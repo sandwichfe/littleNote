@@ -1,0 +1,27 @@
+{
+  "name": "littlenote",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@wangeditor/editor": "^5.1.23",
+    "@wangeditor/editor-for-vue": "^5.1.12",
+    "axios": "^1.7.2",
+    "crypto-js": "^4.2.0",
+    "element-plus": "^2.7.5",
+    "pinia": "^2.1.7",
+    "vue": "^3.4.21",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "fast-glob": "^3.3.2",
+    "vite": "^5.2.8",
+    "vite-plugin-svg-icons": "^2.0.1"
+  }
+}
