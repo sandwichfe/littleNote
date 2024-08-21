@@ -42,12 +42,11 @@
       <vue-scroll
         :ops="ops"
         @handle-scroll="handleScroll"
-        style="width: 100%; height: 100%"
         ref="vs"
         v-if="this.contents && this.contents.length > 0"
       >
         <div class="main_scroll_content">
-          <ul :class="listType == true ? 'list-file-ul' : ''">
+          <ul>
             <li
               v-for="(c, index) in contents"
               :key="index"
@@ -56,13 +55,6 @@
               @mouseup="clearTimer"
             >
               <div class="file-li-item" @click="addOrUpdateNote(c.id)">
-                <div class="file-svg-icon">
-                  <svg-icon
-                    iconClass="file-1"
-                    className="fileIcon"
-                    class="svg-file-icon"
-                  ></svg-icon>
-                </div>
                 <div class="prename">{{ c.title }}</div>
                 <div class="ptime" >{{ c.updateTime?c.updateTime:c.createTime }}</div>
               </div>
@@ -226,7 +218,7 @@ export default {
     computed: {
       // 滚动区高度 
       scrollerHeight: function() {
-      return (document.documentElement.clientHeight - 30-40-41-5) + 'px'; //自定义高度需求  不知道这多的5px哪来的..
+      return (document.documentElement.clientHeight - 30-65-41-5) + 'px'; //自定义高度需求  不知道这多的5px哪来的..
        }
      },
   watch: {
@@ -375,41 +367,11 @@ export default {
 
 <style scoped >
 .main_content {
-  width: 90%;
+  width: 95%;
   margin: 0 auto;
-  height: 100%;
   position: relative;
-}
-
-.prename {
-  text-align: left;
-  height: 30px;
-  line-height: 30px;
-  margin-top: 5px;
-  margin-bottom: 0px;
-  color: black;
-  font-size: 16px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 120px; 
-  white-space: nowrap;
 }
-
-.ptime {
-  margin-left: auto; 
-  margin-right: 20px;
-  text-align: center;
-  height: 30px;
-  line-height: 30px;
-  margin-top: 5px;
-  margin-bottom: 0px;
-  color: #4899a3c9;
-  font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 
 .dirIcon {
   width: 40px;
@@ -438,7 +400,6 @@ export default {
 
 .url-path {
   color: #42859396;
-  line-height: 30px;
   display: flex;
   word-break: keep-all; /* 内容/字不换行 */
   white-space: nowrap; /* 不换行 */
@@ -477,6 +438,10 @@ export default {
     }
 
 
+.head_bg {
+  border-radius: 8px;
+}
+
 
 .keyword-select {
   line-height: 40px;
@@ -513,9 +478,11 @@ export default {
 }
 
 .scroll_content {
-  height: calc(100% - 100px);
+  overflow-y: auto; /* 垂直方向超出时显示滚动条 */
   border: #ead9d9 solid 1px;
+  background-color:rgb(237 237 237);
   border-bottom:none;
+ 
 }
 
 .loading-icon {
@@ -523,7 +490,8 @@ export default {
 }
 
 ul {
-  /* background-color: rgb(95, 68, 68); */
+  margin-left: 10px;
+  margin-right: 10px;
   list-style: none;
   display: flex;
   flex-wrap: wrap; /** 子元素li超出换行 */
@@ -539,21 +507,48 @@ ul > i {
 }
 
 .line {
-  width: 10rem;
-  height: 10rem;
+  background-color: #fff;
+  border-radius: 8px;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  width: 100%;
 }
 
 .file-li-item {
-  width: 80%;
-  margin: auto;
+  width: 90%;
+  height: 90px;
+  margin-left: 20px;
+  display: flex;
+  align-items: flex-start; /* 子元素在交叉轴（水平）上靠左对齐 */
+  flex-direction: column; /* 设置子元素垂直排列 */
 }
 
-.file-svg-icon {
-  width: 40px;
-  height: 40px;
-  margin: 0 auto;
+.prename {
+  /* background-color: #4acfc1; */
+  text-align: left;
+  line-height: 60px;
   margin-top: 5px;
+  margin-bottom: 0px;
+  color: black;
+  font-size: 16px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+.ptime {
+  /* background-color: #7dce85; */
+  text-align: center;
+  line-height: 30px;
+  margin-top: 5px;
+  margin-bottom: 0px;
+  color: #a9aaabc9;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 
 .main_scroll_content li:hover .svg-file-icon {
   scale: 1.1 1.1;
@@ -573,37 +568,5 @@ ul > i {
   border-top:none;
 }
 
-/* list style */
-.list-file-ul {
-  display: flex;
-}
 
-.list-file-ul .prename {
-  margin-left: 10px;
-}
-.list-file-ul li {
-  border: #e8f3f2 1px solid;
-  width: 100%;
-  height: 60px;
-}
-.list-file-ul .file-li-item {
-  width: 100%;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  height: 40px;
-  margin-top: 10px;
-}
-
-.list-file-ul .file-svg-icon {
-  margin-top: 0;
-  margin-left: 0%;
-   margin-right: 0%;
-}
-
-.list-file-ul li:hover .prename {
-  color: #72c8c4;
-}
-
-/* list style end */
 </style>
