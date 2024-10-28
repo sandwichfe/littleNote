@@ -1,5 +1,5 @@
 <template>
-    <div style="height: 100%;" >
+    <div  >
       <!-- <div>
         <button @click="insertText">insert text</button>
         <button @click="printHtml">print html</button>
@@ -24,10 +24,11 @@
           style="border-bottom: 1px solid #ccc"
         />
         <Editor
+            id="myEditor"
           :defaultConfig="editorConfig"
           :mode="mode"
           v-model="valueHtml"
-          style="overflow-y: hidden"
+          style="width: 100%; height: 300px; outline: none;overflow-y: hidden"
           @onCreated="handleCreated"
           @onChange="handleChange"
           @onDestroyed="handleDestroyed"
@@ -95,15 +96,14 @@
     const editStatus = ref(false);
 
 
-
       // 编辑器实例，必须用 shallowRef，重要！
       const editorRef = shallowRef();
   
       
       // 内容 HTML
       const valueHtml = ref("");
-  
-    
+      console.log(editorRef.value)
+      
 
       // 模拟 ajax 异步获取内容
       onMounted(() => {
@@ -121,6 +121,8 @@
           valueHtml.value = decrypted(res.content);
         });
 
+        window.addEventListener('resize', setPageHeight); // 添加窗口大小改变事件
+        setPageHeight();
       });
   
       const toolbarConfig = {};
@@ -143,6 +145,7 @@
       const handleCreated = (editor) => {
         console.log('created', editor);
         editorRef.value = editor; // 记录 editor 实例，重要！
+
       };
       const handleChange = (editor) => {
         console.log('change:', editor.getHtml());
@@ -284,6 +287,16 @@
       };
 
 
+        const setPageHeight = () => {
+        const height = window.innerHeight; // 获取窗口高度
+        const targetDiv = document.getElementById('myEditor'); // 替换为你的 div 的 ID
+        if (targetDiv) {
+          targetDiv.style.height = `${height * 0.8}px`; // 设置目标 div 高度为 80%
+              }
+            };
+
+
+
 
 
   
@@ -308,7 +321,8 @@
         saveNote,
         noteData,
         router,
-        delNote
+        delNote,
+        setPageHeight,
       };
 
 

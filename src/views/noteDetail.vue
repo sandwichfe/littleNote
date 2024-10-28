@@ -1,6 +1,6 @@
 <template>
   <div id="app" style="height: 100%;">
-    <editor  :isEdit="isEdit"  :noteId="noteId"></editor>
+    <editor  :isEdit="isEdit"  :noteId="noteId" style="background: greenyellow;"></editor>
   </div>
 </template>
 
