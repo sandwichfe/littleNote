@@ -121,8 +121,9 @@
         });
 
         window.addEventListener('resize', setPageHeight); // 添加窗口大小改变事件
-        
-      });
+        setPageHeight();
+      }
+      );
   
       const toolbarConfig = {};
 
@@ -287,10 +288,12 @@
 
 
         const setPageHeight = () => {
-        const height = window.innerHeight; // 获取窗口高度
+          const height = visualViewport.height || window.innerHeight;
+          const Editheight = (visualViewport.height ? height * 0.65 : height * 0.8)
+          console.log(Editheight,"setHeight")
         const targetDiv = document.getElementById('myEditor'); // 替换为你的 div 的 ID
         if (targetDiv) {
-          targetDiv.style.height = `${height * 0.8}px`; // 设置目标 div 高度为 80%
+          targetDiv.style.height = `${Editheight * 0.8}px`; // 设置目标 div 高度为 80%
               }
             };
 
