@@ -28,7 +28,7 @@
           :defaultConfig="editorConfig"
           :mode="mode"
           v-model="valueHtml"
-          style="width: 100%; height: 300px; outline: none;overflow-y: hidden"
+          :style="{ width: '100%', height: pageEditHeight + 'px', outline: 'none', overflowY: 'hidden' }"
           @onCreated="handleCreated"
           @onChange="handleChange"
           @onDestroyed="handleDestroyed"
@@ -50,7 +50,7 @@
   
   <script>
   import '@wangeditor/editor/dist/css/style.css';
-  import { onBeforeUnmount, ref, toRefs ,reactive,shallowRef, onMounted } from 'vue';
+  import { onBeforeUnmount, ref, toRefs ,reactive,shallowRef, onMounted,computed  } from 'vue';
   import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
   import { getNote,editNote,addNote,deleteNoteItem } from "@/network/base"; 
   import { useRouter } from 'vue-router';
@@ -78,8 +78,7 @@
     },
   },
 
-  computed: {
-  },
+
 
 
     setup(props, context) {
@@ -122,7 +121,7 @@
         });
 
         window.addEventListener('resize', setPageHeight); // 添加窗口大小改变事件
-        setPageHeight();
+        
       });
   
       const toolbarConfig = {};
@@ -296,6 +295,16 @@
             };
 
 
+      // 使用 computed 创建计算属性
+      const pageEditHeight = computed(() => {
+      const height = visualViewport.height || window.innerHeight;
+      return (visualViewport.height ? height * 0.65 : height * 0.8);
+      });
+
+
+
+
+
 
 
 
@@ -323,6 +332,7 @@
         router,
         delNote,
         setPageHeight,
+        pageEditHeight,
       };
 
 
