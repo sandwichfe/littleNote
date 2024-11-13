@@ -4,14 +4,14 @@
         <button @click="insertText">insert text</button>
         <button @click="printHtml">print html</button>
       </div> -->
-      <el-button @click="disableEdit" :disabled="!editStatus">disable</el-button>
-      <el-button @click="enableEdit" :disabled="editStatus">enable</el-button>
-      <el-button @click="saveNote" plain type="primary">save</el-button>
-    
+
+        <el-button @click="disableEdit" :disabled="!editStatus" style="margin-top: 5px;">disable</el-button>
+        <el-button @click="enableEdit" :disabled="editStatus" style="margin-top: 5px;">enable</el-button>
+        <el-button @click="saveNote" plain type="primary" style="margin-top: 5px;">save</el-button>
 
       <el-popconfirm title="确定删除吗?" @confirm="delNote">
         <template #reference>
-          <el-button plain  type="danger" >delete</el-button>
+          <el-button plain  type="danger" style="margin-top: 5px;">delete</el-button>
         </template>
       </el-popconfirm>
 
