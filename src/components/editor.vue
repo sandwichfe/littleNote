@@ -4,14 +4,14 @@
         <button @click="insertText">insert text</button>
         <button @click="printHtml">print html</button>
       </div> -->
-      <el-button @click="disableEdit" :disabled="!editStatus">disable</el-button>
-      <el-button @click="enableEdit" :disabled="editStatus">enable</el-button>
-      <el-button @click="saveNote" plain type="primary">save</el-button>
-    
+
+        <el-button @click="disableEdit" :disabled="!editStatus" style="margin-top: 5px;">disable</el-button>
+        <el-button @click="enableEdit" :disabled="editStatus" style="margin-top: 5px;">enable</el-button>
+        <el-button @click="saveNote" plain type="primary" style="margin-top: 5px;">save</el-button>
 
       <el-popconfirm title="确定删除吗?" @confirm="delNote">
         <template #reference>
-          <el-button plain  type="danger" >delete</el-button>
+          <el-button plain  type="danger" style="margin-top: 5px;">delete</el-button>
         </template>
       </el-popconfirm>
 
@@ -28,7 +28,7 @@
           :defaultConfig="editorConfig"
           :mode="mode"
           v-model="valueHtml"
-          style="width: 100%; height: 300px; outline: none;overflow-y: hidden"
+          :style="{ width: '100%', height: pageEditHeight + 'px', outline: 'none', overflowY: 'hidden' }"
           @onCreated="handleCreated"
           @onChange="handleChange"
           @onDestroyed="handleDestroyed"
@@ -50,7 +50,7 @@
   
   <script>
   import '@wangeditor/editor/dist/css/style.css';
-  import { onBeforeUnmount, ref, toRefs ,reactive,shallowRef, onMounted } from 'vue';
+  import { onBeforeUnmount, ref, toRefs ,reactive,shallowRef, onMounted,computed  } from 'vue';
   import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
   import { getNote,editNote,addNote,deleteNoteItem } from "@/network/base"; 
   import { useRouter } from 'vue-router';
@@ -78,8 +78,7 @@
     },
   },
 
-  computed: {
-  },
+
 
 
     setup(props, context) {
@@ -123,7 +122,8 @@
 
         window.addEventListener('resize', setPageHeight); // 添加窗口大小改变事件
         setPageHeight();
-      });
+      }
+      );
   
       const toolbarConfig = {};
 
@@ -288,12 +288,24 @@
 
 
         const setPageHeight = () => {
-        const height = window.innerHeight; // 获取窗口高度
+          const height = visualViewport.height || window.innerHeight;
+          const Editheight = (visualViewport.height ? height * 0.65 : height * 0.8)
+          console.log(Editheight,"setHeight")
         const targetDiv = document.getElementById('myEditor'); // 替换为你的 div 的 ID
         if (targetDiv) {
-          targetDiv.style.height = `${height * 0.8}px`; // 设置目标 div 高度为 80%
+          targetDiv.style.height = `${Editheight * 0.8}px`; // 设置目标 div 高度为 80%
               }
             };
+
+
+      // 使用 computed 创建计算属性
+      const pageEditHeight = computed(() => {
+      const height = visualViewport.height || window.innerHeight;
+      return (visualViewport.height ? height * 0.65 : height * 0.8);
+      });
+
+
+
 
 
 
@@ -323,6 +335,7 @@
         router,
         delNote,
         setPageHeight,
+        pageEditHeight,
       };
 
 
