@@ -1,4 +1,4 @@
-import { request } from "./request";
+import { request,LoginRequest } from "./request";
 
 export function getFileList(filePath, queryWord) {
     return request({
@@ -10,13 +10,13 @@ export function getFileList(filePath, queryWord) {
       }
     })}
 
-    export function listNote(aa, bb) {
+    export function listNote(pageNum, pageSize) {
       return request({
           method: "post",
           url: "/note/listNote",
         params: {         
-          a:aa,
-          a:bb,
+          pageNum:pageNum,
+          pageSize:pageSize,
         }
       })}
 
@@ -61,3 +61,16 @@ export function getFileList(filePath, queryWord) {
                   id:id,
                 }
               })}
+
+
+              
+            export  function login(username,password) {
+              return LoginRequest({
+                url: '/user/login',
+                method:'post',
+                params: {     
+                  username,
+                  password
+                }
+              })
+            }

@@ -273,8 +273,8 @@ export default {
     },
 
     initList() {
-      listNote("","").then((res) => {
-        this.contents = res;
+      listNote(-1,-1).then((res) => {
+        this.contents = res.data.records;
       });
 
 
