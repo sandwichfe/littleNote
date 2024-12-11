@@ -7,7 +7,6 @@
 <script>
 // import HelloWorld from './components/HelloWorld.vue'
 import editor from '../components/editor.vue';
-import { getNote } from "@/network/base"; 
 import { useRouter } from 'vue-router';
 import { openLoading,closeLoading } from "@/utils/loadingUtil";
 
@@ -60,15 +59,6 @@ methods:{
       }
     },
 
-    initNote(){
-      // getNote(paramId).then((res) => {
-
-      //   // console.log(res)
-
-      //   this.newEdit = res.content;
-      //   console.log(this.newEdit)
-      // });
-    }
 
 }
 
