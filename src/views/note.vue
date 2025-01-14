@@ -125,6 +125,7 @@ const delay = (function () {
 })();
 
 const router = useRouter(); // Vue 3 使用 `useRouter` 钩子进行路由跳转
+let timer;
 
 // 定义响应式变量
 const centerDialogVisible = ref(false);
