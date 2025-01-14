@@ -1,49 +1,42 @@
 <template>
   <div class="main_content">
- <!-- 添加 -->
+    <!-- 添加 -->
     <div>
-        <div class="url-path"  @click="addOrUpdateNote(-1)">
+      <div class="url-path" @click="addOrUpdateNote(-1)">
         <div>
-          <svg-icon
-            iconClass="add"
-            className="list-btn-switch"
-          ></svg-icon>
+          <svg-icon iconClass="add" className="list-btn-switch" />
         </div>
-        </div>
+      </div>
     </div>
 
     <div class="head head_bg">
       <!-- 搜索 -->
       <div class="keyword-select">
         <el-input
-          v-model="serachValue"
+          v-model="searchValue"
           placeholder="请输入内容"
           ref="keywordSelect"
           clearable
-        ></el-input>
+        />
       </div>
-       <!-- 刷新 -->
-      <div class="back-box" >
-        <button onclick="location.reload()">
-          <svg-icon
-            iconClass="refresh"
-            className="list-btn-switch"
-          ></svg-icon>
+      <!-- 刷新 -->
+      <div class="back-box">
+        <button @click="reloadPage">
+          <svg-icon iconClass="refresh" className="list-btn-switch" />
         </button>
       </div>
     </div>
 
     <div
-      :style="{height: scrollerHeight}"
+      :style="{ height: scrollerHeight }"
       class="scroll_content"
       v-loading="loading"
       element-loading-text="o(*≧▽≦)ツ加载中~"
     >
       <vue-scroll
-        :ops="ops"
         @handle-scroll="handleScroll"
         ref="vs"
-        v-if="this.contents && this.contents.length > 0"
+        v-if="contents && contents.length > 0"
       >
         <div class="main_scroll_content">
           <ul>
@@ -56,16 +49,10 @@
             >
               <div class="file-li-item" @click="addOrUpdateNote(c.id)">
                 <div class="prename">{{ c.title }}</div>
-                <div class="ptime" >{{ c.updateTime?c.updateTime:c.createTime }}</div>
+                <div class="ptime">{{ c.updateTime || c.createTime }}</div>
               </div>
             </li>
-            <i></i
-            ><i></i
-            ><i></i
-            ><i></i
-            ><i></i
-            ><i></i
-            ><i></i>
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
           </ul>
         </div>
       </vue-scroll>
@@ -78,47 +65,56 @@
         class="empty-msg-box"
       ></el-empty>
 
-
-<!-- 确认框 -->
+      <!-- 确认框 -->
       <el-dialog v-model="centerDialogVisible" title="删除" width="500" center>
-          <span>
-            确定删除？
-          </span>
-          <template #footer>
-            <div class="dialog-footer">
-              <el-button  @click="centerDialogVisible = false">Cancel</el-button>
-              <el-button @click="centerDialogVisible = false">Confirm</el-button>
-                
-              
-            </div>
-          </template>
-        </el-dialog>
-
-
-
+        <span>确定删除？</span>
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="centerDialogVisible = false">Cancel</el-button>
+            <el-button @click="centerDialogVisible = false">Confirm</el-button>
+          </div>
+        </template>
+      </el-dialog>
     </div>
-    <back-top v-show="backTopVisible" @click.native="backToTop()"></back-top>
+
+    <back-top v-show="backTopVisible" @click="backToTop" />
     <div class="util-col">
       <!-- 样式切换 -->
-      <div class="show-box" @click="switchList()">
+      <div class="show-box" @click="switchList">
         <button>
           <svg-icon
             iconClass="list-icon"
             className="list-btn-switch"
-            v-if="listType == false"
-          ></svg-icon>
+            v-if="!listType"
+          />
           <svg-icon
             iconClass="app-icon"
             className="list-btn-switch"
-            v-if="listType == true"
-          ></svg-icon>
+            v-if="listType"
+          />
         </button>
       </div>
     </div>
   </div>
 </template>
 
-<script>
+<!-- 声明导出组件名 -->
+<script lang="ts">
+export default {
+  name: "note",
+}
+</script>
+
+<!-- setup语法糖 -->
+<script setup lang="ts">
+import { listNote } from "@/network/base"; // 引入自己封装的axios请求函数
+import BackTop from "../components/backTop/BackTop.vue";
+import { love } from "@/utils/love";
+import { ref, computed, watch, onMounted, onActivated, onDeactivated } from 'vue';
+import { openLoading, closeLoading } from "@/utils/loadingUtil";
+import { useRouter } from 'vue-router';
+
+
 // 节流函数
 const delay = (function () {
   let timer = 0;
@@ -127,178 +123,104 @@ const delay = (function () {
     timer = setTimeout(callback, ms);
   };
 })();
-import { listNote } from "@/network/base"; //引入自己封装的axios请求函数
-import BackTop from "../components/backTop/BackTop.vue";
-import { love } from "@/utils/love";
-import { ref } from 'vue'
-import { openLoading,closeLoading } from "@/utils/loadingUtil";
 
-const centerDialogVisible  = ref(false)
+const router = useRouter(); // Vue 3 使用 `useRouter` 钩子进行路由跳转
+
+// 定义响应式变量
+const centerDialogVisible = ref(false);
+const listType = ref(true);
+const contents = ref([{ preName: "1", id: 1 }, { preName: "1", id: 2 }, { preName: "1", id: 3 }, { preName: "1", id: 4 }]);
+const loading = ref(false);
+const backTopVisible = ref(false);
+const currentPath = ref('');
+const searchValue = ref("");
 
 
-export default {
-  name: "index",
-  components: { BackTop,
-     },
-  data() {
-    return {
-      listType: true,
-      contents: [{preName:"1",id:1}, {preName:"1",id:2}, {preName:"1",id:3},{preName:"1",id:4}],
-      loading: false,
-      backTopVisible: false,
-      currentPath: '', 
-      hs: [{ preName: "刷新" }],
-      ops: {
-        vuescroll: {
-          mode: "native", //模式:pc natice 移动端是slice
-          sizeStrategy: "percent", //父元素是否是固定的是就percent 不是就是number 填一个数值
-          detectResize: true, //内容是否根据页面调整
-        },
-        scrollPanel: {
-          initialScrollY: false, //初始化距离顶部的位置
-          initialScrollX: false, //初始化距离左侧的位置
-          scrollingX: true, // 是否开启横向滚动
-          scrollingY: true, //是否开启竖向滚动
-          speed: 300, //多长时间内完成一次滚动。 数值越小滚动的速度越快。
-          easing: "easeInQuad", //默认动画
-          verticalNativeBarPos: "right",
-          maxHeight: undefined, //这是滚动条最大高度,内容高度小于 maxHeight 时高度自适应，超出的话出现滚动条。
-          maxWidth: undefined, //这是滚动条最大宽度,内容宽度小于 maxWidth 时高度自适应，超出的话出现滚动条。
-        },
-        rail: {
-          background: "#ffffff", //轨道的背景色。
-          opacity: 0.5, //轨道的透明度。 0是透明，1是不透明
-          size: "6px", //轨道的尺寸。
-          specifyBorderRadius: false, //是否指定轨道的 borderRadius， 如果不那么将会自动设置。
-          gutterOfEnds: null,
-          gutterOfSide: "0px", //距离容器的距离
-          keepShow: false, //是否即使 bar 不存在的情况下也保持显示。
-        },
-        bar: {
-          showDelay: 500, //在鼠标离开容器后多长时间隐藏滚动条。
-          onlyShowBarOnScroll: true, //是否只在滚动时显示 bar。
-          keepShow: true, //滚动条是否保持显示。
-          background: "#d9dcda", //滚动条背景色。
-          opacity: 1, //滚动条透明度。
-          hoverStyle: false,
-          specifyBorderRadius: false, //是否指定滚动条的 borderRadius， 如果不那么和轨道的保持一致。
-          minSize: false, //为 bar 设置一个最小尺寸, 从 0 到 1. 如 0.3, 代表 30%.
-          size: "6px", //bar 的尺寸。
-          disable: false, //是否禁用滚动条。
-        },
-      },
-      pathOps: {
-        rail: {
-          background: "#ffffff", //轨道的背景色。
-          opacity: 0.5, //轨道的透明度。 0是透明，1是不透明
-          size: "6px", //轨道的尺寸。
-          specifyBorderRadius: false, //是否指定轨道的 borderRadius， 如果不那么将会自动设置。
-          gutterOfEnds: null,
-          gutterOfSide: "0px", //距离容器的距离
-          keepShow: false, //是否即使 bar 不存在的情况下也保持显示。
-        },
-        bar: {
-          showDelay: 500, //在鼠标离开容器后多长时间隐藏滚动条。
-          onlyShowBarOnScroll: true, //是否只在滚动时显示 bar。
-          keepShow: false, //滚动条是否保持显示。
-          background: "#d9dcda", //滚动条背景色。
-          opacity: 1, //滚动条透明度。
-          hoverStyle: false,
-          specifyBorderRadius: false, //是否指定滚动条的 borderRadius， 如果不那么和轨道的保持一致。
-          minSize: false, //为 bar 设置一个最小尺寸, 从 0 到 1. 如 0.3, 代表 30%.
-          size: "2px", //bar 的尺寸。
-          disable: true, //是否禁用滚动条。
-        },
-      },
-      serachValue: "",
-      centerDialogVisible:false,
-      
-    };
-  },
-    computed: {
-      // 滚动区高度 
-      scrollerHeight: function() {
-      return (document.documentElement.clientHeight - 30-65-41-5) + 'px'; //自定义高度需求  不知道这多的5px哪来的..
-       }
-     },
-  watch: {
-    //watch serachValue change
-    serachValue() {
-      delay(() => {
-        this.remoteMethod(this.serachValue);
-      }, 300);
-    },
-  },
-  activated() {
-    //用户点击进入时执行的方法
-    console.log("init");
-  },
-  deactivated() {
-    //用户离开（点了别的组件）时执行的方法
-    //离开时保存
-    console.log("离开了");
-  },
-  created() {
-    this.initList();
-  },
-  mounted() {
-    love();
-  },
-  methods: {
+// 计算属性
+const scrollerHeight = computed(() => {
+  return (document.documentElement.clientHeight - 30 - 65 - 41 - 5) + 'px';
+});
+
+// 监听
+watch(searchValue, (newValue) => {
+  delay(() => {
+    remoteMethod(newValue);
+  }, 300);
+});
+
+
+// 生命周期钩子
+onActivated(() => {
+  console.log("init");
+});
+
+onDeactivated(() => {
+  console.log("离开了");
+});
+
+onMounted(() => {
+  initList();
+  love();
+});
+
+  // created() {
+  //   this.initList();
+  // },
 
 
 
-    // 搜索框内每一次输入都会执行的事件
-    remoteMethod(query) {
-      if (query !== "") {
-        setTimeout(() => {
-          this.loading = true;
-          getFileList(this.currentPath, query).then((res) => {
-            this.contents = res.data;
-            this.loading = false;
-          });
-        }, 200);
-      } else {
-        this.loading = true;
-        getFileList(this.currentPath, null).then((res) => {
-          this.contents = res.data;
-          this.loading = false;
-        });
-      }
-    },
 
-    switchList() {
-      this.listType = !this.listType;
-      this.$refs["vs"].scrollIntoView(".main_scroll_content", 0);
-    },
-
-    initList() {
-      listNote(-1,-1).then((res) => {
-        this.contents = res.data.records;
+  // 搜索框内每一次输入都会执行的事件
+  const remoteMethod = (query) => {
+  if (query !== "") {
+    setTimeout(() => {
+      loading.value = true;
+      getFileList(currentPath.value, query).then((res) => {
+        contents.value = res.data;
+        loading.value = false;
       });
+    }, 200);
+  } else {
+    loading.value = true;
+    getFileList(currentPath.value, null).then((res) => {
+      contents.value = res.data;
+      loading.value = false;
+    });
+  }
+};
 
 
+   // 切换列表
+    const switchList = () => {
+      listType.value = !listType.value;
+      // 这个方法应该是用来触发滚动
+      const vs = document.querySelector(".main_scroll_content");
+      vs?.scrollIntoView({ behavior: "smooth" });
+    };
 
-    },
+    const initList = () => {
+      listNote(-1,-1).then((res) => {
+        contents.value = res.data.records;
+      });
+    };
 
-    handleScroll(vertical, horizontal, nativeEvent) {
-      // console.log(vertical.scrollTop)
-      // 滚动超过400 就出现backtop图标
+
+    // 处理滚动事件
+    const handleScroll = (vertical, horizontal, nativeEvent) => {
       if (vertical.scrollTop >= 400) {
-        this.backTopVisible = true;
+        backTopVisible.value = true;
       } else {
-        this.backTopVisible = false;
+        backTopVisible.value = false;
       }
-    },
+    };
 
-    backToTop() {
+    // 返回顶部
+    const backToTop = () => {
       this.$refs["vs"].scrollIntoView(".main_scroll_content", 100);
-    },
+    };
 
-    /**
-     *  使url path的滚动条到最后
-     */
-    scrollLast() {
+    // 滚动到最后
+    const scrollLast = () => {
       this.$refs["pathVs"].scrollTo(
         {
           x: "100%",
@@ -306,63 +228,45 @@ export default {
         0,
         "easeInQuad"
       );
-    },
+    };
 
-    /**
-     * url path的内容发生变化后 滚动条滚到最后
-     */
-    handleResize() {
-      // console.log('content has resized!')
-      this.scrollLast();
-    },
+    // 处理窗口大小调整
+    const handleResize = () => {
+      scrollLast();
+    };
 
-   /**
-    * 返回上一级
-    */
-   backToPrevious(){
-      if(this.currentPath==""){
-        this.$message( {
-          message: '(˃ ⌑ ˂ഃ )客官,返回不了啦',
-          duration:1000,
-          showClose:false,
-          iconClass:null,
-        });
+    // 返回上级路径
+    const backToPrevious = () => {
+      if (currentPath.value === "") {
+        alert('(˃ ⌑ ˂ഃ )客官,返回不了啦');
         return;
       }
-      // 当前返回上一级后的菜单index -1
-      let currentIndex = this.hs.length-1-1;
-      let currentContent = this.hs[currentIndex];
-       //跳到上一层位置
-      this.gopage(currentContent, currentIndex);
-   },
+      let currentIndex = hs.value.length - 1 - 1;
+      let currentContent = hs.value[currentIndex];
+      gopage(currentContent, currentIndex);
+    };
 
-   startTimer(c) {
-      this.timer = setTimeout(() => {
-        this.centerDialogVisible = true
-      }, 1000); // 设置长按时间，单位为毫秒
-    },
-    clearTimer() {
-      clearTimeout(this.timer);
-    },
+    // 启动定时器
+    const startTimer = () => {
+      timer = setTimeout(() => {
+        centerDialogVisible.value = true;
+      }, 1000);
+    };
 
-    addOrUpdateNote(id){
-      
-      // 开启loading
-      openLoading();
+    // 清除定时器
+    const clearTimer = () => {
+      clearTimeout(timer);
+    };
 
-        if(id==-1){
-          this.$router.push(`/noteDetail/-1`)
-        }else{
-          this.$router.push(`/noteDetail/${id}`)
-        }
-
-        
-
-    }
-
-
-  },
-};
+   // 添加或更新笔记 
+   const addOrUpdateNote = (id) => {
+    openLoading();
+   if (id === -1) {
+     router.push(`/noteDetail/-1`);
+   } else {
+    router.push(`/noteDetail/${id}`);
+   }
+ };
 </script>
 
 <style scoped >

@@ -17,8 +17,6 @@ import App from './App.vue'
 import router from './router'
 import axios from 'axios'
 
-// js-cookie
-import Cookies from 'js-cookie'
 
 const app = createApp(App)
 
@@ -26,8 +24,6 @@ app.use(createPinia())
 app.use(router)
 
 app.use(ElementPlus)
-
-app.use(Cookies);
 
 // 全局注册SvgIcon组件
 app.component('SvgIcon', SvgIcon);

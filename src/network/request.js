@@ -6,7 +6,7 @@ import router from '../router';
 export function request(config) {
     const instance = axios.create({                       //创建移 动axios的实例
         // baseURL: "http://49.235.149.110:8000",      //一定要写成ip 不要localhost 不然别的机器访问不到
-        baseURL: "http://127.0.0.1:8080",  
+        baseURL: "http://127.0.0.1:8000",  
         timeout: 5000,
     });
 
