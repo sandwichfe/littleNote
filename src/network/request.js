@@ -3,10 +3,13 @@ import { ElMessage} from 'element-plus';
 import Cookies from 'js-cookie'
 import router from '../router';
 
+// const requestIp = "127.0.0.1";
+const requestIp = "49.235.149.110";
+// 环境
+
 export function request(config) {
     const instance = axios.create({                       //创建移 动axios的实例
-        // baseURL: "http://49.235.149.110:8000",      //一定要写成ip 不要localhost 不然别的机器访问不到
-        baseURL: "http://127.0.0.1:8000",  
+        baseURL: `http://${requestIp}:8000`,  
         timeout: 5000,
     });
 
@@ -78,8 +81,7 @@ function handleError(err) {
 
 export function LoginRequest(config) {
     const instance = axios.create({                       //创建移 动axios的实例
-        // baseURL: "http://49.235.149.110:8000",      //一定要写成ip 不要localhost 不然别的机器访问不到
-        baseURL: "http://127.0.0.1:9000",  
+        baseURL: `http://${requestIp}:9088`,  
         timeout: 5000,
     });
 

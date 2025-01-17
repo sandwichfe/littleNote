@@ -58,7 +58,10 @@ export default {
             Cookies.set("loginToken",res.data,{ expires: 7 }); //存cookies  过期时间为7天
             this.$router.push("/")
             this.$message.success(res.msg)
-          }
+          }else {
+              // 处理登录失败的情况
+               this.$message.error(res.msg || "登录失败，请检查用户名或密码"); // 提示失败信息
+              }
         }
       });
     },
