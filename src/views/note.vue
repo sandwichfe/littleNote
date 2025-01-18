@@ -12,58 +12,25 @@
     <div class="head head_bg">
       <!-- 搜索 -->
       <div class="keyword-select">
-        <el-input
-          v-model="searchValue"
-          placeholder="请输入内容"
-          ref="keywordSelect"
-          clearable
-        />
-      </div>
-      <!-- 刷新 -->
-      <div class="back-box">
-        <button @click="reloadPage">
-          <svg-icon iconClass="refresh" className="list-btn-switch" />
-        </button>
+        <el-input v-model="searchValue" placeholder="请输入内容" ref="keywordSelect" clearable />
       </div>
     </div>
 
-    <div
-      :style="{ height: scrollerHeight }"
-      class="scroll_content"
-      v-loading="loading"
-      element-loading-text="o(*≧▽≦)ツ加载中~"
-    >
-      <vue-scroll
-        @handle-scroll="handleScroll"
-        ref="vs"
-        v-if="contents && contents.length > 0"
-      >
-        <div class="main_scroll_content">
-          <ul>
-            <li
-              v-for="(c, index) in contents"
-              :key="index"
-              class="line"
-              @mousedown="startTimer(c)"
-              @mouseup="clearTimer"
-            >
-              <div class="file-li-item" @click="addOrUpdateNote(c.id)">
-                <div class="prename">{{ c.title }}</div>
-                <div class="ptime">{{ c.updateTime || c.createTime }}</div>
-              </div>
-            </li>
-            <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-          </ul>
-        </div>
-      </vue-scroll>
+    <div ref="scrollContainer" :style="{ height: scrollerHeight }" class="scroll_content" v-loading="loading"
+      element-loading-text="o(*≧▽≦)ツ加载中~">
+      <div v-if="contents && contents.length > 0">
+        <ul>
+          <li v-for="(c, index) in contents" :key="index" class="line" @mousedown="startTimer(c)" @mouseup="clearTimer">
+            <div class="file-li-item" @click="addOrUpdateNote(c.id)">
+              <div class="prename">{{ c.title }}</div>
+              <div class="ptime">{{ c.updateTime || c.createTime }}</div>
+            </div>
+          </li>
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </ul>
+      </div>
 
-      <el-empty
-        description="(ง •̀_•́)ง没有数据了"
-        v-else
-        image=""
-        :image-size="200"
-        class="empty-msg-box"
-      ></el-empty>
+      <el-empty description="(ง •̀_•́)ง没有数据了" v-else image="" :image-size="200" class="empty-msg-box"></el-empty>
 
       <!-- 确认框 -->
       <el-dialog v-model="centerDialogVisible" title="删除" width="500" center>
@@ -77,21 +44,12 @@
       </el-dialog>
     </div>
 
-    <back-top v-show="backTopVisible" @click="backToTop" />
     <div class="util-col">
       <!-- 样式切换 -->
       <div class="show-box" @click="switchList">
         <button>
-          <svg-icon
-            iconClass="list-icon"
-            className="list-btn-switch"
-            v-if="!listType"
-          />
-          <svg-icon
-            iconClass="app-icon"
-            className="list-btn-switch"
-            v-if="listType"
-          />
+          <svg-icon iconClass="list-icon" className="list-btn-switch" v-if="!listType" />
+          <svg-icon iconClass="app-icon" className="list-btn-switch" v-if="listType" />
         </button>
       </div>
     </div>
@@ -108,11 +66,26 @@ export default {
 <!-- setup语法糖 -->
 <script setup lang="ts">
 import { listNote } from "@/network/base"; // 引入自己封装的axios请求函数
-import BackTop from "../components/backTop/BackTop.vue";
 import { love } from "@/utils/love";
-import { ref, computed, watch, onMounted, onActivated, onDeactivated } from 'vue';
+import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick } from 'vue';
 import { openLoading, closeLoading } from "@/utils/loadingUtil";
-import { useRouter } from 'vue-router';
+import { useRouter, onBeforeRouteLeave } from 'vue-router';
+import { useStore } from "vuex"; // 引入 Vuex store
+
+
+
+// 定义一个 ref 用于引用 DOM 元素  绑定dom的ref
+const scrollContainer = ref<HTMLElement | null>(null);
+
+// 设置滚动条到指定位置
+const scrollToPosition = (position) => {
+  if (scrollContainer.value) {
+    scrollContainer.value.scrollTop = position;
+  }
+};
+
+// 引入 store
+const store = useStore();
 
 
 // 节流函数
@@ -149,128 +122,101 @@ watch(searchValue, (newValue) => {
   }, 300);
 });
 
-
 // 生命周期钩子
 onActivated(() => {
-  console.log("init");
 });
 
 onDeactivated(() => {
-  console.log("离开了");
 });
 
 onMounted(() => {
+  console.log("huilail...")
   initList();
   love();
+  // 在页面加载完自动滚动到指定位置
+  nextTick(() => {
+    setTimeout(() => {
+      const savedScrollPosition = store.state.scrollPosition;
+      if (savedScrollPosition) {
+        scrollToPosition(savedScrollPosition);  // 页面加载时滚动到 500px
+      }
+    }, 50);  // 延迟50，确保 DOM 已经渲染完成
+  });
 });
 
-  // created() {
-  //   this.initList();
-  // },
+
+onBeforeRouteLeave((to, from, next) => {
+  console.log("luyou likail ")
+
+  // 路由离开时保存滚动条位置  
+  let scrollTop = scrollContainer.value.scrollTop
+  // debugger
+  if (scrollTop) {
+    // 将滚动条的垂直位置保存vuex
+    store.dispatch("updateScrollPosition", scrollTop);
+  }
+  next();
+});
 
 
-
-
-  // 搜索框内每一次输入都会执行的事件
-  const remoteMethod = (query) => {
+// 搜索框内每一次输入都会执行的事件
+const remoteMethod = (query) => {
   if (query !== "") {
     setTimeout(() => {
       loading.value = true;
-      getFileList(currentPath.value, query).then((res) => {
-        contents.value = res.data;
+      listNote(-1, -1).then((res) => {
+        contents.value = res.data.records;
         loading.value = false;
       });
     }, 200);
   } else {
     loading.value = true;
-    getFileList(currentPath.value, null).then((res) => {
-      contents.value = res.data;
+    listNote(-1, -1).then((res) => {
+      contents.value = res.data.records;
       loading.value = false;
     });
   }
 };
 
 
-   // 切换列表
-    const switchList = () => {
-      listType.value = !listType.value;
-      // 这个方法应该是用来触发滚动
-      const vs = document.querySelector(".main_scroll_content");
-      vs?.scrollIntoView({ behavior: "smooth" });
-    };
+// 切换列表
+const switchList = () => {
+  listType.value = !listType.value;
+  // 这个方法应该是用来触发滚动
+  const vs = document.querySelector(".main_scroll_content");
+  vs?.scrollIntoView({ behavior: "smooth" });
+};
 
-    const initList = () => {
-      listNote(-1,-1).then((res) => {
-        contents.value = res.data.records;
-      });
-    };
+const initList = () => {
+  listNote(-1, -1).then((res) => {
+    contents.value = res.data.records;
+  });
+};
 
+// 启动定时器
+const startTimer = () => {
+  timer = setTimeout(() => {
+    centerDialogVisible.value = true;
+  }, 1000);
+};
 
-    // 处理滚动事件
-    const handleScroll = (vertical, horizontal, nativeEvent) => {
-      if (vertical.scrollTop >= 400) {
-        backTopVisible.value = true;
-      } else {
-        backTopVisible.value = false;
-      }
-    };
+// 清除定时器
+const clearTimer = () => {
+  clearTimeout(timer);
+};
 
-    // 返回顶部
-    const backToTop = () => {
-      this.$refs["vs"].scrollIntoView(".main_scroll_content", 100);
-    };
-
-    // 滚动到最后
-    const scrollLast = () => {
-      this.$refs["pathVs"].scrollTo(
-        {
-          x: "100%",
-        },
-        0,
-        "easeInQuad"
-      );
-    };
-
-    // 处理窗口大小调整
-    const handleResize = () => {
-      scrollLast();
-    };
-
-    // 返回上级路径
-    const backToPrevious = () => {
-      if (currentPath.value === "") {
-        alert('(˃ ⌑ ˂ഃ )客官,返回不了啦');
-        return;
-      }
-      let currentIndex = hs.value.length - 1 - 1;
-      let currentContent = hs.value[currentIndex];
-      gopage(currentContent, currentIndex);
-    };
-
-    // 启动定时器
-    const startTimer = () => {
-      timer = setTimeout(() => {
-        centerDialogVisible.value = true;
-      }, 1000);
-    };
-
-    // 清除定时器
-    const clearTimer = () => {
-      clearTimeout(timer);
-    };
-
-   // 添加或更新笔记 
-   const addOrUpdateNote = (id) => {
-    openLoading();
-   if (id === -1) {
-     router.push(`/noteDetail/-1`);
-   } else {
+// 添加或更新笔记 
+const addOrUpdateNote = (id) => {
+  openLoading();
+  if (id === -1) {
+    router.push(`/noteDetail/-1`);
+  } else {
     router.push(`/noteDetail/${id}`);
-   }
- };
+  }
+};
 </script>
 
-<style scoped >
+<style scoped>
 .main_content {
   width: 95%;
   margin: 0 auto;
@@ -306,8 +252,10 @@ onMounted(() => {
 .url-path {
   color: #42859396;
   display: flex;
-  word-break: keep-all; /* 内容/字不换行 */
-  white-space: nowrap; /* 不换行 */
+  word-break: keep-all;
+  /* 内容/字不换行 */
+  white-space: nowrap;
+  /* 不换行 */
 }
 
 .url-path div {
@@ -315,32 +263,32 @@ onMounted(() => {
   margin-left: 4px;
   margin-right: 4px;
   transition: background-color 0.9s ease;
-  cursor: pointer; 
+  cursor: pointer;
 }
 
 .url-path div::before {
-        margin-left: 7.5px;
-        content: '';
-        position: absolute;
-        width: 25px;
-        height: 30px;
-        background-color: rgb(191 231 232 / 30%);
-        transition: transform 0.3s, opacity 0.3s;
-        border-radius: 5px;
-        transform: scale(0);
-        opacity: 0;
-        pointer-events: none;
-    }
+  margin-left: 7.5px;
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 30px;
+  background-color: rgb(191 231 232 / 30%);
+  transition: transform 0.3s, opacity 0.3s;
+  border-radius: 5px;
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+}
 
-    .url-path div:hover::before {
-        transform: scale(2);
-        opacity: 1;
-    }
+.url-path div:hover::before {
+  transform: scale(2);
+  opacity: 1;
+}
 
-    .url-path div span {
-        position: relative;
-        z-index: 1;
-    }
+.url-path div span {
+  position: relative;
+  z-index: 1;
+}
 
 
 .head_bg {
@@ -369,11 +317,13 @@ onMounted(() => {
 }
 
 
- button {
+button {
   cursor: pointer;
-  border: 0; /* 清除默认边框 */
+  border: 0;
+  /* 清除默认边框 */
   outline: none;
-  background-color: transparent; /*清除默认背景 */
+  background-color: transparent;
+  /*清除默认背景 */
 }
 
 .list-btn-switch {
@@ -383,11 +333,12 @@ onMounted(() => {
 }
 
 .scroll_content {
-  overflow-y: auto; /* 垂直方向超出时显示滚动条 */
+  overflow-y: auto;
+  /* 垂直方向超出时显示滚动条 */
   border: #ead9d9 solid 1px;
-  background-color:rgb(237 237 237);
-  border-bottom:none;
- 
+  background-color: rgb(237 237 237);
+  border-bottom: none;
+
 }
 
 .loading-icon {
@@ -399,15 +350,13 @@ ul {
   margin-right: 10px;
   list-style: none;
   display: flex;
-  flex-wrap: wrap; /** 子元素li超出换行 */
-  justify-content: space-between; /**居中 从左往右 */
+  flex-wrap: wrap;
+  /** 子元素li超出换行 */
+  justify-content: space-between;
+  /**居中 从左往右 */
 }
 
-.main_scroll_content li {
-  height: 100%;
-}
-
-ul > i {
+ul>i {
   width: 10rem;
 }
 
@@ -424,8 +373,10 @@ ul > i {
   height: 90px;
   margin-left: 20px;
   display: flex;
-  align-items: flex-start; /* 子元素在交叉轴（水平）上靠左对齐 */
-  flex-direction: column; /* 设置子元素垂直排列 */
+  align-items: flex-start;
+  /* 子元素在交叉轴（水平）上靠左对齐 */
+  flex-direction: column;
+  /* 设置子元素垂直排列 */
 }
 
 .prename {
@@ -455,11 +406,6 @@ ul > i {
 }
 
 
-.main_scroll_content li:hover .svg-file-icon {
-  scale: 1.1 1.1;
-  transition: all 0.8s;
-}
-
 .empty-msg-box {
   margin-top: 150px;
 }
@@ -470,8 +416,6 @@ ul > i {
   height: 40px;
   background-color: #fff;
   border: #ead9d9 solid 1px;
-  border-top:none;
+  border-top: none;
 }
-
-
 </style>
