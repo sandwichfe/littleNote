@@ -5,11 +5,11 @@
         <button @click="printHtml">print html</button>
       </div> -->
 
-    <div style="height: 35pxpx; display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap;">
-      <el-button @click="disableEdit" :disabled="!editStatus" style="line-height: 35px; margin-left: 5px;">disable</el-button>
-      <el-button @click="enableEdit" :disabled="editStatus" style="line-height: 35px; margin-left: 5px;">enable</el-button>
-      <el-button @click="saveNote" plain type="primary" style="line-height: 35px; margin-left: 5px;">save</el-button>
-      <div style="line-height: 35px; margin-left: 5px;">
+    <div class = "edit-button-box">
+      <el-button @click="disableEdit" :disabled="!editStatus">disable</el-button>
+      <el-button @click="enableEdit" :disabled="editStatus" >enable</el-button>
+      <el-button @click="saveNote" plain type="primary" >save</el-button>
+      <div style="height: 32px; margin-left: 14px; margin-bottom: 10px;">
         <el-popconfirm title="确定删除吗?" @confirm="delNote">
           <template #reference>
             <el-button plain type="danger" style="margin-top: 5px;">delete</el-button>
@@ -20,7 +20,7 @@
 
 
 
-    <div style="border: 1px solid #ccc; margin-top: 10px; ">
+    <div style="border: 1px solid #ccc; margin-top: 5px; ">
       <Toolbar :editor="editorRef" :defaultConfig="toolbarConfig" :mode="mode" style="border-bottom: 1px solid #ccc;"
         id="editor-Toolbar" />
       <Editor id="myEditor" :defaultConfig="editorConfig" :mode="mode" v-model="valueHtml"
@@ -333,8 +333,17 @@ export default {
 </script>
 
 <style>
-.w-e-text-container {
-  /* height: 850px !important; */
-  /*!important是重点，因为原div是行内样式设置的高度300px*/
+.edit-button-box {
+  margin-top: 2px;
+  height: 37px;  /* 修正了多余的 px */
+  display: flex;
+  justify-content: flex-start; /* 子元素靠左排列 */
+  align-items: center; /* 让所有子元素垂直居中 */
+  flex-wrap: nowrap;
+
 }
+
+
+
+
 </style>
