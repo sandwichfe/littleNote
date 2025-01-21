@@ -1,9 +1,30 @@
 <template>
   <div class="main_content">
+
+   <!-- 分组筛选 -->
+    <div>
+      <el-select
+      v-model="groupValue"
+      placeholder="Select"
+      size="large"
+      style="width: 240px"
+      clearable 
+      @change="changeGroup"
+    >
+      <el-option
+        v-for="item in groups"
+        :key="item.id"
+        :label="item.groupName"
+        :value="item.id"
+      />
+    </el-select>
+    </div>
+
+
     <!-- 添加 -->
     <div>
-      <div class="url-path" @click="addOrUpdateNote(-1)">
-        <div>
+      <div class="add-btn">
+        <div  @click="addOrUpdateNote(-1)">
           <svg-icon iconClass="add" className="list-btn-switch" />
         </div>
       </div>
@@ -65,14 +86,32 @@ export default {
 
 <!-- setup语法糖 -->
 <script setup lang="ts">
-import { listNote } from "@/network/base"; // 引入自己封装的axios请求函数
+import { listNote,listNoteGroup } from "@/network/base"; // 引入自己封装的axios请求函数
 import { love } from "@/utils/love";
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick } from 'vue';
 import { openLoading, closeLoading } from "@/utils/loadingUtil";
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useStore } from "vuex"; // 引入 Vuex store
 
+const groupValue = ref('')
 
+const groups = ref(
+  [
+    {
+      id: 'Option1',
+      groupName: 'Option1',
+    },
+  ]
+)
+
+// 处理选中项变化
+const changeGroup = (newValue: string) => {
+  let groupId = newValue?Number(newValue):null;
+  listNote(-1, -1,groupId).then((res) => {
+    contents.value = res.data.records;
+  });
+
+};
 
 // 定义一个 ref 用于引用 DOM 元素  绑定dom的ref
 const scrollContainer = ref<HTMLElement | null>(null);
@@ -191,6 +230,11 @@ const initList = () => {
   listNote(-1, -1).then((res) => {
     contents.value = res.data.records;
   });
+
+  listNoteGroup(-1, -1).then((res) => {
+    groups.value = res.data.records;
+  });
+  listNoteGroup
 };
 
 // 启动定时器
@@ -249,24 +293,23 @@ const addOrUpdateNote = (id) => {
   justify-content: space-between;
 }
 
-.url-path {
+.add-btn {
   color: #42859396;
   display: flex;
   word-break: keep-all;
   /* 内容/字不换行 */
   white-space: nowrap;
   /* 不换行 */
+  flex-direction: row-reverse; /* 使元素从右边开始排列 */
 }
 
-.url-path div {
+.add-btn div {
   cursor: pointer;
-  margin-left: 4px;
-  margin-right: 4px;
   transition: background-color 0.9s ease;
   cursor: pointer;
 }
 
-.url-path div::before {
+.add-btn div::before {
   margin-left: 7.5px;
   content: '';
   position: absolute;
@@ -280,12 +323,12 @@ const addOrUpdateNote = (id) => {
   pointer-events: none;
 }
 
-.url-path div:hover::before {
+.add-btn div:hover::before {
   transform: scale(2);
   opacity: 1;
 }
 
-.url-path div span {
+.add-btn div span {
   position: relative;
   z-index: 1;
 }

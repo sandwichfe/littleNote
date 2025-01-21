@@ -13,13 +13,14 @@ interface Note {
 }
 
 // 这里为列表和分页功能添加类型
-export function listNote(pageNum: number, pageSize: number): Promise<Note[]> {
+export function listNote(pageNum: number, pageSize: number,groupId?:number): Promise<Note[]> {
   return request({
     method: "post",
     url: "/note/listNote",
     params: {
       pageNum: pageNum,
       pageSize: pageSize,
+      groupId:groupId
     }
   });
 }
@@ -85,6 +86,17 @@ export function login(username: string, password: string): Promise<LoginResponse
     params: {
       username,
       password
+    }
+  });
+}
+
+export function listNoteGroup(pageNum: number, pageSize: number): Promise<any> {
+  return request({
+    method: "post",
+    url: "/noteGroup/listNoteGroup",
+    params: {
+      pageNum: pageNum,
+      pageSize: pageSize,
     }
   });
 }
