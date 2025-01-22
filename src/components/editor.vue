@@ -2,23 +2,22 @@
   <div>
 
     <div class="edit-button-box">
-      <el-button @click="disableEdit" :disabled="!editStatus">disable</el-button>
-      <el-button @click="enableEdit" :disabled="editStatus">enable</el-button>
-      <el-button @click="saveNote" plain type="primary">save</el-button>
+      <!-- 分组筛选 -->
+      <div>
+        <el-select v-model="groupValue" placeholder="Select"  style="width: 120px;height: 32px;margin-right: 10px;"  @change="changeGroup">
+          <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
+        </el-select>
+      </div>
+
+
+      <el-button @click="editOrPreview" >{{!editStatus?'编辑':'预览'}}</el-button>
+      <el-button @click="saveNote" plain type="primary">保存</el-button>
       <div style="height: 32px; margin-left: 14px; margin-bottom: 10px;">
         <el-popconfirm title="确定删除吗?" @confirm="delNote">
           <template #reference>
-            <el-button plain type="danger" style="margin-top: 5px;">delete</el-button>
+            <el-button plain type="danger" style="margin-top: 5px;">删除</el-button>
           </template>
         </el-popconfirm>
-      </div>
-
-      <!-- 分组筛选 -->
-      <div>
-        <el-select v-model="groupValue" placeholder="Select" size="large" style="width: 240px" 
-          @change="changeGroup">
-          <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
-        </el-select>
       </div>
 
     </div>
@@ -218,6 +217,16 @@ const printHtml = () => {
   console.log(editor.getHtml());
 };
 
+
+const editOrPreview=() => {
+  if(editStatus.value===true){
+    disableEdit();
+  }else{
+    enableEdit();
+  }
+}
+
+
 const disableEdit = () => {
   const editor = editorRef.value;
   if (editor == null) return;
@@ -311,6 +320,7 @@ const saveNote = () => {
 
 <style>
 .edit-button-box {
+  margin-left: 5px;
   margin-top: 2px;
   height: 37px;
   /* 修正了多余的 px */

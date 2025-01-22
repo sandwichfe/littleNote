@@ -1,33 +1,23 @@
 <template>
   <div class="main_content">
 
-   <!-- 分组筛选 -->
-    <div>
-      <el-select
-      v-model="groupValue"
-      placeholder="Select"
-      size="large"
-      style="width: 240px"
-      clearable 
-      @change="changeGroup"
-    >
-      <el-option
-        v-for="item in groups"
-        :key="item.id"
-        :label="item.groupName"
-        :value="item.id"
-      />
-    </el-select>
-    </div>
-
 
     <!-- 添加 -->
-    <div>
-      <div class="add-btn">
-        <div  @click="addOrUpdateNote(-1)">
+      <div class="top-box">
+        <div class="add-btn" @click="addOrUpdateNote(-1)">
           <svg-icon iconClass="add" className="list-btn-switch" />
         </div>
-      </div>
+
+        <!-- 分组筛选 -->
+        <div>
+          <el-select v-model="groupValue" placeholder="分组" size="large" style="width:180px; " clearable
+            @change="changeGroup">
+            <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
+          </el-select>
+        </div>
+
+
+
     </div>
 
     <div class="head head_bg">
@@ -294,7 +284,7 @@ const addOrUpdateNote = (id) => {
   justify-content: space-between;
 }
 
-.add-btn {
+.top-box {
   color: #42859396;
   display: flex;
   word-break: keep-all;
@@ -304,14 +294,14 @@ const addOrUpdateNote = (id) => {
   flex-direction: row-reverse; /* 使元素从右边开始排列 */
 }
 
-.add-btn div {
+.top-box div {
   cursor: pointer;
   transition: background-color 0.9s ease;
   cursor: pointer;
 }
 
-.add-btn div::before {
-  margin-left: 7.5px;
+.top-box .add-btn::before {
+  margin-left: 17.5px;
   content: '';
   position: absolute;
   width: 25px;
@@ -324,12 +314,12 @@ const addOrUpdateNote = (id) => {
   pointer-events: none;
 }
 
-.add-btn div:hover::before {
+.top-box .add-btn:hover::before {
   transform: scale(2);
   opacity: 1;
 }
 
-.add-btn div span {
+.top-box .add-btn span {
   position: relative;
   z-index: 1;
 }
