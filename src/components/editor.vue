@@ -1,9 +1,5 @@
 <template>
   <div>
-    <!-- <div>
-        <button @click="insertText">insert text</button>
-        <button @click="printHtml">print html</button>
-      </div> -->
 
     <div class="edit-button-box">
       <el-button @click="disableEdit" :disabled="!editStatus">disable</el-button>
@@ -16,6 +12,15 @@
           </template>
         </el-popconfirm>
       </div>
+
+      <!-- 分组筛选 -->
+      <div>
+        <el-select v-model="groupValue" placeholder="Select" size="large" style="width: 240px" 
+          @change="changeGroup">
+          <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
+        </el-select>
+      </div>
+
     </div>
 
 
@@ -54,6 +59,27 @@ import { ElMessage } from 'element-plus'
 import { cipherText, decrypted } from "@/utils/aesUtil";
 import { openLoading, closeLoading } from "@/utils/loadingUtil";
 import { type noteInterface } from '@/types/note'; // 引入类型
+import { listNoteGroup } from "@/network/noteGroup";
+
+const groupValue = ref('')
+
+const groups = ref(
+  [
+    {
+      id: 'Option1',
+      groupName: 'Option1',
+    },
+  ]
+)
+
+// 处理选中项变化
+const changeGroup = (newValue: string) => {
+  let groupId = newValue?Number(newValue):null;
+  noteData.value.groupId = groupId;
+};
+
+
+
 
 
 // props 接受父组件传来 并且是只读的 如果需要更改 应该要创建一个副本去更改
@@ -88,6 +114,12 @@ onMounted(() => {
     }, 100);  // 延迟100ms，确保 DOM 渲染完成
   });
   window.addEventListener('resize', calculateHeight);  // 监听窗口尺寸变化
+
+
+  listNoteGroup(-1, -1).then((res) => {
+    groups.value = res.data.records;
+  });
+
 });
 
 onBeforeUnmount(() => {
@@ -118,7 +150,10 @@ onMounted(() => {
     if (res.content == null) {
       res.content = ''
     }
+    // 编辑器内容
     valueHtml.value = decrypted(res.content);
+    // 类型
+    groupValue.value = res.groupId;
   });
 }
 );
@@ -242,21 +277,25 @@ const saveNote = () => {
   noteValue = cipherText(noteValue)
   if (noteData.value.noteId == -1) {
     // 添加操作
-    addNote(null, noteValue, title).then((res) => {
+    addNote(null, noteValue, title,noteData.value.groupId).then((res) => {
       if (res.code = 200) {
         ElMessage({
           message: '保存成功！',
           type: 'success',
           plain: true,
         })
-        // 修改参数
-        router.replace(`/noteDetail/${res.id}`);
-        noteData.value.noteId = res.id;
+        // 修改路由参数
+        if(res.data){
+        router.replace(`/noteDetail/${res.data}`);
+        noteData.value.noteId = res.data;
+        }else{
+          alert("保存出错...")
+        }
       }
     });
   } else {
     // 修改操作
-    editNote(noteData.value.noteId, noteValue, title).then((res) => {
+    editNote(noteData.value.noteId, noteValue, title,noteData.value.groupId).then((res) => {
       if (res = "ok") {
         ElMessage({
           message: '保存成功！',

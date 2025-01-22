@@ -86,7 +86,8 @@ export default {
 
 <!-- setup语法糖 -->
 <script setup lang="ts">
-import { listNote,listNoteGroup } from "@/network/base"; // 引入自己封装的axios请求函数
+import { listNote } from "@/network/base"; // 引入自己封装的axios请求函数
+import { listNoteGroup } from "@/network/noteGroup";
 import { love } from "@/utils/love";
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick } from 'vue';
 import { openLoading, closeLoading } from "@/utils/loadingUtil";
@@ -234,7 +235,7 @@ const initList = () => {
   listNoteGroup(-1, -1).then((res) => {
     groups.value = res.data.records;
   });
-  listNoteGroup
+  
 };
 
 // 启动定时器

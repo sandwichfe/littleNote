@@ -1,10 +1,5 @@
 import { request, LoginRequest } from "./request";
 
-// 定义接口类型，明确返回的数据结构
-interface NoteResponse {
-  content: string | null;
-  // 你可以根据实际返回数据扩展更多字段
-}
 
 interface Note {
   id: number;
@@ -26,7 +21,7 @@ export function listNote(pageNum: number, pageSize: number,groupId?:number): Pro
 }
 
 // 获取单个笔记，返回类型为 NoteResponse
-export function getNote(id: number): Promise<NoteResponse> {
+export function getNote(id: number): Promise<any> {
   return request({
     method: "get",
     url: "/note/getNote",
@@ -37,27 +32,29 @@ export function getNote(id: number): Promise<NoteResponse> {
 }
 
 // 编辑笔记，返回类型仍然为 NoteResponse 或 void，取决于实际需求
-export function editNote(id: number, content: string, title: string): Promise<void> {
+export function editNote(id: number, content: string, title: string,groupId?: number): Promise<void> {
   return request({
     method: "post",
     url: "/note/editNote",
     data: {
       id: id,
       content: content,
-      title: title
+      title: title,
+      groupId:groupId
     }
   });
 }
 
 // 添加新笔记
-export function addNote(id: number, content: string, title: string): Promise<void> {
+export function addNote(id: number, content: string, title: string,groupId?: number): Promise<void> {
   return request({
     method: "post",
     url: "/note/addNote",
     data: {
       id: id,
       content: content,
-      title: title
+      title: title,
+      groupId:groupId
     }
   });
 }
@@ -90,13 +87,4 @@ export function login(username: string, password: string): Promise<LoginResponse
   });
 }
 
-export function listNoteGroup(pageNum: number, pageSize: number): Promise<any> {
-  return request({
-    method: "post",
-    url: "/noteGroup/listNoteGroup",
-    params: {
-      pageNum: pageNum,
-      pageSize: pageSize,
-    }
-  });
-}
+
