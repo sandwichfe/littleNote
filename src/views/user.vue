@@ -17,6 +17,15 @@
       </el-table-column>
     </el-table>
 
+    <!-- 分页组件 -->
+    <el-pagination
+      :page-size="pageSize"
+      :current-page="currentPage"
+      layout="prev, pager, next"
+      :total="total"
+      @current-change="handlePageChange"
+    />
+
     <!-- 用户表单对话框 -->
     <el-dialog v-model="dialogVisible" :title="formTitle">
       <el-form :model="form" label-width="100px" :rules="rules" ref="formRef">
@@ -60,6 +69,11 @@ import {
 const userList = ref([])
 const loading = ref(false)
 
+// 分页相关状态
+const pageSize = ref(10)
+const currentPage = ref(1)
+const total = ref(0)
+
 // 对话框相关状态
 const dialogVisible = ref(false)
 const formTitle = ref('')
@@ -94,14 +108,21 @@ onMounted(() => {
 const fetchUsers = async () => {
   try {
     loading.value = true
-    const response = await getAllUsers()
-    userList.value = response.data
+    const response = await getAllUsers({ pageNum: currentPage.value, pageSize: pageSize.value })
+    userList.value = response.data.records
+    total.value = response.data.total
   } catch (error) {
-    console.error('获取用户列表失败:', error)  // 打印错误详情
+    console.error('获取用户列表失败:', error)
     ElMessage.error('获取用户列表失败')
   } finally {
     loading.value = false
   }
+}
+
+// 分页改变事件
+const handlePageChange = (newPage) => {
+  currentPage.value = newPage
+  fetchUsers()
 }
 
 // 新建用户

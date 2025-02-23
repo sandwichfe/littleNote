@@ -3,16 +3,38 @@ import { LoginRequest } from './request'
 
 interface Role {
   id?: number
-  name: string
-  description: string
+  roleName: string
+  deleted?: boolean
+  sort?: number
+  createTime?: string
+  createUserId?: number
 }
 
-export const createRole = (role: Role) => LoginRequest({ method: 'post', url: '/sys/role', data: role })
+interface PageVo {
+  pageNum: number
+  pageSize: number
+}
 
-export const getRoleById = (id: number) => LoginRequest({ method: 'get', url: `/sys/role/${id}` })
+export const createRole = (role: { id?: number, roleName: string }) => LoginRequest({ 
+  method: 'post', 
+  url: '/sys/role/create', 
+  data: { 
+    id: role.id, 
+    roleName: role.roleName 
+  } 
+})
 
-export const getAllRoles = () => LoginRequest({ method: 'get', url: '/sys/role' })
+export const getRoleById = (id: number) => LoginRequest({ method: 'get', url: `/sys/role/get/${id}` })
 
-export const updateRole = (role: Role) => LoginRequest({ method: 'put', url: '/sys/role', data: role })
+export const getAllRoles = (pageVo: PageVo) => LoginRequest({ method: 'post', url: '/sys/role/list', data: pageVo })
 
-export const deleteRole = (id: number) => LoginRequest({ method: 'delete', url: `/sys/role/${id}` })
+export const updateRole = (role: { id?: number, roleName: string }) => LoginRequest({ 
+  method: 'post', 
+  url: '/sys/role/update', 
+  data: { 
+    id: role.id, 
+    roleName: role.roleName 
+  } 
+})
+
+export const deleteRole = (id: number) => LoginRequest({ method: 'delete', url: `/sys/role/delete/${id}` })

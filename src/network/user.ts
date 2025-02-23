@@ -13,12 +13,17 @@ interface User {
   sourceFrom?: string
 }
 
-export const createUser = (user: User) => LoginRequest({ method: 'post', url: '/sys/user', data: user })
+interface PageVo {
+  pageNum: number
+  pageSize: number
+}
 
-export const getUserById = (id: number) => LoginRequest({ method: 'get', url: `/sys/user/${id}` })
+export const createUser = (user: User) => LoginRequest({ method: 'post', url: '/sys/user/create', data: user })
 
-export const getAllUsers = () => LoginRequest({ method: 'get', url: '/sys/user' })
+export const getUserById = (id: number) => LoginRequest({ method: 'get', url: `/sys/user/get/${id}` })
 
-export const updateUser = (user: User) => LoginRequest({ method: 'put', url: '/sys/user', data: user })
+export const getAllUsers = (pageVo: PageVo) => LoginRequest({ method: 'post', url: '/sys/user/list', data: pageVo })
 
-export const deleteUser = (id: number) => LoginRequest({ method: 'delete', url: `/sys/user/${id}` })
+export const updateUser = (user: User) => LoginRequest({ method: 'post', url: '/sys/user/update', data: user })
+
+export const deleteUser = (id: number) => LoginRequest({ method: 'delete', url: `/sys/user/delete/${id}` })

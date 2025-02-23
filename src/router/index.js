@@ -31,6 +31,10 @@ const router = createRouter({
     {
       path: '/role',
       component: () => import('../views/role.vue')
+    },
+    {
+      path: '/menu',
+      component: () => import('../views/menu.vue')
     }
   ]
 })

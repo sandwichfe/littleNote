@@ -1,12 +1,13 @@
 <template>
-  <div class="role-container">
-    <!-- 新增角色按钮和表格 -->
-    <el-button type="primary" @click="handleCreate">新增角色</el-button>
+  <div class="menu-container">
+    <!-- 新增菜单按钮和表格 -->
+    <el-button type="primary" @click="handleCreate">新增菜单</el-button>
     
-    <el-table :data="roleList" style="width: 100%" v-loading="loading">
+    <el-table :data="menuList" style="width: 100%" v-loading="loading">
       <el-table-column prop="id" label="ID" width="80"></el-table-column>
-      <el-table-column prop="roleName" label="角色名称"></el-table-column>
-      <el-table-column prop="description" label="描述"></el-table-column>
+      <el-table-column prop="name" label="菜单名称"></el-table-column>
+      <el-table-column prop="url" label="URL"></el-table-column>
+      <el-table-column prop="type" label="类型"></el-table-column>
       <el-table-column label="操作" width="200">
         <template #default="scope">
           <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
@@ -24,14 +25,17 @@
       @current-change="handlePageChange"
     />
 
-    <!-- 角色表单对话框 -->
+    <!-- 菜单表单对话框 -->
     <el-dialog v-model="dialogVisible" :title="formTitle">
       <el-form :model="form" label-width="100px" :rules="rules" ref="formRef">
-        <el-form-item label="角色名称" prop="roleName">
-          <el-input v-model="form.roleName" placeholder="请输入角色名称"></el-input>
+        <el-form-item label="菜单名称" prop="name">
+          <el-input v-model="form.name" placeholder="请输入菜单名称"></el-input>
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="form.description" placeholder="请输入描述"></el-input>
+        <el-form-item label="URL" prop="url">
+          <el-input v-model="form.url" placeholder="请输入URL"></el-input>
+        </el-form-item>
+        <el-form-item label="类型" prop="type">
+          <el-input v-model="form.type" placeholder="请输入类型"></el-input>
         </el-form-item>
       </el-form>
 
@@ -47,15 +51,15 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
-  createRole, 
-  getRoleById, 
-  getAllRoles, 
-  updateRole, 
-  deleteRole 
-} from '../network/role'
+  createMenu, 
+  getMenuById, 
+  getAllMenus, 
+  updateMenu, 
+  deleteMenu 
+} from '../network/menu'
 
-// 角色列表和加载状态
-const roleList = ref([])
+// 菜单列表和加载状态
+const menuList = ref([])
 const loading = ref(false)
 
 // 分页相关状态
@@ -71,32 +75,32 @@ const isCreate = ref(true)
 // 表单数据和校验规则
 const form = reactive({
   id: null,
-  roleName: '',
-  deleted: false,
-  sort: 0,
-  createTime: null,
-  createUserId: null
+  name: '',
+  url: '',
+  type: ''
 })
 
 const rules = reactive({
-  roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }]
+  name: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+  url: [{ required: true, message: '请输入URL', trigger: 'blur' }],
+  type: [{ required: true, message: '请输入类型', trigger: 'blur' }]
 })
 
 // 生命周期钩子
 onMounted(() => {
-  fetchRoles()
+  fetchMenus()
 })
 
-// 获取角色列表
-const fetchRoles = async () => {
+// 获取菜单列表
+const fetchMenus = async () => {
   try {
     loading.value = true
-    const response = await getAllRoles({ pageNum: currentPage.value, pageSize: pageSize.value })
-    roleList.value = response.data.records
+    const response = await getAllMenus({ pageNum: currentPage.value, pageSize: pageSize.value })
+    menuList.value = response.data.records
     total.value = response.data.total
   } catch (error) {
-    console.error('获取角色列表失败:', error)
-    ElMessage.error('获取角色列表失败')
+    console.error('获取菜单列表失败:', error)
+    ElMessage.error('获取菜单列表失败')
   } finally {
     loading.value = false
   }
@@ -105,32 +109,28 @@ const fetchRoles = async () => {
 // 分页改变事件
 const handlePageChange = (newPage) => {
   currentPage.value = newPage
-  fetchRoles()
+  fetchMenus()
 }
 
-// 新建角色
+// 新建菜单
 const handleCreate = () => {
   isCreate.value = true
-  formTitle.value = '新建角色'
+  formTitle.value = '新建菜单'
   Object.keys(form).forEach(key => form[key] = key === 'id' ? null : '')
   dialogVisible.value = true
 }
 
-// 编辑角色
+// 编辑菜单
 const handleEdit = async (row) => {
   try {
-    const response = await getRoleById(row.id)
-    Object.assign(form, {
-      ...response.data,
-      createTime: response.data.createTime ? new Date(response.data.createTime).toISOString() : null,
-      createUserId: response.data.createUserId || null
-    })
+    const response = await getMenuById(row.id)
+    Object.assign(form, response.data)
     isCreate.value = false
-    formTitle.value = '编辑角色'
+    formTitle.value = '编辑菜单'
     dialogVisible.value = true
   } catch (error) {
-    console.error('获取角色信息失败:', error)  // 打印错误详情
-    ElMessage.error('获取角色信息失败')
+    console.error('获取菜单信息失败:', error)
+    ElMessage.error('获取菜单信息失败')
   }
 }
 
@@ -138,41 +138,40 @@ const handleEdit = async (row) => {
 const submitForm = async () => {
   try {
     if (isCreate.value) {
-      await createRole(form)
-      ElMessage.success('创建角色成功')
+      await createMenu(form)
+      ElMessage.success('创建菜单成功')
     } else {
-      await updateRole(form)
-      ElMessage.success('更新角色成功')
+      await updateMenu(form)
+      ElMessage.success('更新菜单成功')
     }
     dialogVisible.value = false
-    fetchRoles()
+    fetchMenus()
   } catch (error) {
-    console.error('操作失败:', error)  // 打印错误详情
+    console.error('操作失败:', error)
     ElMessage.error('操作失败')
   }
 }
 
-// 删除角色
+// 删除菜单
 const handleDelete = (row) => {
-  ElMessageBox.confirm('确认删除该角色？', '警告', {
+  ElMessageBox.confirm('确认删除该菜单？', '警告', {
     confirmButtonText: '确认',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
     try {
-      await deleteRole(row.id)
+      await deleteMenu(row.id)
       ElMessage.success('删除成功')
-      fetchRoles()
+      fetchMenus()
     } catch (error) {
-      console.error('删除失败:', error)  // 打印错误详情
-      ElMessage.error('删除失败')
+      console.error('删除失败:', error)
     }
   })
 }
 </script>
 
 <style scoped>
-.role-container {
+.menu-container {
   padding: 20px;
 }
 </style>
