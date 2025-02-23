@@ -6,7 +6,6 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      // name: 'note',        //name属性会找不到组件
       component: note
     },
     {
@@ -28,6 +27,10 @@ const router = createRouter({
     {
       path: '/user',
       component: () => import('../views/user.vue')
+    },
+    {
+      path: '/role',
+      component: () => import('../views/role.vue')
     }
   ]
 })
