@@ -12,19 +12,23 @@ const router = createRouter({
     {
       path: '/note',
       component: () => import('../views/note.vue')
-    } ,
-      {
+    },
+    {
       path: '/noteDetail/:id',
       component: () => import('../views/noteDetail.vue')
     },
     {
       path: '/login',
       component: () => import('../login.vue')
-    } ,
+    },
     {
       path: '/qrcode',
       component: () => import('../views/qrcodeView.vue')
-    } ,
+    },
+    {
+      path: '/user',
+      component: () => import('../views/user.vue')
+    }
   ]
 })
 
