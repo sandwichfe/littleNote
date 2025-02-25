@@ -1,83 +1,102 @@
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
+import { userLogin } from '@/network/base';
+import Cookies from 'js-cookie';
+import Vcode from 'vue3-puzzle-vcode';
+import Img01 from "@/assets/img/login_bg.png";
+import Img02 from "@/assets/img/login_bg1.png";
+
+const router = useRouter();
+
+const loginForm = ref({
+  username: '',
+  password: ''
+});
+
+const isShow = ref(true);
+
+const login = async () => {
+  if (loginForm.value.username === "" || loginForm.value.password === "") {
+    ElMessage.error("用户名或密码不能为空");
+    return;
+  } else {
+    userLogin(loginForm.value.username, loginForm.value.password).then((res) => {
+      if (res) {
+        if (res.code == 200) {
+          Cookies.remove("loginToken");  
+          Cookies.set("loginToken", res.data, { expires: 7 }); //存cookies  过期时间为7天
+          router.push("/");
+          ElMessage.success(res.msg);
+        } else {
+          ElMessage.error(res.msg || "登录失败，请检查用户名或密码"); // 提示失败信息
+        }
+      }
+    });
+  }
+};
+
+const success = (msg) => {
+  isShow.value = false;
+  ElMessage({
+    message: "验证通过",
+    type: "success"
+  });
+  // 验证通过后跳转到首页
+  Cookies.remove("loginToken");  
+  Cookies.set("loginToken", loginToken.value, { expires: 7 }); //存cookies  过期时间为7天
+  router.push('/');
+};
+
+const close = () => {
+  isShow.value = false;
+};
+
+const fail = () => {
+  ElMessage.error("验证失败");
+};
+</script>
+
 <template>
   <body id="poster">
     <el-form class="login-container" label-position="left" label-width="0px">
       <h3 class="login_title">系统登录</h3>
       <el-form-item>
-        <el-input
-          type="text"
-          v-model="loginForm.username"
-          auto-complete="off"
-          placeholder="账号"
-        ></el-input>
+        <el-input type="text" v-model="loginForm.username" auto-complete="off" placeholder="账号"
+          name="username"></el-input>
       </el-form-item>
 
       <el-form-item>
-        <el-input
-          type="password"
-          v-model="loginForm.password"
-          auto-complete="off"
-          placeholder="密码"
-        ></el-input>
+        <el-input type="password" v-model="loginForm.password" auto-complete="off" placeholder="密码"
+          name="password"></el-input>
       </el-form-item>
 
       <el-form-item style="width: 100%">
-        <el-button
-          type="primary"
-          style="width: 100%; background: rgb(175 186 197); border: none"
-          v-on:click="login"
-          >登录</el-button
-        >
+        <el-button type="primary" style="width: 100%; background: rgb(175 186 197); border: none"
+          @click="login">登录</el-button>
       </el-form-item>
     </el-form>
+
+    <Vcode
+      :show="isShow"
+      @success="success"
+      @close="close"
+      @fail="fail"
+      :imgs="[Img01, Img02]"
+    ></Vcode>
   </body>
 </template>
- 
- 
-<script>
-import { login } from "@/network/base";
-import Cookies from 'js-cookie'
-export default {
-  name: "Login",
-  data() {
-    return {
-      loginForm: {
-        username: "",
-        password: "",
-      },
-      responseResult: [],
-    };
-  },
-  methods: {
-    login() {
-      login(this.loginForm.username, this.loginForm.password).then((res) => {
-        console.log(res);
-        if (res) {
-          if (res.code == 200) {
-            // this.$store.commit("setNewToken", res.data);
-            Cookies.remove("loginToken");  
-            Cookies.set("loginToken",res.data,{ expires: 7 }); //存cookies  过期时间为7天
-            this.$router.push("/")
-            this.$message.success(res.msg)
-          }else {
-              // 处理登录失败的情况
-               this.$message.error(res.msg || "登录失败，请检查用户名或密码"); // 提示失败信息
-              }
-        }
-      });
-    },
-  },
-};
-</script>
- 
-<style>
+
+<style scoped>
 #poster {
-  /* background:url("../assets/eva.jpg") no-repeat; */
   background-position: center;
   height: 100%;
   width: 100%;
   background-size: cover;
   position: fixed;
 }
+
 body {
   margin: 0px;
   padding: 0;

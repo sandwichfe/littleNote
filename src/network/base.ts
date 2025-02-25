@@ -76,7 +76,7 @@ interface LoginResponse {
   // 可以添加其他字段，如用户信息等
 }
 
-export function login(username: string, password: string): Promise<LoginResponse> {
+export function userLogin(username: string, password: string): Promise<LoginResponse> {
   return LoginRequest({
     url: '/user/login',
     method: 'post',
@@ -87,4 +87,22 @@ export function login(username: string, password: string): Promise<LoginResponse
   });
 }
 
+// 新增生成滑块验证数据的方法
+export function generateSlider(): Promise<any> {
+  return LoginRequest({
+    method: "get",
+    url: "/user/slider/generate",
+  });
+}
 
+// 新增验证滑块位置的方法
+export function verifySlider(sliderId: string, userX: number): Promise<any> {
+  return LoginRequest({
+    method: "post",
+    url: "/user/slider/verify",
+    params: {
+      sliderId,
+      userX
+    }
+  });
+}

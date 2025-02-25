@@ -18,6 +18,7 @@ import router from './router'
 import axios from 'axios'
 import store from './store'; // 确保引入 store
 
+
 const app = createApp(App)
 
 app.use(createPinia())
@@ -26,6 +27,7 @@ app.use(router)
 app.use(ElementPlus)
 
 app.use(store)
+
 
 // 全局注册SvgIcon组件
 app.component('SvgIcon', SvgIcon);
