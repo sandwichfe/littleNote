@@ -15,7 +15,9 @@ const loginForm = ref({
   password: ''
 });
 
-const isShow = ref(true);
+const isShow = ref(false);
+
+const loginToken = ref("");
 
 const login = async () => {
   if (loginForm.value.username === "" || loginForm.value.password === "") {
@@ -25,10 +27,9 @@ const login = async () => {
     userLogin(loginForm.value.username, loginForm.value.password).then((res) => {
       if (res) {
         if (res.code == 200) {
-          Cookies.remove("loginToken");  
-          Cookies.set("loginToken", res.data, { expires: 7 }); //存cookies  过期时间为7天
-          router.push("/");
-          ElMessage.success(res.msg);
+          // ElMessage.success(res.msg);
+          loginToken.value = res.data;
+          isShow.value = true;
         } else {
           ElMessage.error(res.msg || "登录失败，请检查用户名或密码"); // 提示失败信息
         }
@@ -39,10 +40,7 @@ const login = async () => {
 
 const success = (msg) => {
   isShow.value = false;
-  ElMessage({
-    message: "验证通过",
-    type: "success"
-  });
+  ElMessage.success("验证通过");
   // 验证通过后跳转到首页
   Cookies.remove("loginToken");  
   Cookies.set("loginToken", loginToken.value, { expires: 7 }); //存cookies  过期时间为7天
@@ -60,15 +58,15 @@ const fail = () => {
 
 <template>
   <body id="poster">
-    <el-form class="login-container" label-position="left" label-width="0px">
+    <el-form class="login-container" label-position="left" label-width="0px" @submit.prevent="login">
       <h3 class="login_title">系统登录</h3>
       <el-form-item>
-        <el-input type="text" v-model="loginForm.username" auto-complete="off" placeholder="账号"
+        <el-input type="text" v-model="loginForm.username" auto-complete="on" placeholder="账号"
           name="username"></el-input>
       </el-form-item>
 
       <el-form-item>
-        <el-input type="password" v-model="loginForm.password" auto-complete="off" placeholder="密码"
+        <el-input type="password" v-model="loginForm.password" auto-complete="on" placeholder="密码"
           name="password"></el-input>
       </el-form-item>
 
