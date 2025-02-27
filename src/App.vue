@@ -1,20 +1,13 @@
 <script setup>
-import { useRoute } from 'vue-router'
-
-const route = useRoute()
 </script>
 
 <template>
-  <div class="app-container">
+  <div id="app">
     <RouterView />
   </div>
 </template>
 
 <style>
-.app-container {
-  display: flex;
-  height: 100vh;
-}
 
 * {
   margin: 0;

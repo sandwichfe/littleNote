@@ -16,23 +16,12 @@ onMounted(() => {
   }
 })
 
-// 右键菜单相关状态
-const contextMenuVisible = ref(false)
 const contextMenuPosition = ref({ x: 0, y: 0 })
 
 // 显示右键菜单
 const showContextMenu = (event) => {
   event.preventDefault()
   contextMenuPosition.value = { x: event.clientX, y: event.clientY }
-  contextMenuVisible.value = true
-}
-
-// 关闭全部 Tab
-const closeAllTabs = () => {
-  tabs.value = [tabs.value[0]] // 保留首页 Tab
-  activeTab.value = '/'
-  router.push('/')
-  contextMenuVisible.value = false
 }
 
 // 关闭单个 Tab
@@ -78,7 +67,7 @@ watch(activeTab, (newTab) => {
         <el-menu-item index="/qrcode">二维码</el-menu-item>
       </el-menu>
     </div>
-    <div class="content">
+    <div class="content" style="width: 100%;">
       <el-tabs
         v-model="activeTab"
         type="card"
@@ -92,15 +81,6 @@ watch(activeTab, (newTab) => {
       </el-tabs>
     </div>
 
-    <!-- 右键菜单 -->
-    <div
-      v-if="contextMenuVisible"
-      class="context-menu"
-      :style="{ top: `${contextMenuPosition.y}px`, left: `${contextMenuPosition.x}px` }"
-      @click="contextMenuVisible = false"
-    >
-      <div class="context-menu-item" @click="closeAllTabs">关闭全部</div>
-    </div>
   </div>
 </template>
 

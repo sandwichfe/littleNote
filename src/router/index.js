@@ -7,17 +7,13 @@ const routes = [
     component: () => import('../login.vue')
   },
   {
+    path: '/note',
+    component: () => import('../views/note.vue')
+  },
+  {
     path: '/',
     component: ManageLayout,
     children: [
-      {
-        path: '',
-        component: () => import('../views/note.vue')
-      },
-      {
-        path: '/note',
-        component: () => import('../views/note.vue')
-      },
       {
         path: '/noteDetail/:id',
         component: () => import('../views/noteDetail.vue')
