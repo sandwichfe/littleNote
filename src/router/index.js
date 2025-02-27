@@ -11,13 +11,18 @@ const routes = [
     component: () => import('../views/note.vue')
   },
   {
+    path: '/noteDetail/:id',
+    component: () => import('../views/noteDetail.vue')
+  },
+  {
+    path: '/',
+    redirect: '/user' 
+  },
+  {
     path: '/',
     component: ManageLayout,
     children: [
-      {
-        path: '/noteDetail/:id',
-        component: () => import('../views/noteDetail.vue')
-      },
+
       {
         path: '/qrcode',
         component: () => import('../views/qrcodeView.vue')
