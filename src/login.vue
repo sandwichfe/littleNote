@@ -7,6 +7,8 @@ import Cookies from 'js-cookie';
 import Vcode from 'vue3-puzzle-vcode';
 import Img01 from "@/assets/img/login_bg.png";
 import Img02 from "@/assets/img/login_bg1.png";
+// 使用 import 语法引入图片路径
+import verityImgPath from '@/assets/img/login_bg1.png';
 
 const router = useRouter();
 
@@ -18,6 +20,9 @@ const loginForm = ref({
 const isShow = ref(false);
 
 const loginToken = ref("");
+
+const verityImg = ref(verityImgPath);
+
 
 const login = async () => {
   if (loginForm.value.username === "" || loginForm.value.password === "") {
@@ -70,7 +75,7 @@ const fail = () => {
               v-model="loginForm.username"
               auto-complete="off"
               placeholder="请输入账号"
-              style="width: 330px;height: 40px;"
+              style="height: 40px;"
             ></el-input>
           </el-form-item>
 
@@ -80,7 +85,7 @@ const fail = () => {
               v-model="loginForm.password"
               auto-complete="off"
               placeholder="请输入密码"
-              style="width: 330px;height: 40px;"
+              style="height: 40px;"
             ></el-input>
           </el-form-item>
 
@@ -89,9 +94,10 @@ const fail = () => {
               type="text"
               placeholder="请输入验证码"
               suffix-icon="el-icon-refresh"
+              style="height: 40px;"
             >
               <template #append>
-                <img :src="验证码图片" alt="验证码" />
+                <img :src="verityImg" alt="验证码" style="width: 80px;height: 40px;"/>
               </template>
             </el-input>
           </el-form-item>
@@ -104,7 +110,7 @@ const fail = () => {
           <el-form-item style="width: 100%">
             <el-button
               type="primary"
-              style="width: 100%; background: #007bff; border: none"
+              style=" background: #007bff; border: none; width: 100%;height: 40px;"
               v-on:click="login"
             >立即登录</el-button>
           </el-form-item>
@@ -134,6 +140,7 @@ const fail = () => {
 .poster {
   height: 100%;
   width: 100%;
+  background: linear-gradient(to right, rgb(255 237 237 / 80%), rgb(187 236 255 / 50%));
   background-size: cover;
   position: fixed;
 }
