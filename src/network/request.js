@@ -96,7 +96,7 @@ export function LoginRequest(config) {
         if(accessToken){
             // window.location.href="/login"
             // Message("登录已失效请重新登录！");
-            config.headers["accessToken"] = accessToken;
+            config.headers["Authorization"] = accessToken;
         }
          return config;
      }, err => {
