@@ -29,25 +29,32 @@ const login = async () => {
     ElMessage.error("用户名或密码不能为空");
     return;
   } else {
-    userLogin(loginForm.value.username, loginForm.value.password).then((res) => {
+    // 弹出滑块形码
+    isShow.value = true;
+  }
+};
+
+/**
+ * 滑块验证码成功回调  做登录相关操作
+ * @param {Object} msg
+ */
+const success = (msg) => {
+  isShow.value = false;
+      // 登录请求
+      userLogin(loginForm.value.username, loginForm.value.password).then((res) => {
       if (res) {
         if (res.code == 200) {
           loginToken.value = res.data;
-          isShow.value = true;
+          Cookies.remove("loginToken");
+          Cookies.set("loginToken", loginToken.value, { expires: 7 });
+          router.push('/');
+          ElMessage.success("登录成功");
         } else {
           ElMessage.error(res.msg || "登录失败，请检查用户名或密码");
         }
       }
     });
-  }
-};
 
-const success = (msg) => {
-  isShow.value = false;
-  ElMessage.success("验证通过");
-  Cookies.remove("loginToken");
-  Cookies.set("loginToken", loginToken.value, { expires: 7 });
-  router.push('/');
 };
 
 const close = () => {
@@ -71,7 +78,7 @@ const fail = () => {
         <el-form label-position="left" label-width="0px">
           <el-form-item>
             <el-input
-              type="text"
+              type="link"
               v-model="loginForm.username"
               auto-complete="off"
               placeholder="请输入账号"
@@ -91,7 +98,7 @@ const fail = () => {
 
           <el-form-item>
             <el-input
-              type="text"
+              type="link"
               placeholder="请输入验证码"
               suffix-icon="el-icon-refresh"
               style="height: 40px;"

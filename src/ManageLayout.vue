@@ -1,8 +1,13 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref,onMounted,watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { Setting } from '@element-plus/icons-vue';
+import { Setting, Plus } from '@element-plus/icons-vue';
+import { 
+  getCurrentUser,
+  updateCurrentUser
+} from '@/network/user'
+
 
 const route = useRoute()
 const router = useRouter()
@@ -17,7 +22,41 @@ onMounted(() => {
   if (route.path !== '/' && !tabs.value.some(tab => tab.name === route.path)) {
     tabs.value.push({ name: route.path, label: route.path.slice(1) })
   }
+
+  fetchUserInfo() // 页面加载时获取用户信息
+
 })
+
+
+// 获取当前用户信息
+const fetchUserInfo = async () => {
+  try {
+    const response = await getCurrentUser() // 调用 /sys/user/current 接口
+    const userData = response.data
+    userForm.value = {
+      nickname: userData.nickname || '默认昵称',
+      avatar: userData.avatarUrl || 'http://49.235.149.110/favicon.ico'
+    }
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+  }
+}
+
+// 更新当前用户信息
+const updateCurrentUserInfo = async () => {
+  try {
+    const response = await updateCurrentUser(userForm.value) 
+    dialogVisible.value = false
+    ElMessage.success('保存成功')
+    fetchUserInfo();
+
+  } catch (error) {
+    console.error('更新用户信息失败:', error)
+  }
+}
+
+
+
 
 const contextMenuPosition = ref({ x: 0, y: 0 })
 
@@ -53,6 +92,29 @@ watch(activeTab, (newTab) => {
     router.push(newTab)
   }
 })
+
+const dialogVisible = ref(false)
+const userForm = ref({
+  nickname: '',
+  avatar: ''
+})
+
+const openDialog = () => {
+  dialogVisible.value = true
+}
+
+const handleAvatarSuccess = (response) => {
+  // userForm.value.avatar = response.url // 假设返回的图片 URL 在 response.url 中
+  userForm.value.avatar ='http://49.235.149.110/favicon.ico';
+}
+
+const beforeAvatarUpload = (file) => {
+  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
+  if (!isJPG) {
+    ElMessage.error('上传头像图片只能是 JPG 或 PNG 格式!')
+  }
+  return isJPG
+}
 </script>
 
 <template>
@@ -72,10 +134,9 @@ watch(activeTab, (newTab) => {
     </div>
     <div class="content" style="width: 100%;">
       <header class="header">
-        <div class="user-info">
-          <!-- <div>yiru</div> -->
-          <el-avatar :size="40" src="http://49.235.149.110/favicon.ico"></el-avatar>
-          <span class="nickname">{{ "一如" }}</span>
+        <div class="user-info" @click="openDialog">
+          <el-avatar :size="40" :src="userForm.avatar"></el-avatar>
+          <span class="nickname">{{ userForm.nickname }}</span>
           <el-icon :size="25" color="#9fc4f0">
             <Setting />
           </el-icon>
@@ -94,6 +155,30 @@ watch(activeTab, (newTab) => {
       </el-tabs>
     </div>
 
+    <!-- 用户信息修改对话框 -->
+    <el-dialog v-model="dialogVisible" title="修改用户信息" width="30%">
+      <el-form :model="userForm" label-width="80px">
+        <el-form-item label="昵称">
+          <el-input v-model="userForm.nickname" placeholder="请输入昵称"></el-input>
+        </el-form-item>
+        <el-form-item label="头像">
+          <el-upload
+            class="avatar-uploader"
+            :action="'/upload/avatar'" 
+            :show-file-list="false"
+            :on-success="handleAvatarSuccess"
+            :before-upload="beforeAvatarUpload"
+          >
+            <img v-if="userForm.avatar" :src="userForm.avatar" class="avatar" />
+            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="updateCurrentUserInfo">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -150,5 +235,21 @@ watch(activeTab, (newTab) => {
   font-size: 16px;
   margin-right: 10px;
   color: #00bcd4;
+}
+
+.avatar-uploader .avatar {
+  width: 100px;
+  height: 100px;
+  display: block;
+}
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 100px;
+  height: 100px;
+  text-align: center;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
 }
 </style>
