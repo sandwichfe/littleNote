@@ -104,18 +104,13 @@ export function LoginRequest(config) {
      });
  
  
-     // 响应式拦截
-     instance.interceptors.response.use(res => {
-         if(401==res.data.code) {
-            ElMessage.success(res.data.msg);
-            router.push("/login",()=>{})
-         }
-         return res.data;
-     }, err => {
-        // Message("暂时没有数据了");
-        console.log(err);
-        ElMessage.error("发生了一点小错误，正在紧急修复中~");
-     });  
+// 响应式拦截
+instance.interceptors.response.use(
+    res => res.data,
+    err => handleError(err)
+);
+
+
 
     return instance(config);
 }
