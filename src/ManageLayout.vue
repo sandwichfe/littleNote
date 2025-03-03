@@ -3,6 +3,7 @@ import { ref,onMounted,watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { Setting, Plus } from '@element-plus/icons-vue';
+import Cookies from 'js-cookie';
 import { 
   getCurrentUser,
   updateCurrentUser
@@ -55,6 +56,11 @@ const updateCurrentUserInfo = async () => {
   }
 }
 
+
+const logout = () => {
+  Cookies.remove("loginToken");
+  router.push('/login');
+}
 
 
 
@@ -134,12 +140,16 @@ const beforeAvatarUpload = (file) => {
     </div>
     <div class="content" style="width: 100%;">
       <header class="header">
-        <div class="user-info" @click="openDialog">
-          <el-avatar :size="40" :src="userForm.avatar"></el-avatar>
+        <div class="avatar-container" @click="">
+          <el-avatar :size="40" :src="userForm.avatar" class="avatar"></el-avatar>
           <span class="nickname">{{ userForm.nickname }}</span>
           <el-icon :size="25" color="#9fc4f0">
             <Setting />
           </el-icon>
+          <div class="floating-menu">
+            <div class="menu-item" @click="openDialog">修改资料</div>
+            <div class="menu-item" @click="logout">退出登录</div>
+          </div>
         </div>
       </header>
       <el-tabs
@@ -183,19 +193,24 @@ const beforeAvatarUpload = (file) => {
 </template>
 
 <style scoped>
-.manage-layout {
-  display: flex;
-  height: 100vh;
-}
-
 .menu {
   width: 200px;
   background-color: #f5f5f5;
+  display: block; /* 确保菜单显示 */
+  position: relative; /* 确保菜单定位正确 */
+  z-index: 1; /* 确保菜单层级不被覆盖 */
+}
+
+.manage-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden; /* 防止内容溢出导致布局问题 */
 }
 
 .content {
   flex: 1;
   padding: 20px;
+  overflow: auto; /* 允许内容滚动 */
 }
 
 /* 右键菜单样式 */
@@ -224,32 +239,47 @@ const beforeAvatarUpload = (file) => {
   border-bottom: 1px solid #ccc;
 }
 
-.user-info {
+.avatar-container {
+  position: relative;
   display: flex;
-  align-items: center;
+  align-items: center; /* 确保头像、昵称和图标垂直居中 */
   gap: 10px; /* 添加间距 */
-}
-
-.user-info .nickname {
-  margin-left: 5px;
-  font-size: 16px;
-  margin-right: 10px;
-  color: #00bcd4;
-}
-
-.avatar-uploader .avatar {
-  width: 100px;
-  height: 100px;
-  display: block;
-}
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-  width: 100px;
-  height: 100px;
-  text-align: center;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
   cursor: pointer;
 }
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.avatar:hover {
+  transform: scale(1.1);
+}
+
+.floating-menu {
+  display: none;
+  position: absolute;
+  top: 25px; /* 调整为更贴近头像 */
+  right: 10;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  padding: 10px;
+  width: 200px;
+  z-index: 1000;
+  transform: translateX(-100%);
+}
+
+.avatar-container:hover .floating-menu {
+  display: block;
+}
+
+.floating-menu .menu-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+  }
+
 </style>
