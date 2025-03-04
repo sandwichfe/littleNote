@@ -213,4 +213,37 @@ const fail = () => {
   border: none;
   background: none;
 }
+
+/* 新增移动端样式 */
+@media (max-width: 768px) {
+  .poster {
+    display: flex;
+    align-items: center;
+  }
+
+  .login-container {
+    margin: auto; /* 修改此处实现垂直居中 */
+    width: 90%;
+    min-height: auto;
+    flex-direction: column;
+  }
+  
+  .login-image {
+    display: none;
+  }
+  
+  .login-form {
+    padding: 20px;
+    width: 100%;
+  }
+  
+  .poster {
+    background: linear-gradient(to bottom, rgb(255 237 237 / 80%), rgb(187 236 255 / 50%));
+  }
+  
+  .login-tabs {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
 </style>
