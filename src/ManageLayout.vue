@@ -12,7 +12,6 @@ import {
 
 const route = useRoute()
 const router = useRouter()
-const store = useStore()
 const activeTab = ref(route.path)
 const tabs = ref([
   { name: '/', label: '首页' },
@@ -65,9 +64,13 @@ const logout = () => {
 const isFloatingMenuVisible = ref(false)
 
 const toggleFloatingMenu = () => {
+  console.log('toggleFloatingMenu')
+  console.log('begin',isFloatingMenuVisible.value)
   isFloatingMenuVisible.value = !isFloatingMenuVisible.value
+  console.log('end',isFloatingMenuVisible.value)
 }
 const showFloatingMenu = () => {
+  console.log('showFloatingMenu')
   isFloatingMenuVisible.value = true
 }
 
@@ -78,14 +81,6 @@ const hideFloatingMenu = () => {
       isFloatingMenuVisible.value = false;
     }
   }, 200);
-}
-
-const contextMenuPosition = ref({ x: 0, y: 0 })
-
-// 显示右键菜单
-const showContextMenu = (event) => {
-  event.preventDefault()
-  contextMenuPosition.value = { x: event.clientX, y: event.clientY }
 }
 
 // 关闭单个 Tab
@@ -137,13 +132,46 @@ const beforeAvatarUpload = (file) => {
   }
   return isJPG
 }
+
+const isMobileMenuVisible = ref(false)
+const isMobile = ref(false)
+
+// 检测移动端状态
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+// 切换移动端菜单
+const toggleMobileMenu = () => {
+  isMobileMenuVisible.value = !isMobileMenuVisible.value
+}
+
+// 初始化时检测
+onMounted(() => {
+  checkMobile()
+  console.log('isMobile', isMobile.value)
+  window.addEventListener('resize', checkMobile)
+})
+
+
+
+
+
 </script>
 
 <template>
   <div class="manage-layout">
 
+        <!-- 汉堡菜单按钮 -->
+        <div v-if="isMobile" class="hamburger" @click="toggleMobileMenu">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+      </svg>
+    </div>
+
+
     <!-- 左侧菜单 -->
-    <div class="menu">
+    <div class="menu" :class="{ 'mobile-menu-visible': isMobileMenuVisible }">
       <el-menu :default-active="activeTab" @select="(path) => $router.push(path)">
         <el-menu-item index="/">首页</el-menu-item>
         <el-menu-item index="/note">笔记</el-menu-item>
@@ -158,11 +186,12 @@ const beforeAvatarUpload = (file) => {
     </div>
 
     <!-- 右侧区域 -->
-    <div class="right-content" style="width: 100%;">
+    <div class="right-content" style="width: 100%;" @click="isMobileMenuVisible = false">
     <!--用户信息  -->
     <header class="header">
-        <div class="user-info-container" @click="toggleFloatingMenu" @mouseenter="showFloatingMenu"
-          @mouseleave="hideFloatingMenu">
+        <div class="user-info-container" @click="toggleFloatingMenu" 
+        @mouseenter="!isMobile && showFloatingMenu()"
+        @mouseleave="!isMobile && hideFloatingMenu()"> 
           <el-avatar :size="40" :src="userForm.avatar" class="avatar"></el-avatar>
           <span class="nickname">{{ userForm.nickname }}</span>
           <el-icon :size="25" color="#9fc4f0">
@@ -170,8 +199,8 @@ const beforeAvatarUpload = (file) => {
           </el-icon>
 
           <div class="floating-menu" v-show="isFloatingMenuVisible" 
-          @mouseenter="showFloatingMenu"
-          @mouseleave="hideFloatingMenu"  >
+          @mouseenter="!isMobile && showFloatingMenu()"
+          @mouseleave="!isMobile && hideFloatingMenu()"> 
             <div class="menu-item" @click="openDialog">修改资料</div>
             <div class="menu-item" @click="logout">退出登录</div>
           </div>
@@ -182,7 +211,7 @@ const beforeAvatarUpload = (file) => {
       <!-- 内容区域 -->
     <div class="content" style="width: 100%;">
       <el-tabs v-model="activeTab" type="card" closable @tab-remove="handleTabRemove"
-        @contextmenu.prevent="showContextMenu">
+       >
         <el-tab-pane v-for="tab in tabs" :key="tab.name" :label="tab.label" :name="tab.name">
           <RouterView />
         </el-tab-pane>
@@ -219,9 +248,7 @@ const beforeAvatarUpload = (file) => {
 .menu {
   width: 200px;
   background-color: #f5f5f5;
-  display: block;
-  position: relative;
-  z-index: 1;
+  transition: transform 0.3s ease;
 }
 
 .manage-layout {
@@ -295,5 +322,151 @@ const beforeAvatarUpload = (file) => {
 
 .floating-menu .menu-item.active {
   background-color: #e6f7ff;
+}
+
+/* // 在原有样式基础上新增媒体查询 */
+@media (max-width: 768px) {
+
+  * {
+      /* 禁用移动端点击效果 */
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      outline: none;
+    }
+
+  .hamburger {
+    /* 保持原有样式 */
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 1px 0 4px rgba(0, 0, 0, 0.05);
+    border-radius: 0 4px 4px 0;
+    left: 0;
+    padding: 10px;
+    transition: all 0.3s ease;
+    /* 新增图标样式 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+  }
+
+  .hamburger svg {
+    transition: transform 0.3s ease;
+    transform: rotate(0deg);
+  }
+
+  .hamburger svg.arrow-open {
+    transform: rotate(-180deg);
+  }
+
+  /* 菜单展开时隐藏背景 */
+  .menu.mobile-menu-visible + .hamburger {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .menu {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    transform: translateX(-100%);
+  }
+
+  .menu.mobile-menu-visible {
+    transform: translateX(0);
+  }
+
+  .el-tabs__item {
+    padding: 0 8px !important;
+    font-size: 12px;
+  }
+
+  /* 弹窗适配 */
+  .el-dialog {
+    width: 90% !important;
+  }
+
+  .manage-layout {
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  .header {
+    padding: 10px 5%;
+    justify-content: flex-end;
+    width: 100%;
+    display: flex;
+  }
+
+  .content {
+    padding: 10px;
+    
+    .el-tabs__item {
+      padding: 0 10px;
+      font-size: 12px;
+    }
+  }
+
+  .user-info-container {
+    display: flex;
+    justify-content: flex-end;
+    width: auto;
+    gap: 8px;
+    position: static !important;
+    padding-right: 15px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .floating-menu {
+    top: 45px;
+    right: 5%;
+    width: 120px;
+    z-index: 2000;
+    /* 添加触摸优化 */
+    touch-action: manipulation;
+  }
+
+  /* 弹窗优化 */
+  .el-dialog {
+    width: 95% !important;
+    max-width: 100vw;
+    margin: 2vh auto !important;
+    
+    .el-form-item {
+      flex-direction: column;
+      margin-bottom: 15px;
+      
+      :deep(.el-form-item__label) {
+        width: 100% !important;
+        text-align: left;
+        margin-bottom: 8px;
+      }
+      
+      .el-input {
+        width: 100% !important;
+      }
+    }
+    
+    .el-dialog__footer {
+      padding: 10px 15px;
+      
+      .el-button {
+        width: 100%;
+        margin: 5px 0;
+      }
+    }
+  }
+  
+  /* 头像上传区域适配 */
+  .avatar-uploader {
+    .el-upload {
+      width: 80px !important;
+      height: 80px !important;
+    }
+  }
+
+
 }
 </style>
