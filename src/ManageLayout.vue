@@ -62,7 +62,23 @@ const logout = () => {
   router.push('/login');
 }
 
+const isFloatingMenuVisible = ref(false)
 
+const toggleFloatingMenu = () => {
+  isFloatingMenuVisible.value = !isFloatingMenuVisible.value
+}
+const showFloatingMenu = () => {
+  isFloatingMenuVisible.value = true
+}
+
+const hideFloatingMenu = () => {
+  // 避免鼠标移出菜单时，菜单被隐藏
+  setTimeout(() => {
+    if (!document.querySelector('.floating-menu:hover')) {
+      isFloatingMenuVisible.value = false;
+    }
+  }, 200);
+}
 
 const contextMenuPosition = ref({ x: 0, y: 0 })
 
@@ -140,25 +156,25 @@ const beforeAvatarUpload = (file) => {
     </div>
     <div class="content" style="width: 100%;">
       <header class="header">
-        <div class="avatar-container" @click="">
+        <div class="user-container" @click="toggleFloatingMenu" @mouseenter="showFloatingMenu"
+          @mouseleave="hideFloatingMenu">
           <el-avatar :size="40" :src="userForm.avatar" class="avatar"></el-avatar>
           <span class="nickname">{{ userForm.nickname }}</span>
           <el-icon :size="25" color="#9fc4f0">
             <Setting />
           </el-icon>
-          <div class="floating-menu">
+
+          <div class="floating-menu" v-show="isFloatingMenuVisible" 
+          @mouseenter="showFloatingMenu"
+          @mouseleave="hideFloatingMenu"  >
             <div class="menu-item" @click="openDialog">修改资料</div>
             <div class="menu-item" @click="logout">退出登录</div>
           </div>
+
         </div>
       </header>
-      <el-tabs
-        v-model="activeTab"
-        type="card"
-        closable
-        @tab-remove="handleTabRemove"
-        @contextmenu.prevent="showContextMenu"
-      >
+      <el-tabs v-model="activeTab" type="card" closable @tab-remove="handleTabRemove"
+        @contextmenu.prevent="showContextMenu">
         <el-tab-pane v-for="tab in tabs" :key="tab.name" :label="tab.label" :name="tab.name">
           <RouterView />
         </el-tab-pane>
@@ -172,15 +188,12 @@ const beforeAvatarUpload = (file) => {
           <el-input v-model="userForm.nickname" placeholder="请输入昵称"></el-input>
         </el-form-item>
         <el-form-item label="头像">
-          <el-upload
-            class="avatar-uploader"
-            :action="'/upload/avatar'" 
-            :show-file-list="false"
-            :on-success="handleAvatarSuccess"
-            :before-upload="beforeAvatarUpload"
-          >
+          <el-upload class="avatar-uploader" :action="'/upload/avatar'" :show-file-list="false"
+            :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
             <img v-if="userForm.avatar" :src="userForm.avatar" class="avatar" />
-            <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+            <el-icon v-else class="avatar-uploader-icon">
+              <Plus />
+            </el-icon>
           </el-upload>
         </el-form-item>
       </el-form>
@@ -196,21 +209,21 @@ const beforeAvatarUpload = (file) => {
 .menu {
   width: 200px;
   background-color: #f5f5f5;
-  display: block; /* 确保菜单显示 */
-  position: relative; /* 确保菜单定位正确 */
-  z-index: 1; /* 确保菜单层级不被覆盖 */
+  display: block;
+  position: relative;
+  z-index: 1;
 }
 
 .manage-layout {
   display: flex;
   height: 100vh;
-  overflow: hidden; /* 防止内容溢出导致布局问题 */
+  overflow: hidden;
 }
 
 .content {
   flex: 1;
   padding: 20px;
-  overflow: auto; /* 允许内容滚动 */
+  overflow: auto;
 }
 
 /* 右键菜单样式 */
@@ -239,47 +252,38 @@ const beforeAvatarUpload = (file) => {
   border-bottom: 1px solid #ccc;
 }
 
-.avatar-container {
+.user-container {
   position: relative;
   display: flex;
-  align-items: center; /* 确保头像、昵称和图标垂直居中 */
-  gap: 10px; /* 添加间距 */
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
 }
 
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  transition: transform 0.3s;
-}
-
-.avatar:hover {
-  transform: scale(1.1);
-}
-
 .floating-menu {
-  display: none;
+  display: block;
   position: absolute;
-  top: 25px; /* 调整为更贴近头像 */
-  right: 10;
+  top: 40px;
+  right: 95px;
   background-color: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   border-radius: 5px;
   padding: 10px;
-  width: 200px;
+  width: 120px;
   z-index: 1000;
-  transform: translateX(-100%);
-}
-
-.avatar-container:hover .floating-menu {
-  display: block;
 }
 
 .floating-menu .menu-item {
-    padding: 10px;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-  }
+  padding: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
 
+.floating-menu .menu-item:hover {
+  background-color: #f5f5f5;
+}
+
+.floating-menu .menu-item.active {
+  background-color: #e6f7ff;
+}
 </style>
