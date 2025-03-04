@@ -141,6 +141,8 @@ const beforeAvatarUpload = (file) => {
 
 <template>
   <div class="manage-layout">
+
+    <!-- 左侧菜单 -->
     <div class="menu">
       <el-menu :default-active="activeTab" @select="(path) => $router.push(path)">
         <el-menu-item index="/">首页</el-menu-item>
@@ -154,9 +156,12 @@ const beforeAvatarUpload = (file) => {
         <el-menu-item index="/qrcode">二维码</el-menu-item>
       </el-menu>
     </div>
-    <div class="content" style="width: 100%;">
-      <header class="header">
-        <div class="user-container" @click="toggleFloatingMenu" @mouseenter="showFloatingMenu"
+
+    <!-- 右侧区域 -->
+    <div class="right-content" style="width: 100%;">
+    <!--用户信息  -->
+    <header class="header">
+        <div class="user-info-container" @click="toggleFloatingMenu" @mouseenter="showFloatingMenu"
           @mouseleave="hideFloatingMenu">
           <el-avatar :size="40" :src="userForm.avatar" class="avatar"></el-avatar>
           <span class="nickname">{{ userForm.nickname }}</span>
@@ -173,12 +178,17 @@ const beforeAvatarUpload = (file) => {
 
         </div>
       </header>
+
+      <!-- 内容区域 -->
+    <div class="content" style="width: 100%;">
       <el-tabs v-model="activeTab" type="card" closable @tab-remove="handleTabRemove"
         @contextmenu.prevent="showContextMenu">
         <el-tab-pane v-for="tab in tabs" :key="tab.name" :label="tab.label" :name="tab.name">
           <RouterView />
         </el-tab-pane>
       </el-tabs>
+    </div>
+
     </div>
 
     <!-- 用户信息修改对话框 -->
@@ -252,7 +262,7 @@ const beforeAvatarUpload = (file) => {
   border-bottom: 1px solid #ccc;
 }
 
-.user-container {
+.user-info-container {
   position: relative;
   display: flex;
   align-items: center;
