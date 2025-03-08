@@ -1,10 +1,10 @@
 <script setup>
-import { ref,onMounted,watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { Setting, Plus } from '@element-plus/icons-vue';
 import Cookies from 'js-cookie';
-import { 
+import {
   getCurrentUser,
   updateCurrentUser
 } from '@/network/user'
@@ -45,7 +45,7 @@ const fetchUserInfo = async () => {
 // 更新当前用户信息
 const updateCurrentUserInfo = async () => {
   try {
-    const response = await updateCurrentUser(userForm.value) 
+    const response = await updateCurrentUser(userForm.value)
     dialogVisible.value = false
     ElMessage.success('保存成功')
     fetchUserInfo();
@@ -65,9 +65,9 @@ const isFloatingMenuVisible = ref(false)
 
 const toggleFloatingMenu = () => {
   console.log('toggleFloatingMenu')
-  console.log('begin',isFloatingMenuVisible.value)
+  console.log('begin', isFloatingMenuVisible.value)
   isFloatingMenuVisible.value = !isFloatingMenuVisible.value
-  console.log('end',isFloatingMenuVisible.value)
+  console.log('end', isFloatingMenuVisible.value)
 }
 const showFloatingMenu = () => {
   console.log('showFloatingMenu')
@@ -122,7 +122,7 @@ const openDialog = () => {
 
 const handleAvatarSuccess = (response) => {
   // userForm.value.avatar = response.url // 假设返回的图片 URL 在 response.url 中
-  userForm.value.avatar ='http://49.235.149.110/favicon.ico';
+  userForm.value.avatar = 'http://49.235.149.110/favicon.ico';
 }
 
 const beforeAvatarUpload = (file) => {
@@ -162,10 +162,10 @@ onMounted(() => {
 <template>
   <div class="manage-layout">
 
-        <!-- 汉堡菜单按钮 -->
-        <div v-if="isMobile" class="hamburger" @click="toggleMobileMenu">
+    <!-- 汉堡菜单按钮 -->
+    <div v-if="isMobile" class="hamburger" @click="toggleMobileMenu">
       <svg viewBox="0 0 24 24" width="24" height="24">
-        <path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+        <path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
       </svg>
     </div>
 
@@ -187,20 +187,18 @@ onMounted(() => {
 
     <!-- 右侧区域 -->
     <div class="right-content" style="width: 100%;" @click="isMobileMenuVisible = false">
-    <!--用户信息  -->
-    <header class="header">
-        <div class="user-info-container" @click="toggleFloatingMenu" 
-        @mouseenter="!isMobile && showFloatingMenu()"
-        @mouseleave="!isMobile && hideFloatingMenu()"> 
+      <!--用户信息  -->
+      <header class="header">
+        <div class="user-info-container" @click="toggleFloatingMenu" @mouseenter="!isMobile && showFloatingMenu()"
+          @mouseleave="!isMobile && hideFloatingMenu()">
           <el-avatar :size="40" :src="userForm.avatar" class="avatar"></el-avatar>
           <span class="nickname">{{ userForm.nickname }}</span>
           <el-icon :size="25" color="#9fc4f0">
             <Setting />
           </el-icon>
 
-          <div class="floating-menu" v-show="isFloatingMenuVisible" 
-          @mouseenter="!isMobile && showFloatingMenu()"
-          @mouseleave="!isMobile && hideFloatingMenu()"> 
+          <div class="floating-menu" v-show="isFloatingMenuVisible" @mouseenter="!isMobile && showFloatingMenu()"
+            @mouseleave="!isMobile && hideFloatingMenu()">
             <div class="menu-item" @click="openDialog">修改资料</div>
             <div class="menu-item" @click="logout">退出登录</div>
           </div>
@@ -209,14 +207,13 @@ onMounted(() => {
       </header>
 
       <!-- 内容区域 -->
-    <div class="content" style="width: 100%;">
-      <el-tabs v-model="activeTab" type="card" closable @tab-remove="handleTabRemove"
-       >
-        <el-tab-pane v-for="tab in tabs" :key="tab.name" :label="tab.label" :name="tab.name">
-          <RouterView />
-        </el-tab-pane>
-      </el-tabs>
-    </div>
+      <div class="content" style="width: 100%;">
+        <el-tabs v-model="activeTab" type="card" closable @tab-remove="handleTabRemove">
+          <el-tab-pane v-for="tab in tabs" :key="tab.name" :label="tab.label" :name="tab.name">
+            <RouterView />
+          </el-tab-pane>
+        </el-tabs>
+      </div>
 
     </div>
 
@@ -328,11 +325,11 @@ onMounted(() => {
 @media (max-width: 768px) {
 
   * {
-      /* 禁用移动端点击效果 */
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-      outline: none;
-    }
+    /* 禁用移动端点击效果 */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    outline: none;
+  }
 
   .hamburger {
     /* 保持原有样式 */
@@ -359,7 +356,7 @@ onMounted(() => {
   }
 
   /* 菜单展开时隐藏背景 */
-  .menu.mobile-menu-visible + .hamburger {
+  .menu.mobile-menu-visible+.hamburger {
     background: transparent;
     box-shadow: none;
   }
@@ -370,7 +367,7 @@ onMounted(() => {
     top: 0;
     height: 100vh;
     z-index: 1000;
-    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     transform: translateX(-100%);
   }
 
@@ -402,7 +399,7 @@ onMounted(() => {
 
   .content {
     padding: 10px;
-    
+
     .el-tabs__item {
       padding: 0 10px;
       font-size: 12px;
@@ -433,32 +430,32 @@ onMounted(() => {
     width: 95% !important;
     max-width: 100vw;
     margin: 2vh auto !important;
-    
+
     .el-form-item {
       flex-direction: column;
       margin-bottom: 15px;
-      
+
       :deep(.el-form-item__label) {
         width: 100% !important;
         text-align: left;
         margin-bottom: 8px;
       }
-      
+
       .el-input {
         width: 100% !important;
       }
     }
-    
+
     .el-dialog__footer {
       padding: 10px 15px;
-      
+
       .el-button {
         width: 100%;
         margin: 5px 0;
       }
     }
   }
-  
+
   /* 头像上传区域适配 */
   .avatar-uploader {
     .el-upload {

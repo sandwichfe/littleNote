@@ -31,16 +31,20 @@ export function request(config) {
  
      // 响应式拦截
      instance.interceptors.response.use(res => {
-         if(401==res.data.code) {
-            ElMessage.success(res.data.msg);
+        if(401==res.data.code) {
+            console.log(res.data.msg);
             router.push("/login",()=>{})
          }
          return res.data;
      }, err => {
-        // Message("暂时没有数据了");
+         if(401==err.response.data.code) {
+             console.log(err.response.data.msg);
+             router.push("/login",()=>{})
+          }
         console.log(err);
         return Promise.reject(err);
      });  
+ 
 
     return instance(config);
 }
@@ -71,13 +75,13 @@ export function LoginRequest(config) {
      // 响应式拦截
      instance.interceptors.response.use(res => {
         if(401==res.data.code) {
-           ElMessage.success(res.data.msg);
+            console.log(res.data.msg);
            router.push("/login",()=>{})
         }
         return res.data;
     }, err => {
         if(401==err.response.data.code) {
-            ElMessage.success(err.response.data.msg);
+            console.log(err.response.data.code);
             router.push("/login",()=>{})
          }
        console.log(err);

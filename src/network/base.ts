@@ -106,3 +106,7 @@ export function verifySlider(sliderId: string, userX: number): Promise<any> {
     }
   });
 }
+
+
+// 修改检查二维码状态接口
+export const qrCoderStatus = (qrCodeId: string) => LoginRequest({ method: 'get', url: `/user/qrCode/login/fetch/${qrCodeId}`})
