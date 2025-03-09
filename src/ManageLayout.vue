@@ -64,13 +64,13 @@ const logout = () => {
 const isFloatingMenuVisible = ref(false)
 
 const toggleFloatingMenu = () => {
-  console.log('toggleFloatingMenu')
-  console.log('begin', isFloatingMenuVisible.value)
+  // console.log('toggleFloatingMenu')
+  // console.log('begin', isFloatingMenuVisible.value)
   isFloatingMenuVisible.value = !isFloatingMenuVisible.value
-  console.log('end', isFloatingMenuVisible.value)
+  // console.log('end', isFloatingMenuVisible.value)
 }
 const showFloatingMenu = () => {
-  console.log('showFloatingMenu')
+  // console.log('showFloatingMenu')
   isFloatingMenuVisible.value = true
 }
 

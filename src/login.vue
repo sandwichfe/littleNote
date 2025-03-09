@@ -15,7 +15,7 @@ import Img06 from "@/assets/img/wwnn_2.jpg";
 import verityImgPath from '@/assets/img/yysls_4.jpg';
 
 import QRCode from '@/components/QRCode.vue';
-import { qrCoderStatus } from '@/network/base';
+import { generateQrCode, qrCoderStatus } from '@/network/base';
 
 const router = useRouter();
 
@@ -75,18 +75,22 @@ const fail = () => {
 // 在script部分新增
 const showQrcode = ref(false)
 const qrcodeUrl = ref('')
+const qrcodeId = ref('')
+
 
 // 在script部分新增状态变量
 const qrcodeStatus = ref('unscanned') // 状态：unscanned/waiting/confirmed/expired
 
-// 修改现有扫码登录方法
 // 修改扫码登录方法
 const handleQrcodeLogin = async () => {
   try {
     showQrcode.value = true
     qrcodeStatus.value = 'unscanned'
+    const response = await generateQrCode()
+    qrcodeId.value = response.data;
     // 模拟生成二维码
-    qrcodeUrl.value = "https://blog.csdn.net/Dandrose"
+    qrcodeUrl.value = "http://192.168.31.75:9088/user/qrCode/scan?qrCodeId=" + qrcodeId.value;
+    console.log(qrcodeUrl.value);
     startPolling('mock_ticket')
   } catch (error) {
     console.error(error)
@@ -96,18 +100,18 @@ const handleQrcodeLogin = async () => {
 }
 
 // 完善轮询逻辑
-// 修改轮询逻辑模拟等待确认
+// 轮询获取扫描状态
 const startPolling = (ticket: string) => {
   const interval = setInterval(async () => {
-    if(showQrcode.value === false){
+    if (showQrcode.value === false) {
       clearInterval(interval)
       return;
     }
 
     try {
-      const response = await qrCoderStatus('1111')
-      let codeScanStatus = response.data.qrCodeStatus;  
-      console.log(response)
+      const response = await qrCoderStatus(qrcodeId.value)
+      let codeScanStatus = response.data.qrCodeStatus;
+      // console.log(response)
       // 二维码过期
       if (codeScanStatus === -1) {
         clearInterval(interval)
@@ -116,17 +120,18 @@ const startPolling = (ticket: string) => {
         return
       }
 
-      // 模拟第一次扫码成功，等待确认
+      // 第一次扫码成功，等待确认
       if (codeScanStatus === 1) {
         qrcodeStatus.value = 'waiting'
         return
       }
 
-      // 模拟用户已确认
+      // 用户已确认
       if (codeScanStatus === 2) {
         clearInterval(interval)
         qrcodeStatus.value = 'confirmed'
-        Cookies.set("loginToken", 'mock_token')
+        Cookies.remove("loginToken");
+        Cookies.set("loginToken", response.data.token)
         router.push('/')
         ElMessage.success("登录成功")
       }

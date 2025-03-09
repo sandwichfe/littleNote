@@ -108,5 +108,17 @@ export function verifySlider(sliderId: string, userX: number): Promise<any> {
 }
 
 
+// 新增生成滑块验证数据的方法
+export function generateQrCode(): Promise<any> {
+  return LoginRequest({
+    method: "get",
+    url: "/user/qrCode/login/generateQrCode",
+    params: {
+    }
+  });
+}
+
+
+
 // 修改检查二维码状态接口
 export const qrCoderStatus = (qrCodeId: string) => LoginRequest({ method: 'get', url: `/user/qrCode/login/fetch/${qrCodeId}`})
