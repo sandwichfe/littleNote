@@ -3,8 +3,8 @@ import { ElMessage} from 'element-plus';
 import Cookies from 'js-cookie'
 import router from '../router';
 
-const requestIp = "127.0.0.1";
-// const requestIp = "49.235.149.110";
+
+const requestIp = import.meta.env.VITE_API_URL;
 // 环境
 
 export function request(config) {

@@ -17,6 +17,7 @@ import verityImgPath from '@/assets/img/yysls_4.jpg';
 import QRCode from '@/components/QRCode.vue';
 import { generateQrCode, qrCoderStatus } from '@/network/base';
 
+const requestIp = ref(import.meta.env.VITE_API_URL);
 const router = useRouter();
 
 const loginForm = ref({
@@ -29,7 +30,6 @@ const isShow = ref(false);
 const loginToken = ref("");
 
 const verityImg = ref(verityImgPath);
-
 
 const login = async () => {
   if (loginForm.value.username === "" || loginForm.value.password === "") {
@@ -89,7 +89,7 @@ const handleQrcodeLogin = async () => {
     const response = await generateQrCode()
     qrcodeId.value = response.data;
     // 模拟生成二维码
-    qrcodeUrl.value = "http://192.168.31.75:9088/user/qrCode/scan?qrCodeId=" + qrcodeId.value;
+    qrcodeUrl.value = `http://${requestIp.value}:9088/user/qrCode/scan?qrCodeId=${qrcodeId.value}`;
     console.log(qrcodeUrl.value);
     startPolling('mock_ticket')
   } catch (error) {
