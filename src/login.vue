@@ -2,7 +2,6 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { userLogin } from '@/network/base';
 import Cookies from 'js-cookie';
 import Vcode from 'vue3-puzzle-vcode';
 import Img01 from "@/assets/img/yysls_1.jpg";
@@ -15,7 +14,7 @@ import Img06 from "@/assets/img/wwnn_2.jpg";
 import verityImgPath from '@/assets/img/yysls_4.jpg';
 
 import QRCode from '@/components/QRCode.vue';
-import { generateQrCode, qrCoderStatus } from '@/network/base';
+import { userLogin, generateQrCode, qrCoderStatus, userRegister } from '@/network/base';
 
 const requestIp = ref(import.meta.env.VITE_API_URL);
 const router = useRouter();
@@ -175,17 +174,21 @@ const register = async () => {
     return;
   }
   
-  // 这里应该调用注册API，目前模拟注册成功
+  // 调用实际的注册API
   try {
-    // 实际项目中替换为真实的注册API调用
-    // const response = await userRegister(registerForm.value);
+    const response = await userRegister({
+      username: registerForm.value.username,
+      password: registerForm.value.password,
+      email: registerForm.value.email || undefined
+    });
     
-    // 模拟注册成功
-    setTimeout(() => {
+    if (response && response.code === 200) {
       ElMessage.success("注册成功，请登录");
       isRegisterMode.value = false; // 切换回登录模式
       loginForm.value.username = registerForm.value.username; // 自动填充用户名
-    }, 1000);
+    } else {
+      ElMessage.error(response?.msg || "注册失败，请稍后再试");
+    }
   } catch (error) {
     console.error(error);
     ElMessage.error("注册失败，请稍后再试");

@@ -122,3 +122,19 @@ export function generateQrCode(): Promise<any> {
 
 // 修改检查二维码状态接口
 export const qrCoderStatus = (qrCodeId: string) => LoginRequest({ method: 'get', url: `/user/qrCode/login/fetch/${qrCodeId}`})
+
+
+// 新增用户注册接口
+interface RegisterParams {
+  username: string;
+  password: string;
+  email?: string;
+}
+
+export function userRegister(params: RegisterParams): Promise<any> {
+  return LoginRequest({
+    url: '/user/register',
+    method: 'post',
+    data: params
+  });
+}
