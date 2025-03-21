@@ -147,6 +147,69 @@ const refreshQrcode = () => {
   handleQrcodeLogin()
 }
 
+
+// 新增注册相关状态
+const isRegisterMode = ref(false);
+const registerForm = ref({
+  username: '',
+  password: '',
+  confirmPassword: '',
+  email: ''
+});
+
+// 新增注册方法
+const register = async () => {
+  // 表单验证
+  if (registerForm.value.username === "" || registerForm.value.password === "") {
+    ElMessage.error("用户名或密码不能为空");
+    return;
+  }
+  
+  if (registerForm.value.password !== registerForm.value.confirmPassword) {
+    ElMessage.error("两次输入的密码不一致");
+    return;
+  }
+  
+  if (registerForm.value.email && !validateEmail(registerForm.value.email)) {
+    ElMessage.error("邮箱格式不正确");
+    return;
+  }
+  
+  // 这里应该调用注册API，目前模拟注册成功
+  try {
+    // 实际项目中替换为真实的注册API调用
+    // const response = await userRegister(registerForm.value);
+    
+    // 模拟注册成功
+    setTimeout(() => {
+      ElMessage.success("注册成功，请登录");
+      isRegisterMode.value = false; // 切换回登录模式
+      loginForm.value.username = registerForm.value.username; // 自动填充用户名
+    }, 1000);
+  } catch (error) {
+    console.error(error);
+    ElMessage.error("注册失败，请稍后再试");
+  }
+};
+
+// 邮箱验证函数
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+};
+
+// 切换到注册模式
+const switchToRegister = () => {
+  isRegisterMode.value = true;
+  showQrcode.value = false;
+};
+
+// 切换到登录模式
+const switchToLogin = () => {
+  isRegisterMode.value = false;
+};
+
+
 </script>
 
 <template>
@@ -160,12 +223,12 @@ const refreshQrcode = () => {
       <!-- 登录大表单 -->
       <div class="login-form">
         <div class="login-tabs">
-          <span :class="{ active: !showQrcode }" @click="showQrcode = false">账号登录</span>
-          <span :class="{ active: showQrcode }" @click="handleQrcodeLogin">扫码登录</span>
+          <span :class="{ active: !showQrcode && !isRegisterMode }" @click="switchToLogin">账号登录</span>
+          <span :class="{ active: showQrcode && !isRegisterMode }" @click="handleQrcodeLogin">扫码登录</span>
         </div>
 
         <!-- 二维码登录 -->
-        <div v-if="showQrcode" class="qrcode-container">
+        <div v-if="showQrcode && !isRegisterMode " class="qrcode-container">
           <QRCode :value="qrcodeUrl" :size="200" class="qrcode" v-loading="!qrcodeUrl" />
           <div class="qrcode-tip">
             <template v-if="qrcodeStatus === 'unscanned'">
@@ -190,7 +253,7 @@ const refreshQrcode = () => {
         </div>
 
         <!-- 表单登录 -->
-        <div v-if="!showQrcode">
+        <div v-if="!showQrcode && !isRegisterMode">
           <el-form label-position="left" label-width="0px">
             <el-form-item>
               <el-input type="link" v-model="loginForm.username" auto-complete="off" placeholder="请输入账号"
@@ -210,22 +273,63 @@ const refreshQrcode = () => {
               </el-input>
             </el-form-item>
 
-            <el-form-item
-              style="width: 100%; display: flex!important; justify-content: space-between!important; align-items: center!important;">
+            <el-form-item style="width: 100%; display: flex!important; justify-content: space-between!important; align-items: center!important;">
               <div style="flex: 1!important;"><el-checkbox v-model="loginForm.remember">记住我</el-checkbox></div>
               <div style="flex: 1!important;text-align: right!important;"><a href="#">忘记密码</a></div>
             </el-form-item>
 
             <el-form-item style="width: 100%">
-              <el-button type="primary" style=" background: #007bff; border: none; width: 100%;height: 40px;"
+              <el-button type="primary" style="background: #007bff; border: none; width: 100%;height: 40px;"
                 v-on:click="login">立即登录</el-button>
+            </el-form-item>
+            
+            <el-form-item style="width: 100%; text-align: center;">
+              <span class="register-link">没有账号？<a href="javascript:void(0)" @click="switchToRegister">立即注册</a></span>
+            </el-form-item>
+
+          </el-form>
+        </div>
+
+
+      <!-- 注册表单 -->
+      <div v-if="isRegisterMode">
+          <el-form label-position="left" label-width="0px">
+            <el-form-item>
+              <el-input type="link" v-model="registerForm.username" auto-complete="off" placeholder="请输入用户名"
+                style="height: 40px;"></el-input>
+            </el-form-item>
+
+            <el-form-item>
+              <el-input type="password" v-model="registerForm.password" auto-complete="off" placeholder="请输入密码"
+                style="height: 40px;"></el-input>
+            </el-form-item>
+
+            <el-form-item>
+              <el-input type="password" v-model="registerForm.confirmPassword" auto-complete="off" placeholder="请确认密码"
+                style="height: 40px;"></el-input>
+            </el-form-item>
+
+            <el-form-item>
+              <el-input type="email" v-model="registerForm.email" auto-complete="off" placeholder="请输入邮箱(选填)"
+                style="height: 40px;"></el-input>
+            </el-form-item>
+
+            <el-form-item style="width: 100%">
+              <el-button type="primary" style="background: #007bff; border: none; width: 100%; height: 40px;"
+                @click="register">立即注册</el-button>
+            </el-form-item>
+
+            <el-form-item style="width: 100%; text-align: center;">
+              <span class="login-link">已有账号？<a href="javascript:void(0)" @click="switchToLogin">立即登录</a></span>
             </el-form-item>
           </el-form>
         </div>
 
 
-        <div class="divider">其他登录方式</div>
-        <div class="other-login-methods">
+
+        <!-- 其他登录方式 -->
+        <div v-if="!isRegisterMode" class="divider">其他登录方式</div>
+        <div v-if="!isRegisterMode" class="other-login-methods">
           <el-button>邮箱登录</el-button>
           <el-button>微信登录</el-button>
           <el-button>QQ登录</el-button>
@@ -346,6 +450,22 @@ const refreshQrcode = () => {
 }
 
 
+.login-link, .register-link {
+  font-size: 14px;
+  color: #666;
+}
+
+.login-link a, .register-link a {
+  color: #007bff;
+  text-decoration: none;
+  margin-left: 5px;
+}
+
+.login-link a:hover, .register-link a:hover {
+  text-decoration: underline;
+}
+
+
 /* 新增移动端样式 */
 @media (max-width: 768px) {
   .poster {
@@ -375,8 +495,14 @@ const refreshQrcode = () => {
   }
 
   .login-tabs {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
     gap: 10px;
+  }
+  
+  .login-tabs span {
+    padding: 5px 10px;
   }
 
 
