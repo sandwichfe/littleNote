@@ -7,21 +7,49 @@ import {
   getCurrentUser,
   updateCurrentUser
 } from '@/network/user'
-
+import { getCurrentUserMenus } from '@/network/menu'
+import { generateRoutes } from '@/router'
 
 const route = useRoute()
 const router = useRouter()
 const activeTab = ref(route.path)
 const tabs = ref([
 ])
+const menuData = ref([])
+
+
+// 获取菜单数据
+const fetchMenuData = async () => {
+  try {
+    const response = await getCurrentUserMenus()
+    if (response.code === 200) {
+      menuData.value = response.data
+      // 生成动态路由
+      const routes = generateRoutes(response.data)
+      // 添加动态路由到根路由的 children 中
+      routes.forEach(route => {
+        if (!router.hasRoute(route.name)) {
+          router.addRoute('/', route) // 注意这里改为添加到根路由
+        }
+      })
+    }
+  } catch (error) {
+    console.error('获取菜单数据失败:', error)
+  }
+}
 
 // 初始化时确保当前路径在 tabs 中
 onMounted(() => {
+
+  // 菜单信息
+  fetchMenuData()
+
   if (route.path !== '/' && !tabs.value.some(tab => tab.name === route.path)) {
     tabs.value.push({ name: route.path, label: route.path.slice(1) })
   }
 
-  fetchUserInfo() // 页面加载时获取用户信息
+  // 页面加载时获取用户信息
+  fetchUserInfo() 
 
 })
 
@@ -170,20 +198,21 @@ onMounted(() => {
 
     <!-- 左侧菜单 -->
     <div class="menu" :class="{ 'mobile-menu-visible': isMobileMenuVisible }">
-      <el-menu :default-active="activeTab" @select="(path) => $router.push(path)">
-
-        <el-sub-menu index="apps">
-          <template #title>应用</template>
-        <el-menu-item index="/note">笔记</el-menu-item>
-        <el-menu-item index="/qrcode">二维码</el-menu-item>
-        </el-sub-menu>
-
-        <el-sub-menu index="system">
-          <template #title>系统管理</template>
-          <el-menu-item index="/user">用户管理</el-menu-item>
-          <el-menu-item index="/role">角色管理</el-menu-item>
-          <el-menu-item index="/menu">菜单管理</el-menu-item>
-        </el-sub-menu>
+      <el-menu
+        :default-active="route.path"
+        class="el-menu-vertical"
+        @select="handleSelect"
+      >
+        <!-- 使用递归组件方式渲染菜单 -->
+        <template v-for="menu in menuData" :key="menu.id">
+          <el-sub-menu v-if="menu.children && menu.children.length" :index="menu.path || menu.name">
+            <template #title>{{ menu.title }}</template>
+            <template v-for="subMenu in menu.children" :key="subMenu.id">
+              <el-menu-item :index="subMenu.path">{{ subMenu.title }}</el-menu-item>
+            </template>
+          </el-sub-menu>
+          <el-menu-item v-else :index="menu.path">{{ menu.title }}</el-menu-item>
+        </template>
       </el-menu>
     </div>
 

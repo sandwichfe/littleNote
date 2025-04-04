@@ -47,3 +47,9 @@ export const updateMenu = (menu: Menu) => LoginRequest({
 })
 
 export const deleteMenu = (id: number) => LoginRequest({ method: 'delete', url: `/sys/menu/delete/${id}` })
+
+// 获取当前用户菜单
+export const getCurrentUserMenus = () => LoginRequest({ 
+  method: 'get', 
+  url: '/sys/menu/current'
+})
