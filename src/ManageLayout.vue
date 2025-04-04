@@ -38,6 +38,14 @@ const fetchMenuData = async () => {
   }
 }
 
+const handleSelect = (index) => {
+  router.push(index)
+  // 如果是移动端，点击后关闭菜单
+  if (isMobile.value) {
+    isMobileMenuVisible.value = false
+  }
+}
+
 // 初始化时确保当前路径在 tabs 中
 onMounted(() => {
 
