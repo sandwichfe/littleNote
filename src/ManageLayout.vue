@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useStore } from 'vuex'
 import { Setting, Plus } from '@element-plus/icons-vue';
 import Cookies from 'js-cookie';
 import {
@@ -14,7 +13,6 @@ const route = useRoute()
 const router = useRouter()
 const activeTab = ref(route.path)
 const tabs = ref([
-  { name: '/', label: '首页' },
 ])
 
 // 初始化时确保当前路径在 tabs 中
@@ -173,15 +171,19 @@ onMounted(() => {
     <!-- 左侧菜单 -->
     <div class="menu" :class="{ 'mobile-menu-visible': isMobileMenuVisible }">
       <el-menu :default-active="activeTab" @select="(path) => $router.push(path)">
-        <el-menu-item index="/">首页</el-menu-item>
+
+        <el-sub-menu index="apps">
+          <template #title>应用</template>
         <el-menu-item index="/note">笔记</el-menu-item>
+        <el-menu-item index="/qrcode">二维码</el-menu-item>
+        </el-sub-menu>
+
         <el-sub-menu index="system">
           <template #title>系统管理</template>
           <el-menu-item index="/user">用户管理</el-menu-item>
           <el-menu-item index="/role">角色管理</el-menu-item>
           <el-menu-item index="/menu">菜单管理</el-menu-item>
         </el-sub-menu>
-        <el-menu-item index="/qrcode">二维码</el-menu-item>
       </el-menu>
     </div>
 
