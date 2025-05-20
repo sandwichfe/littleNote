@@ -51,5 +51,5 @@ export const deleteMenu = (id: number) => LoginRequest({ method: 'delete', url: 
 // 获取当前用户菜单
 export const getCurrentUserMenus = () => LoginRequest({ 
   method: 'get', 
-  url: '/sys/menu/current'
+  url: '/sys/menu/currentUserMenu'
 })
