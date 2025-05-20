@@ -4,6 +4,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
 import path from 'path';
+import fs from 'fs';
 
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons';
 
@@ -26,5 +27,5 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src')
     }
-  }
+  },
 })
