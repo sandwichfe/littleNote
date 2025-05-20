@@ -247,7 +247,7 @@ const switchToLogin = () => {
             <template v-else-if="qrcodeStatus === 'expired'">
               <div class="expired-panel">
                 <p>二维码已过期</p>
-                <el-button type="primary" size="small" @click="refreshQrcode" style="margin-top: 10px;">
+                <el-button type="primary" size="small" @click="refreshQrcode" class="refresh-qrcode-button">
                   刷新二维码
                 </el-button>
               </div>
@@ -260,33 +260,33 @@ const switchToLogin = () => {
           <el-form label-position="left" label-width="0px">
             <el-form-item>
               <el-input type="link" v-model="loginForm.username" auto-complete="off" placeholder="请输入账号"
-                style="height: 40px;"></el-input>
+                class="std-input-height"></el-input>
             </el-form-item>
 
             <el-form-item>
               <el-input type="password" v-model="loginForm.password" auto-complete="off" placeholder="请输入密码"
-                style="height: 40px;"></el-input>
+                class="std-input-height"></el-input>
             </el-form-item>
 
             <el-form-item>
-              <el-input type="link" placeholder="请输入验证码" suffix-icon="el-icon-refresh" style="height: 40px;">
+              <el-input type="link" placeholder="请输入验证码" suffix-icon="el-icon-refresh" class="std-input-height">
                 <template #append>
-                  <img :src="verityImg" alt="验证码" style="width: 80px;height: 40px;" />
+                  <img :src="verityImg" alt="验证码" class="captcha-image" />
                 </template>
               </el-input>
             </el-form-item>
 
-            <el-form-item style="width: 100%; display: flex!important; justify-content: space-between!important; align-items: center!important;">
-              <div style="flex: 1!important;"><el-checkbox v-model="loginForm.remember">记住我</el-checkbox></div>
-              <div style="flex: 1!important;text-align: right!important;"><a href="#">忘记密码</a></div>
+            <el-form-item class="form-item-flex-space-between">
+              <div class="remember-me-checkbox"><el-checkbox v-model="loginForm.remember">记住我</el-checkbox></div>
+              <div class="forgot-password-container"><a href="#" class="forgot-password-link">忘记密码</a></div>
             </el-form-item>
 
-            <el-form-item style="width: 100%">
-              <el-button type="primary" style="background: #007bff; border: none; width: 100%;height: 40px;"
-                v-on:click="login">立即登录</el-button>
+            <el-form-item class="form-item-full-width">
+              <el-button type="primary" class="login-button"
+                @click="login">立即登录</el-button>
             </el-form-item>
             
-            <el-form-item style="width: 100%; text-align: center;">
+            <el-form-item class="form-item-centered-text">
               <span class="register-link">没有账号？<a href="javascript:void(0)" @click="switchToRegister">立即注册</a></span>
             </el-form-item>
 
@@ -299,30 +299,30 @@ const switchToLogin = () => {
           <el-form label-position="left" label-width="0px">
             <el-form-item>
               <el-input type="link" v-model="registerForm.username" auto-complete="off" placeholder="请输入用户名"
-                style="height: 40px;"></el-input>
+                class="std-input-height"></el-input>
             </el-form-item>
 
             <el-form-item>
               <el-input type="password" v-model="registerForm.password" auto-complete="off" placeholder="请输入密码"
-                style="height: 40px;"></el-input>
+                class="std-input-height"></el-input>
             </el-form-item>
 
             <el-form-item>
               <el-input type="password" v-model="registerForm.confirmPassword" auto-complete="off" placeholder="请确认密码"
-                style="height: 40px;"></el-input>
+                class="std-input-height"></el-input>
             </el-form-item>
 
             <el-form-item>
               <el-input type="email" v-model="registerForm.email" auto-complete="off" placeholder="请输入邮箱(选填)"
-                style="height: 40px;"></el-input>
+                class="std-input-height"></el-input>
             </el-form-item>
 
-            <el-form-item style="width: 100%">
-              <el-button type="primary" style="background: #007bff; border: none; width: 100%; height: 40px;"
+            <el-form-item class="form-item-full-width">
+              <el-button type="primary" class="register-button"
                 @click="register">立即注册</el-button>
             </el-form-item>
 
-            <el-form-item style="width: 100%; text-align: center;">
+            <el-form-item class="form-item-centered-text">
               <span class="login-link">已有账号？<a href="javascript:void(0)" @click="switchToLogin">立即登录</a></span>
             </el-form-item>
           </el-form>
@@ -333,9 +333,9 @@ const switchToLogin = () => {
         <!-- 其他登录方式 -->
         <div v-if="!isRegisterMode" class="divider">其他登录方式</div>
         <div v-if="!isRegisterMode" class="other-login-methods">
-          <el-button>邮箱登录</el-button>
-          <el-button>微信登录</el-button>
-          <el-button>QQ登录</el-button>
+          <el-button class="other-login-button">邮箱登录</el-button>
+          <el-button class="other-login-button">微信登录</el-button>
+          <el-button class="other-login-button">QQ登录</el-button>
         </div>
 
       </div>
@@ -353,20 +353,43 @@ const switchToLogin = () => {
 .poster {
   height: 100%;
   width: 100%;
-  background: linear-gradient(to right, rgb(255 237 237 / 80%), rgb(187 236 255 / 50%));
+  background: linear-gradient(135deg, rgba(255,237,237,0.8) 0%, rgba(187,236,255,0.5) 100%);
   background-size: cover;
   position: fixed;
+  animation: gradientAnimation 15s ease infinite;
+}
+
+@keyframes gradientAnimation {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 .login-container {
   border-radius: 15px;
   background-clip: padding-box;
-  margin: 260px auto;
+  margin: 15vh auto;
   width: 850px;
+  max-width: 90%;
   background: #fff;
   border: 1px solid #eaeaea;
-  box-shadow: 0 0 25px #cac6c6;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   display: flex;
+  overflow: hidden;
+  transform: translateY(20px);
+  opacity: 0;
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .login-image {
@@ -378,23 +401,57 @@ const switchToLogin = () => {
 
 .login-form {
   flex: 1;
-  padding: 40px;
+  padding: 30px 40px; /* 调整内边距 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .login-tabs {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
+  justify-content: center; /* 居中显示 */
+  margin-bottom: 25px; /* 增加底部间距 */
+  gap: 20px; /* 增加选项卡之间的间距 */
 }
 
 .login-tabs span {
   cursor: pointer;
   color: #007bff;
+  padding: 8px 15px;
+  border-radius: 5px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-tabs span::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #007bff;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+.login-tabs span:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.login-tabs span:hover {
+  background-color: #f0f0f0; /* 鼠标悬停背景色 */
 }
 
 .login-tabs .active {
-  color: #333;
+  color: #fff !important; /* 确保文字颜色优先 */
+  background-color: #0056b3 !important; /* 确保背景颜色优先 */
   font-weight: bold;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12); /* 为激活标签添加阴影 */
+  transform: translateY(-2px); /* 轻微上移激活标签 */
 }
 
 .divider {
@@ -413,11 +470,45 @@ const switchToLogin = () => {
   margin-top: 20px;
 }
 
-.other-login-methods .el-button {
+.other-login-button {
   font-size: 14px;
   color: #007bff;
-  border: none;
+  border: 1px solid #007bff !important; /* 添加边框, 使用!important确保覆盖element-plus默认样式 */
   background: none;
+  padding: 8px 15px; /* 调整内边距 */
+  border-radius: 5px; /* 添加圆角 */
+  transition: background-color 0.3s ease, color 0.3s ease; /* 添加过渡效果 */
+}
+
+.other-login-button {
+  font-size: 14px;
+  color: #007bff;
+  border: 1px solid #007bff !important;
+  background: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease; /* Added transform and box-shadow transitions */
+  cursor: pointer; /* Added cursor pointer */
+}
+
+.other-login-button:hover {
+  background-color: #007bff !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Added subtle shadow on hover */
+}
+
+.other-login-button:focus {
+  background-color: #007bff !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.35); /* Focus ring similar to main buttons */
+  outline: none;
+}
+
+.other-login-button:active {
+  background-color: #0056b3 !important; /* Darker shade for active, consistent with main buttons' hover */
+  color: #fff !important;
+  transform: scale(0.97); /* Slightly shrink on active */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); /* Slightly reduced shadow for active */
 }
 
 .expired-panel {
@@ -462,10 +553,12 @@ const switchToLogin = () => {
   color: #007bff;
   text-decoration: none;
   margin-left: 5px;
+  transition: color 0.3s ease; /* 添加颜色过渡效果 */
 }
 
 .login-link a:hover, .register-link a:hover {
   text-decoration: underline;
+  color: #0056b3; /* 鼠标悬停时加深颜色 */
 }
 
 
@@ -528,5 +621,117 @@ const switchToLogin = () => {
     width: 70% !important;
     max-width: 200px;
   }
+}
+
+/* Login and Register Button Styles */
+.login-button,
+.register-button {
+  border: none;
+  width: 100%;
+  height: 45px;
+  font-size: 16px;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  color: white !important;
+  background-color: #007bff;
+  cursor: pointer;
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.login-button::before,
+.register-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #007bff, #00bfff);
+  z-index: -1;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.login-button:hover::before,
+.register-button:hover::before {
+  opacity: 0.8;
+}
+
+.login-button:hover,
+.register-button:hover {
+  background-color: #0056b3 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Softer shadow on hover */
+}
+
+.login-button:focus,
+.register-button:focus {
+  background-color: #0056b3 !important; /* Consistent with hover */
+  box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.5); /* Adjusted focus ring color */
+  outline: none;
+}
+
+.login-button:active,
+.register-button:active {
+  background-color: #004085 !important;
+  transform: scale(0.98); /* Slightly shrink on active */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* Slightly reduced shadow for active */
+}
+
+/* Standard Input Height */
+.std-input-height {
+  height: 45px;
+}
+
+/* Captcha Image Styling */
+.captcha-image {
+  width: 80px;
+  height: 40px;
+  vertical-align: middle;
+}
+
+/* Flex Form Item for Remember Me and Forgot Password */
+.form-item-flex-space-between {
+  width: 100%;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.remember-me-checkbox {
+  flex: 1 !important;
+}
+
+.forgot-password-container {
+  flex: 1 !important;
+  text-align: right !important;
+}
+
+.forgot-password-link {
+  color: #007bff;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.forgot-password-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* Refresh QR Code Button Margin */
+.refresh-qrcode-button {
+  margin-top: 10px;
+}
+
+/* Form Item Centered Text */
+.form-item-centered-text {
+  width: 100%;
+  text-align: center;
+}
+
+/* Form Item Full Width */
+.form-item-full-width {
+  width: 100%;
 }
 </style>
