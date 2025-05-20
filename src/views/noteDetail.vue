@@ -1,7 +1,7 @@
 <template>
-  <div id="app" style="overflow: hidden;">
+  <div id="app">
     <!-- 使用绑定的 noteData 传递给 editor 组件 -->
-    <Editor :initNoteData="noteData" style="background: #fff;"></Editor>
+    <Editor :initNoteData="noteData" class="full-height-editor"></Editor>
   </div>
 </template>
 
@@ -48,5 +48,17 @@ function handleEvent(event: KeyboardEvent) {
 </script>
 
 <style scoped>
-/* 可在此添加样式 */
+#app {
+  height: 100vh; /* 使 #app 占据整个视口高度 */
+  display: flex; /* 使用 flex 布局，方便子元素填充 */
+  flex-direction: column; /* 列方向排列 */
+  overflow: hidden; /* 防止 #app 自身出现滚动条 */
+}
+
+/* 编辑器组件的样式 */
+.full-height-editor {
+  flex-grow: 1; /* 使编辑器组件填充剩余空间 */
+  background: #fff; /* 保留原有的背景色 */
+  overflow: hidden; /* 编辑器组件应管理其内部滚动 */
+}
 </style>

@@ -257,47 +257,28 @@ const addOrUpdateNote = (id) => {
   margin: 0 auto;
   position: relative;
   overflow: hidden;
-}
-
-.dirIcon {
-  width: 40px;
-  height: 40px;
-  margin-left: auto;
-  fill: currentColor;
-  color: #c7cad4;
-}
-
-.fileIcon {
-  width: 40px;
-  height: 40px;
-  margin-left: auto;
-  fill: currentColor;
-  color: #c8dae2;
-}
-
-.head {
-  margin-left: auto;
-  line-height: 40px;
-  height: 40px;
-  background-color: #e6ebe7ab;
-  display: flex;
-  justify-content: space-between;
+  padding: 15px;
+  background-color: #f4f6f8; /* Light gray background for a softer look */
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Softer shadow */
 }
 
 .top-box {
   color: #42859396;
   display: flex;
   word-break: keep-all;
-  /* 内容/字不换行 */
   white-space: nowrap;
-  /* 不换行 */
-  flex-direction: row-reverse; /* 使元素从右边开始排列 */
+  flex-direction: row-reverse;
+  margin-bottom: 20px; /* Add space below the top box */
 }
 
 .top-box div {
   cursor: pointer;
-  transition: background-color 0.9s ease;
-  cursor: pointer;
+  transition: background-color 0.9s ease, transform 0.3s ease; /* Added transform transition */
+}
+
+.top-box .add-btn {
+  position: relative; /* Needed for pseudo-element positioning */
 }
 
 .top-box .add-btn::before {
@@ -306,17 +287,22 @@ const addOrUpdateNote = (id) => {
   position: absolute;
   width: 25px;
   height: 30px;
-  background-color: rgb(191 231 232 / 30%);
-  transition: transform 0.3s, opacity 0.3s;
-  border-radius: 5px;
+  background-color: rgba(135, 206, 235, 0.4); /* Sky blueish with more opacity */
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease; /* Smoother transition */
+  border-radius: 50%; /* Circular pulse */
   transform: scale(0);
   opacity: 0;
   pointer-events: none;
+  z-index: 0; /* Ensure it's behind the icon */
 }
 
 .top-box .add-btn:hover::before {
-  transform: scale(2);
+  transform: scale(2.5); /* Larger pulse */
   opacity: 1;
+}
+
+.top-box .add-btn:hover {
+  transform: scale(1.1); /* Slight scale up on hover for the button itself */
 }
 
 .top-box .add-btn span {
@@ -324,59 +310,43 @@ const addOrUpdateNote = (id) => {
   z-index: 1;
 }
 
-
-.head_bg {
-  border-radius: 8px;
+.el-select {
+  transition: box-shadow 0.3s ease; /* Add transition for select focus */
 }
 
+.el-select:focus-within {
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2); /* Element Plus like focus ring */
+}
 
-.keyword-select {
+.head {
+  margin-left: auto;
   line-height: 40px;
-  flex: 12;
-}
-
-.switch {
-  line-height: 40px;
-  /* flex: 1; */
-  flex-shrink: 0;
-  margin-right: 5px;
-  cursor: pointer;
-}
-
-.show-box {
-  /* flex: 1; */
-  flex-shrink: 0;
-  /* height: 30px;
-  width: 30px; */
-}
-
-
-button {
-  cursor: pointer;
-  border: 0;
-  /* 清除默认边框 */
-  outline: none;
-  background-color: transparent;
-  /*清除默认背景 */
-}
-
-.list-btn-switch {
-  width: 40px;
   height: 40px;
-  line-height: 40px;
+  background-color: #ffffff; /* White background for header */
+  display: flex;
+  justify-content: space-between;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); /* Subtle shadow for header */
+  margin-bottom: 15px;
+}
+
+.keyword-select .el-input__inner {
+  border-radius: 6px; /* Rounded input field */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.keyword-select .el-input__inner:focus {
+  border-color: #409EFF;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
 }
 
 .scroll_content {
   overflow-y: auto;
-  /* 垂直方向超出时显示滚动条 */
-  border: #ead9d9 solid 1px;
-  background-color: rgb(237 237 237);
+  border: 1px solid #e0e0e0; /* Lighter border */
+  background-color: #ffffff; /* White background for content area */
   border-bottom: none;
-
-}
-
-.loading-icon {
-  background: #000;
+  border-radius: 8px;
+  padding: 10px;
 }
 
 ul {
@@ -385,71 +355,176 @@ ul {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  /** 子元素li超出换行 */
   justify-content: space-between;
-  /**居中 从左往右 */
+  padding: 0; /* Remove default padding */
 }
 
 ul>i {
-  width: 10rem;
+  width: 10rem; /* Consider making this responsive or removing if not needed */
 }
 
 .line {
   background-color: #fff;
   border-radius: 8px;
-  margin-top: 4px;
-  margin-bottom: 2px;
+  margin-top: 8px; /* Increased margin */
+  margin-bottom: 8px; /* Increased margin */
   width: 100%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Subtle shadow for list items */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover */
+  opacity: 0;
+  animation: itemFadeInUp 0.5s ease-out forwards;
+}
+
+.line:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Staggered animation for list items */
+.line:nth-child(1) { animation-delay: 0.1s; }
+.line:nth-child(2) { animation-delay: 0.15s; }
+.line:nth-child(3) { animation-delay: 0.2s; }
+.line:nth-child(4) { animation-delay: 0.25s; }
+.line:nth-child(5) { animation-delay: 0.3s; }
+/* Add more if needed */
+
+@keyframes itemFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .file-li-item {
-  width: 90%;
+  width: calc(100% - 40px); /* Adjust width considering padding */
   height: 90px;
   margin-left: 20px;
   display: flex;
   align-items: flex-start;
-  /* 子元素在交叉轴（水平）上靠左对齐 */
   flex-direction: column;
-  /* 设置子元素垂直排列 */
+  justify-content: center; /* Center content vertically */
+  padding: 10px 0; /* Add some vertical padding */
 }
 
 .prename {
-  /* background-color: #4acfc1; */
   text-align: left;
-  line-height: 60px;
+  line-height: 1.4; /* Improved line height */
   margin-top: 5px;
-  margin-bottom: 0px;
-  color: black;
-  font-size: 16px;
+  margin-bottom: 5px; /* Adjusted margin */
+  color: #333; /* Darker text for better readability */
+  font-size: 17px; /* Slightly larger font */
+  font-weight: 500; /* Medium weight */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.line:hover .prename {
+  color: #409EFF; /* Highlight title on hover */
 }
 
 .ptime {
-  /* background-color: #7dce85; */
-  text-align: center;
-  line-height: 30px;
-  margin-top: 5px;
-  margin-bottom: 0px;
-  color: #a9aaabc9;
-  font-size: 14px;
+  text-align: left; /* Align with title */
+  line-height: 1.4;
+  margin-top: 0px; /* Adjusted margin */
+  margin-bottom: 5px;
+  color: #888; /* Lighter gray for time */
+  font-size: 13px; /* Slightly smaller font for time */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-
 .empty-msg-box {
-  margin-top: 150px;
+  margin-top: 100px; /* Adjusted margin */
+  color: #909399;
 }
 
 .util-col {
   display: flex;
   flex-direction: row-reverse;
-  height: 40px;
-  background-color: #fff;
-  border: #ead9d9 solid 1px;
+  height: 50px; /* Increased height */
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
   border-top: none;
+  align-items: center; /* Vertically align button */
+  padding-right: 15px; /* Add some padding */
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
+
+.show-box button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  padding: 5px;
+  border-radius: 50%;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.show-box button:hover {
+  background-color: #ecf5ff; /* Light blue background on hover */
+  transform: scale(1.1);
+}
+
+.list-btn-switch {
+  width: 35px; /* Adjusted size */
+  height: 35px;
+  line-height: 35px;
+  color: #555; /* Darker icon color */
+}
+
+/* General transitions for interactive elements */
+.el-button, .el-select, .el-input {
+  transition: all 0.3s ease-in-out;
+}
+
+.el-button:hover, .el-select:hover, .el-input:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Dialog styling */
+.el-dialog {
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.el-dialog__header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  font-weight: 600;
+  color: #303133;
+}
+
+.el-dialog__body {
+  padding: 20px;
+  color: #606266;
+}
+
+.el-dialog__footer {
+  padding: 15px 20px;
+  border-top: 1px solid #f0f0f0;
+  text-align: right;
+}
+
+.dialog-footer .el-button {
+  margin-left: 10px;
+}
+
+.dialog-footer .el-button--primary {
+  background-color: #409EFF;
+  border-color: #409EFF;
+}
+
+.dialog-footer .el-button--primary:hover {
+  background-color: #66b1ff;
+  border-color: #66b1ff;
+}
+
 </style>

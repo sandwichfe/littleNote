@@ -281,228 +281,301 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.menu {
-  width: 200px;
-  background-color: #f5f5f5;
-  transition: transform 0.3s ease;
-}
-
 .manage-layout {
   display: flex;
   height: 100vh;
   overflow: hidden;
+  background-color: #f0f2f5; /* Softer background for the entire layout */
 }
 
-.content {
-  flex: 1;
-  padding: 20px;
-  overflow: auto;
+.menu {
+  width: 220px; /* Slightly wider menu */
+  background-color: #ffffff; /* White background for menu */
+  transition: transform 0.3s ease, width 0.3s ease; /* Added width transition */
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05); /* Subtle shadow for menu */
+  border-right: 1px solid #e8e8e8; /* Light border */
 }
 
-/* 右键菜单样式 */
-.context-menu {
-  position: fixed;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  z-index: 1000;
+.el-menu-vertical {
+  border-right: none; /* Remove default border as we added one to .menu */
 }
 
-.context-menu-item {
-  padding: 8px 16px;
-  cursor: pointer;
+.el-menu-item,
+.el-sub-menu__title {
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth hover effect */
+  border-radius: 4px; /* Rounded corners for menu items */
+  margin: 4px 8px; /* Add some margin around items */
 }
 
-.context-menu-item:hover {
-  background-color: #f5f5f5;
+.el-menu-item:hover,
+.el-sub-menu__title:hover {
+  background-color: #e6f7ff; /* Light blue hover background */
+  color: #1890ff; /* Ant Design blue for hover text */
+}
+
+.el-menu-item.is-active {
+  background-color: #1890ff; /* Ant Design blue for active item */
+  color: #fff;
+}
+
+.el-menu-item.is-active:hover {
+  background-color: #096dd9; /* Darker blue on hover for active item */
+}
+
+.right-content {
+  flex: 1; /* Ensure it takes remaining space */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent content overflow issues */
 }
 
 .header {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #ccc;
+  padding: 0 24px; /* Adjusted padding */
+  height: 64px; /* Standard header height */
+  border-bottom: 1px solid #e8e8e8;
+  background-color: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
 }
 
 .user-info-container {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px; /* Increased gap */
   cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.user-info-container:hover {
+  background-color: #f0f2f5; /* Light hover effect */
+}
+
+.avatar {
+  transition: transform 0.3s ease;
+}
+
+.user-info-container:hover .avatar {
+  transform: scale(1.1); /* Slight zoom on avatar hover */
+}
+
+.nickname {
+  font-weight: 500;
+  color: #333;
 }
 
 .floating-menu {
   display: block;
   position: absolute;
-  top: 40px;
-  right: 95px;
+  top: 55px; /* Adjusted position */
+  right: 0; /* Align to the right of the container */
   background-color: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  border-radius: 5px;
-  padding: 10px;
-  width: 120px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Softer shadow */
+  border-radius: 6px;
+  padding: 8px 0; /* Adjusted padding */
+  width: 150px;
   z-index: 1000;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.user-info-container:hover .floating-menu,
+.floating-menu:hover {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .floating-menu .menu-item {
-  padding: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-size: 14px;
+  color: #555;
+}
+
+.floating-menu .menu-item:hover {
+  background-color: #e6f7ff;
+  color: #1890ff;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+  overflow: auto;
+  background-color: #f0f2f5; /* Consistent background */
+}
+
+.el-tabs--card > .el-tabs__header {
+  border-bottom: 1px solid #e8e8e8;
+  margin-bottom: 0;
+}
+
+.el-tabs--card > .el-tabs__header .el-tabs__nav {
+  border: none;
+  border-radius: 0;
+}
+
+.el-tabs--card > .el-tabs__header .el-tabs__item {
+  border-bottom: none;
+  border-left: none;
+  transition: color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  margin-right: 2px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-bottom: 0;
+  border-radius: 4px 4px 0 0;
+  padding: 0 16px;
+}
+
+.el-tabs--card > .el-tabs__header .el-tabs__item.is-active {
+  background: #fff;
+  border-color: #e8e8e8;
+  color: #1890ff;
+}
+
+.el-tabs__content {
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* Dialog styling */
+.el-dialog {
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.el-dialog__header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  font-weight: 600;
+  color: #303133;
+  border-radius: 8px 8px 0 0;
+}
+
+.el-dialog__body {
+  padding: 24px;
+  color: #606266;
+}
+
+.el-dialog__footer {
+  padding: 12px 24px;
+  border-top: 1px solid #f0f0f0;
+  text-align: right;
+  border-radius: 0 0 8px 8px;
+}
+
+.avatar-uploader .el-upload {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+.avatar-uploader .el-upload:hover {
+  border-color: #409EFF;
+}
+.avatar-uploader-icon {
+  font-size: 28px;
+  color: #8c939d;
+  width: 120px; /* Adjusted size */
+  height: 120px;
+  line-height: 120px;
+  text-align: center;
+}
+.avatar-uploader .avatar {
+  width: 120px;
+  height: 120px;
+  display: block;
+}
+
+/* Hamburger menu for mobile */
+.hamburger {
+  position: fixed; /* Keep it fixed for mobile */
+  top: 15px;
+  left: 15px;
+  z-index: 1001; /* Above menu */
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
 
-.floating-menu .menu-item:hover {
-  background-color: #f5f5f5;
+.hamburger:hover {
+  background: rgba(240, 240, 240, 0.95);
 }
 
-.floating-menu .menu-item.active {
-  background-color: #e6f7ff;
-}
-
-/* // 在原有样式基础上新增媒体查询 */
 @media (max-width: 768px) {
-
-  * {
-    /* 禁用移动端点击效果 */
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    outline: none;
-  }
-
-  .hamburger {
-    /* 保持原有样式 */
-    background: rgba(255, 255, 255, 0.8);
-    box-shadow: 1px 0 4px rgba(0, 0, 0, 0.05);
-    border-radius: 0 4px 4px 0;
-    left: 0;
-    padding: 10px;
-    transition: all 0.3s ease;
-    /* 新增图标样式 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-  }
-
-  .hamburger svg {
-    transition: transform 0.3s ease;
-    transform: rotate(0deg);
-  }
-
-  .hamburger svg.arrow-open {
-    transform: rotate(-180deg);
-  }
-
-  /* 菜单展开时隐藏背景 */
-  .menu.mobile-menu-visible+.hamburger {
-    background: transparent;
-    box-shadow: none;
-  }
-
   .menu {
     position: fixed;
     left: 0;
     top: 0;
     height: 100vh;
     z-index: 1000;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
     transform: translateX(-100%);
+    width: 250px; /* Ensure it's wide enough on mobile */
   }
 
   .menu.mobile-menu-visible {
     transform: translateX(0);
   }
 
-  .el-tabs__item {
-    padding: 0 8px !important;
-    font-size: 12px;
+  .right-content {
+    width: 100%;
+    transition: margin-left 0.3s ease; /* Smooth transition when menu opens/closes */
   }
 
-  /* 弹窗适配 */
-  .el-dialog {
-    width: 90% !important;
-  }
-
-  .manage-layout {
-    position: relative;
-    overflow-x: hidden;
-  }
+  /* Removed margin-left push when menu is visible to allow full screen content with overlay menu */
+  /* .menu.mobile-menu-visible + .right-content {
+    margin-left: 250px; 
+  } */
 
   .header {
-    padding: 10px 5%;
-    justify-content: flex-end;
-    width: 100%;
-    display: flex;
+    padding: 0 15px;
+    height: 56px;
   }
 
   .content {
-    padding: 10px;
-
-    .el-tabs__item {
-      padding: 0 10px;
-      font-size: 12px;
-    }
+    padding: 15px;
   }
 
-  .user-info-container {
-    display: flex;
-    justify-content: flex-end;
-    width: auto;
-    gap: 8px;
-    position: static !important;
-    padding-right: 15px;
-    -webkit-tap-highlight-color: transparent;
+  .el-tabs--card > .el-tabs__header .el-tabs__item {
+    padding: 0 10px;
+    font-size: 13px;
+    height: 36px;
+    line-height: 36px;
+  }
+
+  .el-dialog {
+    width: 90% !important;
+    margin: 5vh auto !important;
   }
 
   .floating-menu {
-    top: 45px;
-    right: 5%;
-    width: 120px;
-    z-index: 2000;
-    /* 添加触摸优化 */
-    touch-action: manipulation;
+    top: 50px; /* Adjust for mobile header */
+    right: 10px;
   }
 
-  /* 弹窗优化 */
-  .el-dialog {
-    width: 95% !important;
-    max-width: 100vw;
-    margin: 2vh auto !important;
-
-    .el-form-item {
-      flex-direction: column;
-      margin-bottom: 15px;
-
-      :deep(.el-form-item__label) {
-        width: 100% !important;
-        text-align: left;
-        margin-bottom: 8px;
-      }
-
-      .el-input {
-        width: 100% !important;
-      }
-    }
-
-    .el-dialog__footer {
-      padding: 10px 15px;
-
-      .el-button {
-        width: 100%;
-        margin: 5px 0;
-      }
-    }
+  .avatar-uploader-icon,
+  .avatar-uploader .avatar {
+    width: 100px;
+    height: 100px;
+    line-height: 100px;
   }
-
-  /* 头像上传区域适配 */
-  .avatar-uploader {
-    .el-upload {
-      width: 80px !important;
-      height: 80px !important;
-    }
-  }
-
-
 }
+
 </style>

@@ -217,6 +217,108 @@ const handleCascaderChange = (value) => {
 
 <style scoped>
 .menu-container {
-  padding: 20px;
+  padding: 24px;
+  background-color: #f0f2f5; /* Consistent background */
+  height: 100%; /* Ensure it takes full height if needed */
+  box-sizing: border-box;
+}
+
+/* Button styling */
+.el-button--primary {
+  background-color: #1890ff;
+  border-color: #1890ff;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.el-button--primary:hover {
+  background-color: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.el-button--danger {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.el-button {
+  border-radius: 4px;
+  margin-bottom: 20px; /* Add some space below the main button */
+}
+
+/* Table styling */
+.el-table {
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #e8e8e8;
+}
+
+.el-table th {
+  background-color: #fafafa;
+  color: #333;
+  font-weight: 500;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.el-table td {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.el-table .el-button--small {
+  margin-right: 8px;
+}
+
+/* Pagination styling */
+.el-pagination {
+  margin-top: 20px;
+  text-align: right;
+}
+
+/* Dialog styling - similar to ManageLayout.vue */
+:deep(.el-dialog) {
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+:deep(.el-dialog__header) {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  font-weight: 600;
+  color: #303133;
+  border-radius: 8px 8px 0 0;
+}
+
+:deep(.el-dialog__body) {
+  padding: 24px;
+  color: #606266;
+}
+
+:deep(.el-dialog__footer) {
+  padding: 12px 24px;
+  border-top: 1px solid #f0f0f0;
+  text-align: right;
+  border-radius: 0 0 8px 8px;
+}
+
+.el-form-item {
+  margin-bottom: 20px;
+}
+
+.el-input .el-input__inner,
+.el-cascader .el-input__inner {
+  border-radius: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .menu-container {
+    padding: 15px;
+  }
+
+  .el-table-column[label="操作"] {
+    width: auto !important; /* Allow actions to wrap if needed */
+  }
+
+  .el-dialog {
+    width: 90% !important;
+  }
 }
 </style>

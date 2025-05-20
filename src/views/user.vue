@@ -187,5 +187,80 @@ const handleDelete = (row) => {
 <style scoped>
 .user-container {
   padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.el-button {
+  transition: all 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.el-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.el-table th {
+  background-color: #eef1f6;
+  color: #333;
+  font-weight: 600;
+}
+
+.el-table td,
+.el-table th {
+  padding: 12px 0;
+}
+
+.el-table .el-button {
+  margin-right: 5px;
+}
+
+.el-pagination {
+  margin-top: 20px;
+  text-align: right;
+}
+
+.el-dialog {
+  border-radius: 8px;
+}
+
+.el-dialog__header {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.el-dialog__footer {
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+}
+
+.el-table__row {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.el-table__row:nth-child(odd) {
+  animation-delay: 0.1s;
+}
+.el-table__row:nth-child(even) {
+  animation-delay: 0.2s;
 }
 </style>
