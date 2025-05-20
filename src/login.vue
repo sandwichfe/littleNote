@@ -424,31 +424,13 @@ const switchToLogin = () => {
   overflow: hidden;
 }
 
-.login-tabs span::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: #007bff;
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 0.3s ease;
-}
 
-.login-tabs span:hover::after {
-  transform: scaleX(1);
-  transform-origin: left;
-}
 
 .login-tabs span:hover {
   background-color: #f0f0f0; /* 鼠标悬停背景色 */
 }
 
 .login-tabs .active {
-  color: #fff !important; /* 确保文字颜色优先 */
-  background-color: #0056b3 !important; /* 确保背景颜色优先 */
   font-weight: bold;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12); /* 为激活标签添加阴影 */
   transform: translateY(-2px); /* 轻微上移激活标签 */
