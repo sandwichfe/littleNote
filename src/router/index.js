@@ -10,11 +10,34 @@ const constantRoutes = [
     component: () => import('../login.vue')
   },
   {
+    path: '/note',
+    component: () => import('../views/note.vue')
+  },
+  {
+    path: '/noteDetail/:id',
+    component: () => import('../views/noteDetail.vue')
+  },
+  {
     path: '/',
-    name: 'Layout',  // 添加名称
     component: ManageLayout,
-    redirect: '/user',
-    children: []
+    children: [
+      {
+        path: '/qrcode',
+        component: () => import('../views/qrcodeView.vue')
+      },
+      {
+        path: '/user',
+        component: () => import('../views/user.vue')
+      },
+      {
+        path: '/role',
+        component: () => import('../views/role.vue')
+      },
+      {
+        path: '/menu',
+        component: () => import('../views/menu.vue')
+      }
+    ]
   }
 ]
 
@@ -24,8 +47,6 @@ const componentMap = {
   '/user': () => import('../views/user.vue'),
   '/role': () => import('../views/role.vue'),
   '/menu': () => import('../views/menu.vue'),
-  '/note': () => import('../views/note.vue'),
-  '/noteDetail/:id': () => import('../views/noteDetail.vue'),
   '/qrcode': () => import('../views/qrcodeView.vue')
 }
 
@@ -74,7 +95,8 @@ router.beforeEach(async (to, from, next) => {
   }
   
   if (token && to.path === '/login') {
-    next('/')
+    // 允许访问login页面，以便用户能够重新登录
+    next()
     return
   }
 
