@@ -210,6 +210,7 @@ const switchToRegister = () => {
 // 切换到登录模式
 const switchToLogin = () => {
   isRegisterMode.value = false;
+  showQrcode.value = false;
 };
 
 
