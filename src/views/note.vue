@@ -257,7 +257,6 @@ const addOrUpdateNote = (id) => {
   margin: 0 auto;
   position: relative;
   overflow: hidden;
-  padding: 15px;
   background-color: #f4f6f8; /* Light gray background for a softer look */
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Softer shadow */
@@ -269,7 +268,6 @@ const addOrUpdateNote = (id) => {
   word-break: keep-all;
   white-space: nowrap;
   flex-direction: row-reverse;
-  margin-bottom: 20px; /* Add space below the top box */
 }
 
 .top-box div {
@@ -327,7 +325,6 @@ const addOrUpdateNote = (id) => {
   justify-content: space-between;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); /* Subtle shadow for header */
-  margin-bottom: 15px;
 }
 
 .keyword-select .el-input__inner {
