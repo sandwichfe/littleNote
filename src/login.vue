@@ -239,11 +239,11 @@ const switchToLogin = () => {
         </div>
 
         <!-- 二维码登录 -->
-        <div v-if="showQrcode && !isRegisterMode " class="qrcode-container">
+        <div v-if="showQrcode && !isRegisterMode " class="qrcode-container animated-qrcode">
           <QRCode :value="qrcodeUrl" :size="200" class="qrcode" v-loading="!qrcodeUrl" />
           <div class="qrcode-tip">
             <template v-if="qrcodeStatus === 'unscanned'">
-              请使用微信扫描二维码
+              请扫描二维码
             </template>
             <template v-else-if="qrcodeStatus === 'waiting'">
               <i class="el-icon-loading"></i>
@@ -636,12 +636,42 @@ const switchToLogin = () => {
 
 /* 新增二维码样式 */
 .qrcode-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 水平居中 */
+  justify-content: center; /* 垂直居中（如果需要） */
   min-height: 280px;
-  padding: 10px;
+  padding: 20px 10px; /* 增加上下内边距 */
+}
 
-  .qrcode {
-    width: 70% !important;
-    max-width: 200px;
+.animated-qrcode .qrcode {
+  opacity: 0;
+  transform: scale(0.8);
+  animation: qrcodeFadeInScale 0.6s ease forwards;
+  animation-delay: 0.2s; /* 延迟一点动画开始 */
+  width: 70% !important;
+  max-width: 200px;
+  margin-bottom: 15px; /* 二维码和提示文字的间距 */
+}
+
+@keyframes qrcodeFadeInScale {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animated-qrcode .qrcode-tip {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: tipFadeInUp 0.5s ease forwards;
+  animation-delay: 0.5s; /* 在二维码动画之后开始 */
+}
+
+@keyframes tipFadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
