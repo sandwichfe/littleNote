@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref,onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import Cookies from 'js-cookie';
@@ -15,6 +15,12 @@ import verityImgPath from '@/assets/img/yysls_4.jpg';
 
 import QRCode from '@/components/QRCode.vue';
 import { userLogin, generateQrCode, qrCoderStatus, userRegister } from '@/network/base';
+
+
+onMounted(() => {
+  // 访问登录页面  清除token
+  Cookies.remove("loginToken");
+});
 
 const requestIp = ref(import.meta.env.VITE_API_URL);
 const router = useRouter();
