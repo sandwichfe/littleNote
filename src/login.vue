@@ -265,7 +265,7 @@ const switchToLogin = () => {
 
         <!-- 表单登录 -->
         <div v-if="!showQrcode && !isRegisterMode">
-          <el-form label-position="left" label-width="0px">
+          <el-form label-position="left" label-width="0px" class="login-el-form">
             <el-form-item>
               <el-input type="link" v-model="loginForm.username" auto-complete="off" placeholder="请输入账号"
                 class="std-input-height"></el-input>
@@ -276,13 +276,13 @@ const switchToLogin = () => {
                 class="std-input-height"></el-input>
             </el-form-item>
 
-            <el-form-item class="form-item-flex-space-between">
-              <div class="forgot-password-container"><a href="#" class="forgot-password-link">忘记密码</a></div>
-            </el-form-item>
-
             <el-form-item class="form-item-full-width">
               <el-button type="primary" class="login-button"
                 @click="login">立即登录</el-button>
+            </el-form-item>
+
+            <el-form-item class="form-item-flex-space-between">
+              <div class="forgot-password-container"><a href="#" class="forgot-password-link">忘记密码</a></div>
             </el-form-item>
             
             <el-form-item class="form-item-centered-text">
@@ -295,7 +295,7 @@ const switchToLogin = () => {
 
       <!-- 注册表单 -->
       <div v-if="isRegisterMode">
-          <el-form label-position="left" label-width="0px">
+          <el-form label-position="left" label-width="0px" class="login-el-form">
             <el-form-item>
               <el-input type="link" v-model="registerForm.username" auto-complete="off" placeholder="请输入用户名"
                 class="std-input-height"></el-input>
@@ -435,6 +435,43 @@ const switchToLogin = () => {
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12); /* 为激活标签添加阴影 */
 }
 
+/* Add animation and spacing to form items */
+.login-el-form .el-form-item {
+  margin-bottom: 22px; /* Increased bottom margin */
+  opacity: 0;
+  transform: translateY(10px);
+  animation: formItemFadeIn 0.5s ease forwards;
+}
+
+/* Stagger animation for form items */
+.login-el-form .el-form-item:nth-child(1) { animation-delay: 0.1s; }
+.login-el-form .el-form-item:nth-child(2) { animation-delay: 0.2s; }
+.login-el-form .el-form-item:nth-child(3) { animation-delay: 0.3s; }
+.login-el-form .el-form-item:nth-child(4) { animation-delay: 0.4s; }
+.login-el-form .el-form-item:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes formItemFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Style input fields */
+.std-input-height .el-input__wrapper {
+  border-radius: 5px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.std-input-height .el-input__wrapper:hover {
+  border-color: #007bff;
+}
+
+.std-input-height .el-input__wrapper.is-focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
 .divider {
   border-top: 1px solid #eaeaea;
   margin: 20px 0;
@@ -526,6 +563,8 @@ const switchToLogin = () => {
 
 
 .login-link, .register-link {
+  flex: 1 !important;
+  text-align: right !important;
   font-size: 14px;
   color: #666;
 }
@@ -714,5 +753,10 @@ const switchToLogin = () => {
 /* Form Item Full Width */
 .form-item-full-width {
   width: 100%;
+  margin-top: 10px; /* Add some top margin to the button container */
+}
+
+.form-item-centered-text {
+  margin-top: 15px; /* Add some top margin to the register/login link container */
 }
 </style>
