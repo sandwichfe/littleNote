@@ -264,25 +264,23 @@ const switchToLogin = () => {
         </div>
 
         <!-- 表单登录 -->
-        <div v-if="!showQrcode && !isRegisterMode">
+        <div v-if="!showQrcode && !isRegisterMode" class="account-login-form">
           <el-form label-position="left" label-width="0px" class="login-el-form">
             <el-form-item>
-              <el-input type="link" v-model="loginForm.username" auto-complete="off" placeholder="请输入账号"
+              <el-input type="text" v-model="loginForm.username" auto-complete="off" placeholder="请输入账号"
                 class="std-input-height"></el-input>
             </el-form-item>
 
-            <el-form-item>
+            <el-form-item class="password-with-forgot-link">
               <el-input type="password" v-model="loginForm.password" auto-complete="off" placeholder="请输入密码"
-                class="std-input-height"></el-input>
+                class="std-input-height">
+              </el-input>
+              <a href="#" class="forgot-password-link-inline">忘记密码?</a>
             </el-form-item>
 
             <el-form-item class="form-item-full-width">
               <el-button type="primary" class="login-button"
                 @click="login">立即登录</el-button>
-            </el-form-item>
-
-            <el-form-item class="form-item-flex-space-between">
-              <div class="forgot-password-container"><a href="#" class="forgot-password-link">忘记密码</a></div>
             </el-form-item>
             
             <el-form-item class="form-item-centered-text">
@@ -436,6 +434,10 @@ const switchToLogin = () => {
 }
 
 /* Add animation and spacing to form items */
+.account-login-form {
+  margin-top: 45px; /* Increased margin to push the form down further */
+}
+
 .login-el-form .el-form-item {
   margin-bottom: 22px; /* Increased bottom margin */
   opacity: 0;
@@ -712,16 +714,25 @@ const switchToLogin = () => {
 }
 
 /* Flex Form Item for Remember Me and Forgot Password */
-.form-item-flex-space-between {
-  width: 100%;
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
+.password-with-forgot-link {
+  position: relative;
 }
 
-.remember-me-checkbox {
-  flex: 1 !important;
+.forgot-password-link-inline {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #007bff;
+  text-decoration: none;
+  font-size: 14px;
 }
+
+.forgot-password-link-inline:hover {
+  text-decoration: underline;
+}
+
+
 
 .forgot-password-container {
   flex: 1 !important;
@@ -753,7 +764,7 @@ const switchToLogin = () => {
 /* Form Item Full Width */
 .form-item-full-width {
   width: 100%;
-  margin-top: 10px; /* Add some top margin to the button container */
+  margin-top: 5px; /* Adjust top margin for the login button container */
 }
 
 .form-item-centered-text {
