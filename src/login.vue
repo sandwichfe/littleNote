@@ -647,33 +647,32 @@ const switchToLogin = () => {
 .animated-qrcode .qrcode {
   opacity: 0;
   transform: scale(0.8);
-  animation: qrcodeFadeInScale 0.6s ease forwards;
-  animation-delay: 0.2s; /* 延迟一点动画开始 */
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.1s;
   width: 70% !important;
   max-width: 200px;
   margin-bottom: 15px; /* 二维码和提示文字的间距 */
 }
 
-@keyframes qrcodeFadeInScale {
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 }
 
 .animated-qrcode .qrcode-tip {
   opacity: 0;
   transform: translateY(10px);
-  animation: tipFadeInUp 0.5s ease forwards;
-  animation-delay: 0.5s; /* 在二维码动画之后开始 */
+  animation: fadeInUp 0.5s ease-out forwards;
+  animation-delay: 0.3s; /* 在二维码动画之后开始 */
 }
 
-@keyframes tipFadeInUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+
 
 /* Login and Register Button Styles */
 .login-button,
