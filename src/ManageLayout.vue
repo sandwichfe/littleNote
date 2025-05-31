@@ -409,12 +409,17 @@ onMounted(() => {
   flex: 1;
   padding: 20px;
   overflow: auto;
-  background-color: #f0f2f5; /* Consistent background */
+  background-color: #ffffff; /* Softer, more modern background */
+  transition: background-color 0.3s ease;
 }
 
+/* Tabs styling */
 .el-tabs--card > .el-tabs__header {
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid #dcdfe6; /* Lighter border */
   margin-bottom: 0;
+  background-color: #ffffff; /* Light background for tab header area */
+  border-radius: 6px 6px 0 0; /* Rounded corners for the header */
+  padding: 5px 5px 0 5px; /* Add some padding to header */
 }
 
 .el-tabs--card > .el-tabs__header .el-tabs__nav {
@@ -423,30 +428,41 @@ onMounted(() => {
 }
 
 .el-tabs--card > .el-tabs__header .el-tabs__item {
+  border: 1px solid transparent; /* Make border transparent initially */
   border-bottom: none;
-  border-left: none;
-  transition: color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-  margin-right: 2px;
-  background: #fafafa;
-  border: 1px solid #e8e8e8;
-  border-bottom: 0;
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  margin-right: 5px; /* Space between tabs */
+  background-color: transparent; /* Transparent background for inactive tabs */
+  color: #606266; /* Default text color */
   border-radius: 4px 4px 0 0;
-  padding: 0 16px;
+  padding: 0 20px; /* More padding for a modern look */
+  height: 40px; /* Consistent height */
+  line-height: 40px;
+  font-weight: 500;
+}
+
+.el-tabs--card > .el-tabs__header .el-tabs__item:hover {
+  color: #409eff;
+  background-color: #e9eef3; /* Subtle hover background */
 }
 
 .el-tabs--card > .el-tabs__header .el-tabs__item.is-active {
-  background: #fff;
-  border-color: #e8e8e8;
-  color: #1890ff;
+  background-color: #ffffff; /* White background for active tab */
+  color: #409eff; /* Element Plus primary color */
+  border-color: #dcdfe6 #dcdfe6 #ffffff; /* Border to blend with content */
+  border-bottom: 1px solid #ffffff; /* Cover the header bottom border */
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05); /* Subtle shadow for active tab */
+  transform: translateY(-1px); /* Slight lift effect */
 }
 
 .el-tabs__content {
-  padding: 16px;
+  padding: 20px;
   background: #fff;
-  border: 1px solid #e8e8e8;
+  border: 1px solid #dcdfe6;
   border-top: none;
-  border-radius: 0 0 4px 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-radius: 0 0 6px 6px; /* Rounded corners for content */
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); /* More pronounced shadow */
+  min-height: calc(100vh - 160px); /* Ensure content area fills space, adjust as needed */
 }
 
 /* Dialog styling */
