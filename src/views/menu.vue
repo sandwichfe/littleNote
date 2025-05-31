@@ -218,7 +218,7 @@ const handleCascaderChange = (value) => {
 <style scoped>
 .menu-container {
   padding: 24px;
-  background-color: #f0f2f5; /* Consistent background */
+  background-color: #ffffff; /* Consistent background */
   height: 100%; /* Ensure it takes full height if needed */
   box-sizing: border-box;
 }

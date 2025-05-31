@@ -175,7 +175,7 @@ const handleDelete = (row) => {
 <style scoped>
 .role-container {
   padding: 20px;
-  background-color: #f9f9f9; /* Slightly off-white background */
+  background-color: #ffffff; /* Consistent background */
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
 }
