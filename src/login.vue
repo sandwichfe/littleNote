@@ -15,6 +15,7 @@ import verityImgPath from '@/assets/img/yysls_4.jpg';
 
 import QRCode from '@/components/QRCode.vue';
 import { userLogin, generateQrCode, qrCoderStatus, userRegister } from '@/network/base';
+import { RefreshRight } from '@element-plus/icons-vue';
 
 
 onMounted(() => {
@@ -240,7 +241,16 @@ const switchToLogin = () => {
 
         <!-- 二维码登录 -->
         <div v-if="showQrcode && !isRegisterMode " class="qrcode-container animated-qrcode">
-          <QRCode :value="qrcodeUrl" :size="200" class="qrcode" v-loading="!qrcodeUrl" />
+          <div class="qrcode-wrapper">
+            <QRCode :value="qrcodeUrl" :size="200" class="qrcode" v-loading="!qrcodeUrl" />
+            <el-icon class="refresh-icon" @click="refreshQrcode" v-if="qrcodeStatus !== 'expired'"><RefreshRight /></el-icon>
+            <div v-if="qrcodeStatus === 'expired'" class="expired-overlay">
+              <p>二维码已过期</p>
+              <el-button type="primary" size="small" @click="refreshQrcode" class="refresh-qrcode-button-overlay">
+                点击刷新
+              </el-button>
+            </div>
+          </div>
           <div class="qrcode-tip">
             <template v-if="qrcodeStatus === 'unscanned'">
               请扫描二维码
@@ -253,12 +263,7 @@ const switchToLogin = () => {
               登录成功，跳转中...
             </template>
             <template v-else-if="qrcodeStatus === 'expired'">
-              <div class="expired-panel">
-                <p>二维码已过期</p>
-                <el-button type="primary" size="small" @click="refreshQrcode" class="refresh-qrcode-button">
-                  刷新二维码
-                </el-button>
-              </div>
+              <!-- 此处内容已移至二维码图片上方 -->
             </template>
           </div>
         </div>
@@ -644,14 +649,96 @@ const switchToLogin = () => {
   padding: 20px 10px; /* 增加上下内边距 */
 }
 
-.animated-qrcode .qrcode {
+.qrcode-wrapper {
+  position: relative;
+  display: flex; /* 改为flex布局，使其包裹内部元素 */
+  justify-content: center; /* 水平居中二维码本身 */
+  align-items: center; /* 垂直居中二维码本身 */
+  margin-bottom: 15px; /* 二维码和提示文字的间距 */
+  /* width: 200px; */ /* 可以考虑给wrapper一个固定宽度，如果二维码大小固定 */
+  /* height: 200px; */ /* 可以考虑给wrapper一个固定高度 */
+}
+
+.animated-qrcode .qrcode-wrapper .qrcode {
+  /* 移除之前的动画属性，因为动画现在应用在wrapper内的qrcode上 */
+  width: 100% !important; /* 让二维码填充wrapper */
+  max-width: 200px; /* 保持最大宽度限制 */
+  display: block;
+}
+
+.animated-qrcode .qrcode-wrapper > .qrcode {
   opacity: 0;
   transform: scale(0.8);
   animation: fadeInUp 0.5s ease-out forwards;
   animation-delay: 0.1s;
-  width: 70% !important;
-  max-width: 200px;
-  margin-bottom: 15px; /* 二维码和提示文字的间距 */
+  /* width: 70% !important; */ /* 宽度由wrapper控制 */
+  /* max-width: 200px; */
+  display: block; /* 确保二维码是块级元素，以便覆盖层能正确工作 */
+}
+
+.refresh-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); 
+  font-size: 50px; /* 调大图标 */
+  color: #fff;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  padding: 15px; /* 增加内边距，使点击区域更大 */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+  z-index: 10;
+  opacity: 0;
+}
+
+.qrcode-wrapper:hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3); /* 半透明黑色遮罩 */
+  border-radius: 8px; /* 与二维码或wrapper的圆角保持一致 */
+  z-index: 5; /* 在二维码之上，在刷新按钮之下 */
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.qrcode-wrapper:hover .refresh-icon {
+  opacity: 1; /* 鼠标悬浮时显示 */
+  z-index: 10; /*确保刷新按钮在遮罩之上*/
+}
+
+.expired-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%; /* 确保覆盖整个wrapper */
+  height: 100%; /* 确保覆盖整个wrapper */
+  background-color: rgba(0, 0, 0, 0.8); /* 加深背景 */
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border-radius: 8px; /* 可以给覆盖层一个圆角，如果二维码本身没有 */
+  opacity: 0;
+  animation: fadeIn 0.3s forwards;
+  z-index: 20; /* 比刷新图标更高，确保覆盖 */
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.refresh-qrcode-button-overlay {
+  margin-top: 10px;
 }
 
 @keyframes fadeInUp {
