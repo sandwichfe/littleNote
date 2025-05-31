@@ -276,16 +276,7 @@ const switchToLogin = () => {
                 class="std-input-height"></el-input>
             </el-form-item>
 
-            <el-form-item>
-              <el-input type="link" placeholder="请输入验证码" suffix-icon="el-icon-refresh" class="std-input-height">
-                <template #append>
-                  <img :src="verityImg" alt="验证码" class="captcha-image" />
-                </template>
-              </el-input>
-            </el-form-item>
-
             <el-form-item class="form-item-flex-space-between">
-              <div class="remember-me-checkbox"><el-checkbox v-model="loginForm.remember">记住我</el-checkbox></div>
               <div class="forgot-password-container"><a href="#" class="forgot-password-link">忘记密码</a></div>
             </el-form-item>
 
@@ -383,6 +374,7 @@ const switchToLogin = () => {
   border: 1px solid #eaeaea;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   display: flex;
+  height: 600px; /* Added to stabilize container height for consistent image size */
   overflow: hidden;
   transform: translateY(20px);
   opacity: 0;
@@ -412,7 +404,7 @@ const switchToLogin = () => {
   padding: 30px 40px; /* 调整内边距 */
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  /* justify-content: center; */ /* Removed to prevent tabs from shifting */
 }
 
 .login-tabs {
@@ -441,7 +433,6 @@ const switchToLogin = () => {
 .login-tabs .active {
   font-weight: bold;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12); /* 为激活标签添加阴影 */
-  transform: translateY(-2px); /* 轻微上移激活标签 */
 }
 
 .divider {
