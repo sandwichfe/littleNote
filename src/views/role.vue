@@ -75,7 +75,8 @@ const form = reactive({
   deleted: false,
   sort: 0,
   createTime: null,
-  createUserId: null
+  createUserId: null,
+  description: ''
 })
 
 const rules = reactive({

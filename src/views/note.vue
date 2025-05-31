@@ -98,8 +98,11 @@ const groups = ref(
 // 处理选中项变化
 const changeGroup = (newValue: string) => {
   let groupId = newValue?Number(newValue):null;
+  loading.value = true;
   listNote(-1, -1,groupId).then((res) => {
     contents.value = res.data.records;
+  }).finally(() => {
+    loading.value = false;
   });
 
 };
@@ -196,6 +199,7 @@ const remoteMethod = (query) => {
       loading.value = true;
       listNote(-1, -1).then((res) => {
         contents.value = res.data.records;
+      }).finally(() => {
         loading.value = false;
       });
     }, 200);
@@ -203,6 +207,7 @@ const remoteMethod = (query) => {
     loading.value = true;
     listNote(-1, -1).then((res) => {
       contents.value = res.data.records;
+    }).finally(() => {
       loading.value = false;
     });
   }
@@ -218,12 +223,18 @@ const switchList = () => {
 };
 
 const initList = () => {
-  listNote(-1, -1).then((res) => {
-    contents.value = res.data.records;
-  });
-
-  listNoteGroup(-1, -1).then((res) => {
-    groups.value = res.data.records;
+  loading.value = true;
+  Promise.all([
+    listNote(-1, -1),
+    listNoteGroup(-1, -1)
+  ]).then(([noteRes, groupRes]) => {
+    contents.value = noteRes.data.records;
+    groups.value = groupRes.data.records;
+  }).catch(error => {
+    console.error('Failed to load initial data:', error);
+    // Optionally show an error message to the user
+  }).finally(() => {
+    loading.value = false;
   });
   
 };
