@@ -31,7 +31,7 @@
       element-loading-text="o(*≧▽≦)ツ加载中~">
       <div v-if="contents && contents.length > 0">
         <ul>
-          <li v-for="(c, index) in contents" :key="index" class="line" @mousedown="startTimer(c)" @mouseup="clearTimer">
+          <li v-for="(c, index) in contents" :key="index" class="line" @mousedown="startTimer()" @mouseup="clearTimer">
             <div class="file-li-item" @click="addOrUpdateNote(c.id)">
               <div class="prename">{{ c.title }}</div>
               <div class="ptime">{{ c.updateTime || c.createTime }}</div>
@@ -76,7 +76,7 @@ export default {
 
 <!-- setup语法糖 -->
 <script setup lang="ts">
-import { listNote } from "@/network/base"; // 引入自己封装的axios请求函数
+import { listNote, type Note } from "@/network/base"; // 引入自己封装的axios请求函数
 import { listNoteGroup } from "@/network/noteGroup";
 import { love } from "@/utils/love";
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick } from 'vue';
@@ -120,7 +120,7 @@ const store = useStore();
 
 // 节流函数
 const delay = (function () {
-  let timer = 0;
+  let timer: ReturnType<typeof setTimeout>; 
   return function (callback, ms) {
     clearTimeout(timer);
     timer = setTimeout(callback, ms);
@@ -133,7 +133,7 @@ let timer;
 // 定义响应式变量
 const centerDialogVisible = ref(false);
 const listType = ref(true);
-const contents = ref([{ preName: "1", id: 1 }, { preName: "1", id: 2 }, { preName: "1", id: 3 }, { preName: "1", id: 4 }]);
+const contents = ref<Note[]>([]);
 const loading = ref(false);
 const backTopVisible = ref(false);
 const currentPath = ref('');

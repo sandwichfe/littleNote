@@ -27,7 +27,8 @@ const router = useRouter();
 
 const loginForm = ref({
   username: '',
-  password: ''
+  password: '',
+  remember: false
 });
 
 const isShow = ref(false);

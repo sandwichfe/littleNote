@@ -1,14 +1,16 @@
 import { request, LoginRequest } from "./request";
 
 
-interface Note {
+export interface Note {
   id: number;
   title: string;
   content: string;
+  createTime?: string;
+  updateTime?: string;
 }
 
 // 这里为列表和分页功能添加类型
-export function listNote(pageNum: number, pageSize: number,groupId?:number): Promise<Note[]> {
+export function listNote(pageNum: number, pageSize: number,groupId?:number): Promise<any> {
   return request({
     method: "post",
     url: "/note/listNote",
@@ -32,7 +34,7 @@ export function getNote(id: number): Promise<any> {
 }
 
 // 编辑笔记，返回类型仍然为 NoteResponse 或 void，取决于实际需求
-export function editNote(id: number, content: string, title: string,groupId?: number): Promise<void> {
+export function editNote(id: number, content: string, title: string,groupId?: number): Promise<any> {
   return request({
     method: "post",
     url: "/note/editNote",
@@ -46,7 +48,7 @@ export function editNote(id: number, content: string, title: string,groupId?: nu
 }
 
 // 添加新笔记
-export function addNote(id: number, content: string, title: string,groupId?: number): Promise<void> {
+export function addNote(id: number, content: string, title: string,groupId?: number): Promise<any> {
   return request({
     method: "post",
     url: "/note/addNote",
@@ -60,7 +62,7 @@ export function addNote(id: number, content: string, title: string,groupId?: num
 }
 
 // 删除笔记
-export function deleteNoteItem(id: number): Promise<void> {
+export function deleteNoteItem(id: number): Promise<any> {
   return request({
     method: "get",
     url: "/note/deleteNote",
@@ -71,12 +73,18 @@ export function deleteNoteItem(id: number): Promise<void> {
 }
 
 // 登录函数，返回类型可以为登录请求的响应结构
-interface LoginResponse {
+interface LoginResponseData {
   token: string;
   // 可以添加其他字段，如用户信息等
 }
 
-export function userLogin(username: string, password: string): Promise<LoginResponse> {
+export interface LoginResponse {
+  code: number;
+  msg?: string;
+  data: LoginResponseData;
+}
+
+export function userLogin(username: string, password: string): Promise<any> {
   return LoginRequest({
     url: '/user/login',
     method: 'post',
