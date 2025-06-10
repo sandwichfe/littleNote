@@ -5,7 +5,6 @@ import { ElButton, ElRow, ElCol, ElInput } from 'element-plus';
 import { Minus, Plus } from '@element-plus/icons-vue';
 
 const size = ref(160)
-const value = ref('hello world')
 
 const decline = () => {
   size.value = size.value - 10
@@ -24,9 +23,7 @@ const increase = () => {
 
 <template>
   <div>
-    
     <!-- 无边框 -->
-    <h2 class="mt30 mb10">无边框</h2>
     <QRCode value="http://www.baidu.com" :bordered="false" error-level="M" />
 
   </div>

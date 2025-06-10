@@ -96,7 +96,7 @@ const handleQrcodeLogin = async () => {
     const response = await generateQrCode()
     qrcodeId.value = response.data;
     // 模拟生成二维码
-    qrcodeUrl.value = `http://${requestIp.value}:9088/user/qrCode/scan?qrCodeId=${qrcodeId.value}`;
+    qrcodeUrl.value = `${import.meta.env.VITE_QRCODE_BASE_URL}${qrcodeId.value}`;
     console.log(qrcodeUrl.value);
     startPolling('mock_ticket')
   } catch (error) {
@@ -290,6 +290,7 @@ const switchToLogin = () => {
             
             <el-form-item class="form-item-centered-text">
               <span class="register-link">没有账号？<a href="javascript:void(0)" @click="switchToRegister">立即注册</a></span>
+              <span  @click="handleQrcodeLogin">扫码登录</span>
             </el-form-item>
 
           </el-form>
@@ -680,7 +681,7 @@ const switchToLogin = () => {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%); 
+  transform: translate(-50%, -50%);
   font-size: 50px; /* 调大图标 */
   color: #fff;
   cursor: pointer;
