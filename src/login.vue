@@ -94,7 +94,7 @@ const handleQrcodeLogin = async () => {
     const response = await generateQrCode()
     qrcodeId.value = response.data;
     // 模拟生成二维码
-    qrcodeUrl.value = `http://${requestIp.value}:9088/user/qrCode/scan?qrCodeId=${qrcodeId.value}`;
+    qrcodeUrl.value = `${import.meta.env.VITE_QRCODE_BASE_URL}${qrcodeId.value}`;
     console.log(qrcodeUrl.value);
     startPolling('mock_ticket')
   } catch (error) {
@@ -232,35 +232,6 @@ const switchToLogin = () => {
 
       <!-- 登录大表单 -->
       <div class="login-form">
-        <div class="login-tabs">
-          <span :class="{ active: !showQrcode && !isRegisterMode }" @click="switchToLogin">账号登录</span>
-          <span :class="{ active: showQrcode && !isRegisterMode }" @click="handleQrcodeLogin">扫码登录</span>
-        </div>
-
-        <!-- 二维码登录 -->
-        <div v-if="showQrcode && !isRegisterMode " class="qrcode-container">
-          <QRCode :value="qrcodeUrl" :size="200" class="qrcode" v-loading="!qrcodeUrl" />
-          <div class="qrcode-tip">
-            <template v-if="qrcodeStatus === 'unscanned'">
-              请使用微信扫描二维码
-            </template>
-            <template v-else-if="qrcodeStatus === 'waiting'">
-              <i class="el-icon-loading"></i>
-              已扫描，等待用户确认...
-            </template>
-            <template v-else-if="qrcodeStatus === 'confirmed'">
-              登录成功，跳转中...
-            </template>
-            <template v-else-if="qrcodeStatus === 'expired'">
-              <div class="expired-panel">
-                <p>二维码已过期</p>
-                <el-button type="primary" size="small" @click="refreshQrcode" class="refresh-qrcode-button">
-                  刷新二维码
-                </el-button>
-              </div>
-            </template>
-          </div>
-        </div>
 
         <!-- 表单登录 -->
         <div v-if="!showQrcode && !isRegisterMode">
@@ -284,7 +255,6 @@ const switchToLogin = () => {
             </el-form-item>
 
             <el-form-item class="form-item-flex-space-between">
-              <div class="remember-me-checkbox"><el-checkbox v-model="loginForm.remember">记住我</el-checkbox></div>
               <div class="forgot-password-container"><a href="#" class="forgot-password-link">忘记密码</a></div>
             </el-form-item>
 
@@ -295,6 +265,7 @@ const switchToLogin = () => {
             
             <el-form-item class="form-item-centered-text">
               <span class="register-link">没有账号？<a href="javascript:void(0)" @click="switchToRegister">立即注册</a></span>
+              <span  @click="handleQrcodeLogin">扫码登录</span>
             </el-form-item>
 
           </el-form>
@@ -336,6 +307,33 @@ const switchToLogin = () => {
         </div>
 
 
+           <!-- 二维码登录 -->
+           <div v-if="showQrcode" class="qrcode-container">
+          <QRCode :value="qrcodeUrl" :size="200" class="qrcode" v-loading="!qrcodeUrl" />
+          <div class="qrcode-tip">
+            <template v-if="qrcodeStatus === 'unscanned'">
+              请使用微信扫描二维码
+            </template>
+            <template v-else-if="qrcodeStatus === 'waiting'">
+              <i class="el-icon-loading"></i>
+              已扫描，等待用户确认...
+            </template>
+            <template v-else-if="qrcodeStatus === 'confirmed'">
+              登录成功，跳转中...
+            </template>
+            <template v-else-if="qrcodeStatus === 'expired'">
+              <div class="expired-panel">
+                <p>二维码已过期</p>
+                <el-button type="primary" size="small" @click="refreshQrcode" class="refresh-qrcode-button">
+                  刷新二维码
+                </el-button>
+              </div>
+            </template>
+
+            <div @click="switchToLogin">返回</div>
+
+          </div>
+        </div>
 
         <!-- 其他登录方式 -->
         <div v-if="!isRegisterMode" class="divider">其他登录方式</div>
