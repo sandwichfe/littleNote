@@ -29,6 +29,6 @@ export const updateUser = (user: User) => LoginRequest({ method: 'post', url: '/
 export const deleteUser = (id: number) => LoginRequest({ method: 'delete', url: `/sys/user/delete/${id}` })
 
 
-export const getCurrentUser = (id: number) => LoginRequest({ method: 'get', url: `/sys/user/current` })
+export const getCurrentUser = () => LoginRequest({ method: 'get', url: `/sys/user/current` })
 
 export const updateCurrentUser = (user: User) => LoginRequest({ method: 'post', url: '/sys/user/update/current', data: user })
