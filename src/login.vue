@@ -10,8 +10,6 @@ import Img03 from "@/assets/img/yysls_3.jpg";
 import Img04 from "@/assets/img/yysls_4.jpg";
 import Img05 from "@/assets/img/wwnn_1.jpg";
 import Img06 from "@/assets/img/wwnn_2.jpg";
-// 使用 import 语法引入图片路径
-import verityImgPath from '@/assets/img/yysls_4.jpg';
 
 import QRCode from '@/components/QRCode.vue';
 import { userLogin, generateQrCode, qrCoderStatus, userRegister } from '@/network/base';
@@ -23,7 +21,6 @@ onMounted(() => {
   Cookies.remove("loginToken");
 });
 
-const requestIp = ref(import.meta.env.VITE_API_URL);
 const router = useRouter();
 
 const loginForm = ref({
@@ -35,8 +32,6 @@ const loginForm = ref({
 const isShow = ref(false);
 
 const loginToken = ref("");
-
-const verityImg = ref(verityImgPath);
 
 const login = async () => {
   if (loginForm.value.username === "" || loginForm.value.password === "") {
@@ -234,13 +229,38 @@ const switchToLogin = () => {
 
       <!-- 登录大表单 -->
       <div class="login-form">
-        <div class="login-tabs">
-          <span :class="{ active: !showQrcode && !isRegisterMode }" @click="switchToLogin">账号登录</span>
-          <span :class="{ active: showQrcode && !isRegisterMode }" @click="handleQrcodeLogin">扫码登录</span>
+
+        <!-- 表单登录 -->
+        <div v-if="!showQrcode && !isRegisterMode" class="account-login-form">
+          <el-form label-position="left" label-width="0px" class="login-el-form">
+            <el-form-item>
+              <el-input type="text" v-model="loginForm.username" auto-complete="off" placeholder="请输入账号"
+                class="std-input-height"></el-input>
+            </el-form-item>
+
+            <el-form-item class="password-with-forgot-link">
+              <el-input type="password" v-model="loginForm.password" auto-complete="off" placeholder="请输入密码"
+                class="std-input-height">
+              </el-input>
+              <a href="#" class="forgot-password-link-inline">忘记密码?</a>
+            </el-form-item>
+
+            <el-form-item class="form-item-full-width">
+              <el-button type="primary" class="login-button"
+                @click="login">立即登录</el-button>
+            </el-form-item>
+            
+            <el-form-item class="form-item-centered-text">
+              <span  @click="handleQrcodeLogin">扫码登录</span>
+              <span class="register-link">没有账号？<a href="javascript:void(0)" @click="switchToRegister">立即注册</a></span>
+            </el-form-item>
+
+          </el-form>
         </div>
 
+
         <!-- 二维码登录 -->
-        <div v-if="showQrcode && !isRegisterMode " class="qrcode-container animated-qrcode">
+        <div v-if="showQrcode" class="qrcode-container animated-qrcode">
           <div class="qrcode-wrapper">
             <QRCode :value="qrcodeUrl" :size="200" class="qrcode" v-loading="!qrcodeUrl" />
             <el-icon class="refresh-icon" @click="refreshQrcode" v-if="qrcodeStatus !== 'expired'"><RefreshRight /></el-icon>
@@ -265,35 +285,8 @@ const switchToLogin = () => {
             <template v-else-if="qrcodeStatus === 'expired'">
               <!-- 此处内容已移至二维码图片上方 -->
             </template>
+            <div  @click="switchToLogin">返回</div>
           </div>
-        </div>
-
-        <!-- 表单登录 -->
-        <div v-if="!showQrcode && !isRegisterMode" class="account-login-form">
-          <el-form label-position="left" label-width="0px" class="login-el-form">
-            <el-form-item>
-              <el-input type="text" v-model="loginForm.username" auto-complete="off" placeholder="请输入账号"
-                class="std-input-height"></el-input>
-            </el-form-item>
-
-            <el-form-item class="password-with-forgot-link">
-              <el-input type="password" v-model="loginForm.password" auto-complete="off" placeholder="请输入密码"
-                class="std-input-height">
-              </el-input>
-              <a href="#" class="forgot-password-link-inline">忘记密码?</a>
-            </el-form-item>
-
-            <el-form-item class="form-item-full-width">
-              <el-button type="primary" class="login-button"
-                @click="login">立即登录</el-button>
-            </el-form-item>
-            
-            <el-form-item class="form-item-centered-text">
-              <span class="register-link">没有账号？<a href="javascript:void(0)" @click="switchToRegister">立即注册</a></span>
-              <span  @click="handleQrcodeLogin">扫码登录</span>
-            </el-form-item>
-
-          </el-form>
         </div>
 
 
@@ -411,33 +404,6 @@ const switchToLogin = () => {
   /* justify-content: center; */ /* Removed to prevent tabs from shifting */
 }
 
-.login-tabs {
-  display: flex;
-  justify-content: center; /* 居中显示 */
-  margin-bottom: 25px; /* 增加底部间距 */
-  gap: 20px; /* 增加选项卡之间的间距 */
-}
-
-.login-tabs span {
-  cursor: pointer;
-  color: #007bff;
-  padding: 8px 15px;
-  border-radius: 5px;
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-
-
-.login-tabs span:hover {
-  background-color: #f0f0f0; /* 鼠标悬停背景色 */
-}
-
-.login-tabs .active {
-  font-weight: bold;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12); /* 为激活标签添加阴影 */
-}
 
 /* Add animation and spacing to form items */
 .account-login-form {
@@ -616,17 +582,6 @@ const switchToLogin = () => {
 
   .poster {
     background: linear-gradient(to bottom, rgb(255 237 237 / 80%), rgb(187 236 255 / 50%));
-  }
-
-  .login-tabs {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    gap: 10px;
-  }
-  
-  .login-tabs span {
-    padding: 5px 10px;
   }
 
 
