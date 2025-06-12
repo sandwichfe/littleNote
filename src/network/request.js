@@ -10,7 +10,7 @@ const requestIp = import.meta.env.VITE_API_URL;
 export function request(config) {
     const instance = axios.create({                       //创建移 动axios的实例
         baseURL: `http://${requestIp}:8000`,  
-        timeout: 5000,
+        timeout: 60000,
     });
 
 

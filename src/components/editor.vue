@@ -4,13 +4,14 @@
     <div class="edit-button-box">
       <!-- 分组筛选 -->
       <div>
-        <el-select v-model="groupValue" placeholder="Select"  style="width: 120px;height: 32px;margin-right: 10px;"  @change="changeGroup">
+        <el-select v-model="groupValue" placeholder="Select" style="width: 120px;height: 32px;margin-right: 10px;"
+          @change="changeGroup">
           <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
         </el-select>
       </div>
 
 
-      <el-button @click="editOrPreview" >{{!editStatus?'编辑':'预览'}}</el-button>
+      <el-button @click="editOrPreview">{{ !editStatus ? '编辑' : '预览' }}</el-button>
       <el-button @click="saveNote" plain type="primary">保存</el-button>
       <div style="height: 32px; margin-left: 14px; margin-bottom: 10px;">
         <el-popconfirm title="确定删除吗?" @confirm="delNote">
@@ -50,7 +51,7 @@ export default {
 </script>
 <script setup lang="ts">
 import '@wangeditor/editor/dist/css/style.css';
-import { onBeforeUnmount, ref, toRefs, shallowRef, onMounted, nextTick,watch } from 'vue';
+import { onBeforeUnmount, ref, toRefs, shallowRef, onMounted, nextTick, watch } from 'vue';
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
 import { getNote, editNote, addNote, deleteNoteItem } from "@/network/base";
 import { useRouter } from 'vue-router';
@@ -59,6 +60,8 @@ import { cipherText, decrypted } from "@/utils/aesUtil";
 import { openLoading, closeLoading } from "@/utils/loadingUtil";
 import { type noteInterface } from '@/types/note'; // 引入类型
 import { listNoteGroup } from "@/network/noteGroup";
+import { uploadImage } from '@/network/base';
+
 
 const groupValue = ref('')
 
@@ -73,7 +76,7 @@ const groups = ref(
 
 // 处理选中项变化
 const changeGroup = (newValue: string) => {
-  let groupId = newValue?Number(newValue):null;
+  let groupId = newValue ? Number(newValue) : null;
   noteData.value.groupId = groupId;
 };
 
@@ -161,7 +164,26 @@ const toolbarConfig = {};
 
 const editorConfig = {
   placeholder: '',
-  readOnly: true
+  readOnly: true,
+  MENU_CONF: {
+    uploadImage: {
+      // 自定义上传
+      async customUpload(file: File, insertFn: InsertFnType) {
+        try {
+          // 上传图片名 如果是默认的image.png 就用时间戳命名
+          const fileName = file.name === 'image.png' ? `${Date.now()}.png` : file.name;
+          const uploadFile = new File([file], fileName, { type: file.type });
+          // 上传图片接口
+          const response = await uploadImage(uploadFile);
+          const url = `${import.meta.env.VITE_UPLOAD_BASE_URL}${response.data}`;
+          insertFn(url, '图片加载失败', url);
+        } catch (error) {
+          console.error('上传失败:', error);
+          ElMessage.error('图片上传失败');
+        }
+      },
+    }
+  }
 };
 
 // 组件销毁时，也及时销毁编辑器，重要！
@@ -218,10 +240,10 @@ const printHtml = () => {
 };
 
 
-const editOrPreview=() => {
-  if(editStatus.value===true){
+const editOrPreview = () => {
+  if (editStatus.value === true) {
     disableEdit();
-  }else{
+  } else {
     enableEdit();
   }
 }
@@ -286,7 +308,7 @@ const saveNote = () => {
   noteValue = cipherText(noteValue)
   if (noteData.value.noteId == -1) {
     // 添加操作
-    addNote(null, noteValue, title,noteData.value.groupId).then((res) => {
+    addNote(null, noteValue, title, noteData.value.groupId).then((res) => {
       if (res.code = 200) {
         ElMessage({
           message: '保存成功！',
@@ -294,17 +316,17 @@ const saveNote = () => {
           plain: true,
         })
         // 修改路由参数
-        if(res.data){
-        router.replace(`/noteDetail/${res.data}`);
-        noteData.value.noteId = res.data;
-        }else{
+        if (res.data) {
+          router.replace(`/noteDetail/${res.data}`);
+          noteData.value.noteId = res.data;
+        } else {
           alert("保存出错...")
         }
       }
     });
   } else {
     // 修改操作
-    editNote(noteData.value.noteId, noteValue, title,noteData.value.groupId).then((res) => {
+    editNote(noteData.value.noteId, noteValue, title, noteData.value.groupId).then((res) => {
       if (res = "ok") {
         ElMessage({
           message: '保存成功！',
@@ -335,7 +357,6 @@ const saveNote = () => {
 
 /* wangeditor 最小高度300 */
 .w-e-scroll {
-    min-height: 300px;
+  min-height: 300px;
 }
-
 </style>

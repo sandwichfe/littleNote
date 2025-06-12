@@ -23,6 +23,15 @@ export default defineConfig({
 
 
   ],
+  server: {
+    port: 3000,
+    open: false,
+    host: '192.168.66.102',
+    https: {
+      key: fs.readFileSync('D:\\certs\\192_168_66_102\\server.key'),
+      cert: fs.readFileSync('D:\\certs\\192_168_66_102\\server.crt')
+    }
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src')

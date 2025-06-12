@@ -146,3 +146,16 @@ export function userRegister(params: RegisterParams): Promise<any> {
     data: params
   });
 }
+
+export function uploadImage(file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append('uploadFile', file);
+  return request({
+    method: 'post',
+    url: '/upload',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+}
