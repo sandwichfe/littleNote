@@ -175,8 +175,8 @@ const editorConfig = {
           const uploadFile = new File([file], fileName, { type: file.type });
           // 上传图片接口
           const response = await uploadImage(uploadFile);
-          const url = `${import.meta.env.VITE_UPLOAD_BASE_URL}${response.data}`;
-          insertFn(url, '图片加载失败', url);
+          const url = `${import.meta.env.VITE_UPLOAD_BASE_URL}/${response.data}`;
+          insertFn(url, '', url);
         } catch (error) {
           console.error('上传失败:', error);
           ElMessage.error('图片上传失败');
