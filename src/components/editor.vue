@@ -153,6 +153,7 @@ onMounted(() => {
       res.content = ''
     }
     // 编辑器内容
+    // console.log(decrypted(res.content))
     valueHtml.value = decrypted(res.content);
     // 类型
     groupValue.value = res.groupId;
@@ -176,7 +177,7 @@ const editorConfig = {
           // 上传图片接口
           const response = await uploadImage(uploadFile);
           const url = `${import.meta.env.VITE_UPLOAD_BASE_URL}/${response.data}`;
-          insertFn(url, '', url);
+          insertFn(url, fileName, url);
         } catch (error) {
           console.error('上传失败:', error);
           ElMessage.error('图片上传失败');
