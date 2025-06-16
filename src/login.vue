@@ -13,6 +13,7 @@ import Img06 from "@/assets/img/wwnn_2.jpg";
 
 import QRCode from '@/components/QRCode.vue';
 import { userLogin, generateQrCode, qrCoderStatus, userRegister } from '@/network/base';
+import { openLoading, closeLoading } from "@/utils/loadingUtil";
 import { RefreshRight } from '@element-plus/icons-vue';
 
 
@@ -49,6 +50,7 @@ const login = async () => {
  */
 const success = (msg) => {
   isShow.value = false;
+  openLoading('o(*≧▽≦)ツ加载中~');
   // 登录请求
   userLogin(loginForm.value.username, loginForm.value.password).then((res) => {
     if (res) {
@@ -63,6 +65,7 @@ const success = (msg) => {
       }
     }
   });
+  closeLoading();
 
 };
 
