@@ -85,19 +85,47 @@ export function generateRoutes(menuData) {
   return routes
 }
 
-// 路由守卫
-router.beforeEach((to, from, next) => {
-  const token = Cookies.get('loginToken')
+import { useMenuStore } from '@/store/menu'
 
-  if (!token && to.path !== '/login') {
-    // 如果没有token且目标不是登录页，重定向到登录页
-    next('/login')
-  } else if (token && to.path === '/login') {
-    // 如果有token且要去登录页，重定向到首页
-    next('/')
+// 路由守卫
+router.beforeEach(async (to, from, next) => {
+  const token = Cookies.get('loginToken')
+  const menuStore = useMenuStore()
+
+  if (!token) {
+    // 没有token
+    if (to.path !== '/login') {
+      menuStore.resetMenuState() // 清理状态
+      next('/login')
+    } else {
+      next()
+    }
   } else {
-    // 其他情况正常放行
-    next()
+    // 有token
+    if (to.path === '/login') {
+      next('/')
+    } else {
+      if (!menuStore.areRoutesAdded) {
+        try {
+          // 异步获取菜单和路由
+          const { success } = await menuStore.fetchAndSetMenus()
+          if (success) {
+            // 使用 replace: true, 以免用户回退到之前的状态
+            next({ ...to, replace: true })
+          } else {
+            // 获取菜单失败，清除 token 并重定向到登录页
+            menuStore.resetMenuState()
+            next('/login')
+          }
+        } catch (error) {
+          console.error('Router guard error:', error)
+          menuStore.resetMenuState()
+          next('/login')
+        }
+      } else {
+        next()
+      }
+    }
   }
 })
 
