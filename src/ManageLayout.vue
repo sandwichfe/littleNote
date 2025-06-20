@@ -7,36 +7,18 @@ import {
   getCurrentUser,
   updateCurrentUser
 } from '@/network/user'
-import { getCurrentUserMenus } from '@/network/menu'
-import { generateRoutes } from '@/router'
+import { useMenuStore } from '@/store/menu'
 
 const route = useRoute()
 const router = useRouter()
 const activeTab = ref(route.path)
 const tabs = ref([
 ])
-const menuData = ref([])
+const menuStore = useMenuStore()
+const menuData = menuStore.menuData
 
 
-// 获取菜单数据
-const fetchMenuData = async () => {
-  try {
-    const response = await getCurrentUserMenus()
-    if (response.code === 200) {
-      menuData.value = response.data
-      // 生成动态路由
-      const routes = generateRoutes(response.data)
-      // 添加动态路由到根路由的 children 中
-      routes.forEach(route => {
-        if (!router.hasRoute(route.name)) {
-          router.addRoute('/', route) // 注意这里改为添加到根路由
-        }
-      })
-    }
-  } catch (error) {
-    console.error('获取菜单数据失败:', error)
-  }
-}
+
 
 const handleSelect = (index) => {
   router.push(index)
@@ -48,10 +30,6 @@ const handleSelect = (index) => {
 
 // 初始化时确保当前路径在 tabs 中
 onMounted(() => {
-
-  // 菜单信息
-  fetchMenuData()
-
   if (route.path !== '/' && !tabs.value.some(tab => tab.name === route.path)) {
     tabs.value.push({ name: route.path, label: route.path.slice(1) })
   }
@@ -91,6 +69,7 @@ const updateCurrentUserInfo = async () => {
 
 
 const logout = () => {
+  menuStore.resetMenuState()
   Cookies.remove("loginToken");
   router.push('/login');
 }

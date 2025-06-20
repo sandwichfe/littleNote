@@ -13,6 +13,7 @@ import Img06 from "@/assets/img/wwnn_2.jpg";
 
 import QRCode from '@/components/QRCode.vue';
 import { userLogin, generateQrCode, qrCoderStatus, userRegister } from '@/network/base';
+import { useMenuStore } from '@/store/menu';
 import { openLoading, closeLoading } from "@/utils/loadingUtil";
 import { RefreshRight } from '@element-plus/icons-vue';
 
@@ -23,6 +24,7 @@ onMounted(() => {
 });
 
 const router = useRouter();
+const menuStore = useMenuStore();
 
 const loginForm = ref({
   username: '',
@@ -51,21 +53,29 @@ const login = async () => {
 const success = (msg) => {
   isShow.value = false;
   openLoading('o(*≧▽≦)ツ加载中~');
-  // 登录请求
-  userLogin(loginForm.value.username, loginForm.value.password).then((res) => {
-    if (res) {
-      if (res.code == 200) {
-        loginToken.value = res.data;
-        Cookies.remove("loginToken");
-        Cookies.set("loginToken", loginToken.value, { expires: 7 });
+    // 登录请求
+  userLogin(loginForm.value.username, loginForm.value.password).then(async (res) => {
+    if (res && res.code === 200) {
+      loginToken.value = res.data;
+      Cookies.set("loginToken", loginToken.value, { expires: 7 });
+
+      // 获取菜单和路由
+      const { success, message } = await menuStore.fetchAndSetMenus();
+
+      if (success) {
         router.push('/');
         ElMessage.success("登录成功");
       } else {
-        ElMessage.error(res.msg || "登录失败，请检查用户名或密码");
+        ElMessage.error(message || '菜单加载失败');
+        // 可选择在这里清除 token
+        Cookies.remove("loginToken");
       }
+    } else {
+      ElMessage.error(res.msg || "登录失败，请检查用户名或密码");
     }
+  }).finally(() => {
+    closeLoading();
   });
-  closeLoading();
 
 };
 
@@ -131,14 +141,21 @@ const startPolling = (ticket: string) => {
         return
       }
 
-      // 用户已确认
+            // 用户已确认
       if (codeScanStatus === 2) {
         clearInterval(interval)
         qrcodeStatus.value = 'confirmed'
-        Cookies.remove("loginToken");
         Cookies.set("loginToken", response.data.token)
-        router.push('/')
-        ElMessage.success("登录成功")
+        
+        // 获取菜单和路由
+        const { success, message } = await menuStore.fetchAndSetMenus();
+        if(success){
+          router.push('/')
+          ElMessage.success("登录成功")
+        } else {
+          ElMessage.error(message || '菜单加载失败');
+          Cookies.remove("loginToken");
+        }
       }
     } catch (error) {
       console.log(error);

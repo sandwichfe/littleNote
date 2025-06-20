@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ManageLayout from '../ManageLayout.vue'
-import { getCurrentUserMenus } from '@/network/menu'
 import Cookies from 'js-cookie'
 
 // 基础路由
@@ -19,6 +18,7 @@ const constantRoutes = [
   },
   {
     path: '/',
+    name: 'ManageLayout', // 为主布局路由添加名称
     component: ManageLayout,
     children: [
       {
@@ -85,41 +85,18 @@ export function generateRoutes(menuData) {
   return routes
 }
 
-// 修改路由守卫
-router.beforeEach(async (to, from, next) => {
+// 路由守卫
+router.beforeEach((to, from, next) => {
   const token = Cookies.get('loginToken')
-  
-  if (!token && to.path !== '/login') {
-    next('/login')
-    return
-  }
-  
-  if (token && to.path === '/login') {
-    // 允许访问login页面，以便用户能够重新登录
-    next()
-    return
-  }
 
-  if (token && router.getRoutes().length === 2) {
-    try {
-      const response = await getCurrentUserMenus()
-      if (response.code === 200) {
-        const routes = generateRoutes(response.data)
-        // 将所有路由添加为根路由的子路由
-        routes.forEach(route => {
-          router.addRoute('Layout', route)
-        })
-        next({ ...to, replace: true })
-      } else {
-        Cookies.remove('loginToken')
-        next('/login')
-      }
-    } catch (error) {
-      console.error('加载动态路由失败:', error)
-      Cookies.remove('loginToken')
-      next('/login')
-    }
+  if (!token && to.path !== '/login') {
+    // 如果没有token且目标不是登录页，重定向到登录页
+    next('/login')
+  } else if (token && to.path === '/login') {
+    // 如果有token且要去登录页，重定向到首页
+    next('/')
   } else {
+    // 其他情况正常放行
     next()
   }
 })
