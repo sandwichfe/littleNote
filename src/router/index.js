@@ -113,14 +113,17 @@ router.beforeEach(async (to, from, next) => {
             // 使用 replace: true, 以免用户回退到之前的状态
             next({ ...to, replace: true })
           } else {
+            console.error('获取用户菜单失败:')
             // 获取菜单失败，清除 token 并重定向到登录页
             menuStore.resetMenuState()
-            next('/login')
+            // Cookies.remove('loginToken')
+            // next('/login')
           }
         } catch (error) {
-          console.error('Router guard error:', error)
+          console.error('获取用户菜单失败:', error)
           menuStore.resetMenuState()
-          next('/login')
+          // Cookies.remove('loginToken')
+          // next('/login')
         }
       } else {
         next()

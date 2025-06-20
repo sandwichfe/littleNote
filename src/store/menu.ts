@@ -36,7 +36,6 @@ export const useMenuStore = defineStore('menu', () => {
   const resetMenuState = () => {
     menuData.value = []
     areRoutesAdded.value = false
-    Cookies.remove('loginToken')
   }
 
   return { menuData, areRoutesAdded, fetchAndSetMenus, resetMenuState }

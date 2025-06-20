@@ -70,6 +70,7 @@ const updateCurrentUserInfo = async () => {
 
 const logout = () => {
   menuStore.resetMenuState()
+  Cookies.remove('loginToken')
   router.push('/login');
 }
 
