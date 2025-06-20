@@ -78,7 +78,6 @@ export default {
 <script setup lang="ts">
 import { listNote, type Note } from "@/network/base"; // 引入自己封装的axios请求函数
 import { listNoteGroup } from "@/network/noteGroup";
-import { love } from "@/utils/love";
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick } from 'vue';
 import { openLoading, closeLoading } from "@/utils/loadingUtil";
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
@@ -165,7 +164,6 @@ onDeactivated(() => {
 onMounted(() => {
   console.log("huilail...")
   initList();
-  love();
   // 在页面加载完自动滚动到指定位置
   nextTick(() => {
     setTimeout(() => {
