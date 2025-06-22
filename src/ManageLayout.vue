@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Setting, Plus } from '@element-plus/icons-vue';
+import { Plus } from '@element-plus/icons-vue';
 import Cookies from 'js-cookie';
 import {
   getCurrentUser,
@@ -72,28 +72,6 @@ const logout = () => {
   menuStore.resetMenuState()
   Cookies.remove('loginToken')
   router.push('/login');
-}
-
-const isFloatingMenuVisible = ref(false)
-
-const toggleFloatingMenu = () => {
-  // console.log('toggleFloatingMenu')
-  // console.log('begin', isFloatingMenuVisible.value)
-  isFloatingMenuVisible.value = !isFloatingMenuVisible.value
-  // console.log('end', isFloatingMenuVisible.value)
-}
-const showFloatingMenu = () => {
-  // console.log('showFloatingMenu')
-  isFloatingMenuVisible.value = true
-}
-
-const hideFloatingMenu = () => {
-  // 避免鼠标移出菜单时，菜单被隐藏
-  setTimeout(() => {
-    if (!document.querySelector('.floating-menu:hover')) {
-      isFloatingMenuVisible.value = false;
-    }
-  }, 200);
 }
 
 // 关闭单个 Tab
@@ -185,11 +163,7 @@ onMounted(() => {
 
     <!-- 左侧菜单 -->
     <div class="menu" :class="{ 'mobile-menu-visible': isMobileMenuVisible }">
-      <el-menu
-        :default-active="route.path"
-        class="el-menu-vertical"
-        @select="handleSelect"
-      >
+      <el-menu :default-active="route.path" class="el-menu-vertical" @select="handleSelect">
         <!-- 使用递归组件方式渲染菜单 -->
         <template v-for="menu in menuData" :key="menu.id">
           <el-sub-menu v-if="menu.children && menu.children.length" :index="menu.path || menu.name">
@@ -205,23 +179,26 @@ onMounted(() => {
 
     <!-- 右侧区域 -->
     <div class="right-content" style="width: 100%;" @click="isMobileMenuVisible = false">
-      <!--用户信息  -->
+   
       <header class="header">
-        <div class="user-info-container" @click="toggleFloatingMenu" @mouseenter="!isMobile && showFloatingMenu()"
-          @mouseleave="!isMobile && hideFloatingMenu()">
-          <el-avatar :size="40" :src="userForm.avatar" class="avatar"></el-avatar>
-          <span class="nickname">{{ userForm.nickname }}</span>
-          <el-icon :size="25" color="#9fc4f0">
-            <Setting />
-          </el-icon>
 
-          <div class="floating-menu" v-show="isFloatingMenuVisible" @mouseenter="!isMobile && showFloatingMenu()"
-            @mouseleave="!isMobile && hideFloatingMenu()">
-            <div class="menu-item" @click="openDialog">修改资料</div>
-            <div class="menu-item" @click="logout">退出登录</div>
-          </div>
-
+           <!--用户信息  -->
+        <div>
+          <el-dropdown trigger="hover" @command="handleCommand">
+            <div class="user-info-container">
+              <el-avatar :size="40" :src="userForm.avatar" class="avatar"></el-avatar>
+              <span class="nickname">{{ userForm.nickname }}</span>
+            </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="openDialog" @click="openDialog">修改资料</el-dropdown-item>
+                <el-dropdown-item command="logout" @click="logout">退出登录</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </div>
+
+
       </header>
 
       <!-- 内容区域 -->
@@ -328,6 +305,7 @@ onMounted(() => {
   padding: 8px;
   border-radius: 4px;
   transition: background-color 0.3s ease;
+  outline: none;
 }
 
 .user-info-container:hover {
@@ -345,43 +323,6 @@ onMounted(() => {
 .nickname {
   font-weight: 500;
   color: #333;
-}
-
-.floating-menu {
-  display: block;
-  position: absolute;
-  top: 55px; /* Adjusted position */
-  right: 0; /* Align to the right of the container */
-  background-color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Softer shadow */
-  border-radius: 6px;
-  padding: 8px 0; /* Adjusted padding */
-  width: 150px;
-  z-index: 1000;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  pointer-events: none;
-}
-
-.user-info-container:hover .floating-menu,
-.floating-menu:hover {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-.floating-menu .menu-item {
-  padding: 10px 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  font-size: 14px;
-  color: #555;
-}
-
-.floating-menu .menu-item:hover {
-  background-color: #e6f7ff;
-  color: #1890ff;
 }
 
 .content {
@@ -560,10 +501,7 @@ onMounted(() => {
     margin: 5vh auto !important;
   }
 
-  .floating-menu {
-    top: 50px; /* Adjust for mobile header */
-    right: 10px;
-  }
+
 
   .avatar-uploader-icon,
   .avatar-uploader .avatar {
