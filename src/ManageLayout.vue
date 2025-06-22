@@ -144,7 +144,7 @@ const cropAndUpload = () => {
   const { canvas } = cropperRef.value.getResult();
   if (canvas) {
     canvas.toBlob(async (blob) => {
-      const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+      const file = new File([blob],`${Date.now()}.jpg`, { type: "image/jpeg" });
       try {
         const response = await uploadImage(file);
         userForm.value.avatar = `${import.meta.env.VITE_UPLOAD_BASE_URL}/${response.data}`;
@@ -218,10 +218,10 @@ onMounted(() => {
 
            <!--用户信息  -->
         <div>
-          <el-dropdown trigger="hover" @command="handleCommand">
+          <el-dropdown trigger="hover" @command="handleCommand" popper-class="user-dropdown">
             <div class="user-info-container">
               <el-avatar :size="40" :src="userForm.avatar" class="avatar"></el-avatar>
-              <span class="nickname">{{ userForm.nickname }}</span>
+              <span class="nickname" :title="userForm.nickname">{{ userForm.nickname }}</span>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
@@ -269,8 +269,8 @@ onMounted(() => {
     </el-dialog>
 
     <!-- Cropper Dialog -->
-    <el-dialog v-model="cropperDialogVisible" title="裁剪头像" width="50%">
-      <div style="height: 400px;">
+    <el-dialog v-model="cropperDialogVisible" title="裁剪头像" width="650px" center>
+      <div style="height: 450px;">
         <Cropper
           ref="cropperRef"
           :src="imageToCrop"
@@ -280,10 +280,13 @@ onMounted(() => {
         />
       </div>
       <template #footer>
-        <el-button @click="cropperDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="cropAndUpload">确认</el-button>
+        <span class="dialog-footer">
+          <el-button @click="cropperDialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="cropAndUpload">确 认</el-button>
+        </span>
       </template>
     </el-dialog>
+    
   </div>
 </template>
 
@@ -357,6 +360,8 @@ onMounted(() => {
   border-radius: 4px;
   transition: background-color 0.3s ease;
   outline: none;
+  min-width: 150px; /* Prevent layout shift */
+  justify-content: flex-start;
 }
 
 .user-info-container:hover {
@@ -376,6 +381,15 @@ onMounted(() => {
   color: #333;
 }
 
+.user-info-container .nickname {
+  display: inline-block;
+  max-width: 80px; /* Approx 5 Chinese characters */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle; /* Helps align with avatar */
+}
+
 .content {
   flex: 1;
   padding: 20px;
@@ -385,6 +399,15 @@ onMounted(() => {
 }
 
 /* Tabs styling */
+:deep(.user-dropdown .el-dropdown-menu) {
+  min-width: 150px;
+  padding: 6px 0;
+}
+
+:deep(.user-dropdown .el-dropdown-menu__item) {
+  justify-content: center;
+}
+
 .el-tabs--card > .el-tabs__header {
   border-bottom: 1px solid #dcdfe6; /* Lighter border */
   margin-bottom: 0;
