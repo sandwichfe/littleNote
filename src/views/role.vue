@@ -7,10 +7,11 @@
       <el-table-column prop="id" label="ID" width="80"></el-table-column>
       <el-table-column prop="roleName" label="角色名称"></el-table-column>
       <el-table-column prop="description" label="描述"></el-table-column>
-      <el-table-column label="操作" width="200">
+      <el-table-column label="操作" width="240">
         <template #default="scope">
           <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
           <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button size="small" type="warning" @click="handleAssignMenu(scope.row)">分配菜单</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -40,11 +41,27 @@
         <el-button type="primary" @click="submitForm">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 分配菜单对话框 -->
+    <el-dialog v-model="menuDialogVisible" title="分配菜单">
+      <el-tree
+        :data="allMenus"
+        show-checkbox
+        node-key="id"
+
+        :props="{ label: 'name', children: 'children' }"
+        ref="menuTree"
+      />
+      <template #footer>
+        <el-button @click="menuDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitAssignMenu">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   createRole, 
@@ -53,6 +70,8 @@ import {
   updateRole, 
   deleteRole 
 } from '../network/role'
+import { getTreeMenus } from '../network/menu'
+import { getMenusByRoleId, assignMenusToRole } from '../network/roleMenu'
 
 // 角色列表和加载状态
 const roleList = ref([])
@@ -67,6 +86,13 @@ const total = ref(0)
 const dialogVisible = ref(false)
 const formTitle = ref('')
 const isCreate = ref(true)
+
+// 菜单分配对话框
+const menuDialogVisible = ref(false)
+const allMenus = ref([])
+const currentRoleMenus = ref([])
+const currentRoleId = ref(null)
+const menuTree = ref(null)
 
 // 表单数据和校验规则
 const form = reactive({
@@ -86,6 +112,7 @@ const rules = reactive({
 // 生命周期钩子
 onMounted(() => {
   fetchRoles()
+  fetchAllMenus()
 })
 
 // 获取角色列表
@@ -169,6 +196,52 @@ const handleDelete = (row) => {
       ElMessage.error('删除失败')
     }
   })
+}
+
+// 获取所有菜单
+const fetchAllMenus = async () => {
+  try {
+    const response = await getTreeMenus({ pageNum: 1, pageSize: 1000 })
+    allMenus.value = response.data
+  } catch (error) {
+    console.error('获取所有菜单失败:', error)
+  }
+}
+
+// 打开分配菜单对话框
+const handleAssignMenu = async (row) => {
+  currentRoleId.value = row.id
+  // 先清空,防止上次的结果影响
+  if (menuTree.value) {
+    menuTree.value.setCheckedKeys([])
+  }
+  try {
+    const response = await getMenusByRoleId(row.id)
+    currentRoleMenus.value = response.data
+    menuDialogVisible.value = true
+
+    await nextTick()
+
+    if (menuTree.value) {
+      menuTree.value.setCheckedKeys(currentRoleMenus.value)
+    }
+  } catch (error) {
+    console.error('获取角色菜单失败:', error)
+    ElMessage.error('获取角色菜单失败')
+  }
+}
+
+// 提交菜单分配
+const submitAssignMenu = async () => {
+  try {
+    const checkedKeys = menuTree.value.getCheckedKeys()
+    await assignMenusToRole(currentRoleId.value, checkedKeys)
+    ElMessage.success('分配菜单成功')
+    menuDialogVisible.value = false
+  } catch (error) {
+    console.error('分配菜单失败:', error)
+    ElMessage.error('分配菜单失败')
+  }
 }
 </script>
 

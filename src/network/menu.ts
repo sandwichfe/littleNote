@@ -37,7 +37,7 @@ export const getAllMenus = (pageVo: PageVo) => LoginRequest({
 export const getTreeMenus = (pageVo: PageVo) => LoginRequest({ 
   method: 'get', 
   url: '/sys/menu/tree', 
-  data: pageVo 
+  params: pageVo 
 })
 
 export const updateMenu = (menu: Menu) => LoginRequest({ 

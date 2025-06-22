@@ -9,10 +9,11 @@
       <el-table-column prop="username" label="账号"></el-table-column>
       <el-table-column prop="email" label="邮箱"></el-table-column>
       <el-table-column prop="mobile" label="手机号"></el-table-column>
-      <el-table-column label="操作" width="200">
+      <el-table-column label="操作" width="240">
         <template #default="scope">
           <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
           <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button size="small" type="warning" @click="handleAssignRole(scope.row)">分配角色</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -51,11 +52,26 @@
         <el-button type="primary" @click="submitForm">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- 分配角色对话框 -->
+    <el-dialog v-model="roleDialogVisible" title="分配角色" @opened="setTreeKeys" @close="handleClose">
+      <el-tree
+        :data="allRoles"
+        show-checkbox
+        node-key="id"
+        :props="{ label: 'roleName', children: 'children' }"
+        ref="roleTree"
+      />
+      <template #footer>
+        <el-button @click="roleDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitAssignRole">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   createUser, 
@@ -64,6 +80,8 @@ import {
   updateUser, 
   deleteUser 
 } from '../network/user'
+import { getAllRoles } from '../network/role'
+import { getRolesByUserId, assignRolesToUser } from '../network/userRole'
 
 // 用户列表和加载状态
 const userList = ref([])
@@ -78,6 +96,13 @@ const total = ref(0)
 const dialogVisible = ref(false)
 const formTitle = ref('')
 const isCreate = ref(true)
+
+// 角色分配对话框
+const roleDialogVisible = ref(false)
+const allRoles = ref([])
+const currentUserRoles = ref([])
+const currentUserId = ref(null)
+const roleTree = ref(null)
 
 // 表单数据和校验规则
 const form = reactive({
@@ -102,6 +127,7 @@ const rules = reactive({
 // 生命周期钩子
 onMounted(() => {
   fetchUsers()
+  fetchAllRoles()
 })
 
 // 获取用户列表
@@ -181,6 +207,52 @@ const handleDelete = (row) => {
       ElMessage.error('删除失败')
     }
   })
+}
+
+// 获取所有角色
+const fetchAllRoles = async () => {
+  try {
+    const response = await getAllRoles({ pageNum: 1, pageSize: 1000 })
+    allRoles.value = response.data.records
+  } catch (error) {
+    console.error('获取所有角色失败:', error)
+  }
+}
+
+// 打开分配角色对话框
+const handleAssignRole = async (row) => {
+  currentUserId.value = row.id
+  try {
+    const response = await getRolesByUserId(row.id)
+    currentUserRoles.value = response.data
+    roleDialogVisible.value = true
+  } catch (error) {
+    console.error('获取用户角色失败:', error)
+    ElMessage.error('获取用户角色失败')
+  }
+}
+
+const setTreeKeys = () => {
+  if (roleTree.value) {
+    roleTree.value.setCheckedKeys(currentUserRoles.value)
+  }
+}
+
+const handleClose = () => {
+  currentUserRoles.value = []
+}
+
+// 提交角色分配
+const submitAssignRole = async () => {
+  try {
+    const checkedKeys = roleTree.value.getCheckedKeys()
+    await assignRolesToUser(currentUserId.value, checkedKeys)
+    ElMessage.success('分配角色成功')
+    roleDialogVisible.value = false
+  } catch (error) {
+    console.error('分配角色失败:', error)
+    ElMessage.error('分配角色失败')
+  }
 }
 </script>
 
