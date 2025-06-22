@@ -2,12 +2,16 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Plus } from '@element-plus/icons-vue';
+import { Cropper } from 'vue-advanced-cropper';
+import 'vue-advanced-cropper/dist/style.css';
 import Cookies from 'js-cookie';
 import {
   getCurrentUser,
   updateCurrentUser
 } from '@/network/user'
+import { uploadImage } from '@/network/base'
 import { useMenuStore } from '@/store/menu'
+import { ElMessage } from 'element-plus';
 
 const route = useRoute()
 const router = useRouter()
@@ -57,11 +61,13 @@ const fetchUserInfo = async () => {
 // 更新当前用户信息
 const updateCurrentUserInfo = async () => {
   try {
-    const response = await updateCurrentUser(userForm.value)
+    const response = await updateCurrentUser({
+      nickname: userForm.value.nickname,
+      avatarUrl: userForm.value.avatar,
+    })
     dialogVisible.value = false
     ElMessage.success('保存成功')
     fetchUserInfo();
-
   } catch (error) {
     console.error('更新用户信息失败:', error)
   }
@@ -107,22 +113,50 @@ const userForm = ref({
   avatar: ''
 })
 
+const cropperDialogVisible = ref(false)
+const imageToCrop = ref(null)
+const cropperRef = ref(null)
+
 const openDialog = () => {
   dialogVisible.value = true
 }
 
-const handleAvatarSuccess = (response) => {
-  // userForm.value.avatar = response.url // 假设返回的图片 URL 在 response.url 中
-  userForm.value.avatar = 'http://49.235.149.110/favicon.ico';
-}
+
 
 const beforeAvatarUpload = (file) => {
-  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
+  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
   if (!isJPG) {
-    ElMessage.error('上传头像图片只能是 JPG 或 PNG 格式!')
+    ElMessage.error('上传头像图片只能是 JPG 或 PNG 格式!');
+    return false;
   }
-  return isJPG
-}
+
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => {
+    imageToCrop.value = reader.result;
+    cropperDialogVisible.value = true;
+  };
+
+  return false; // Prevent el-upload from uploading automatically
+};
+
+const cropAndUpload = () => {
+  const { canvas } = cropperRef.value.getResult();
+  if (canvas) {
+    canvas.toBlob(async (blob) => {
+      const file = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+      try {
+        const response = await uploadImage(file);
+        userForm.value.avatar = `${import.meta.env.VITE_UPLOAD_BASE_URL}/${response.data}`;
+        ElMessage.success('上传成功');
+        cropperDialogVisible.value = false;
+      } catch (error) {
+        console.error('上传头像失败:', error);
+        ElMessage.error('上传头像失败');
+      }
+    }, 'image/jpeg');
+  }
+};
 
 const isMobileMenuVisible = ref(false)
 const isMobile = ref(false)
@@ -219,8 +253,8 @@ onMounted(() => {
           <el-input v-model="userForm.nickname" placeholder="请输入昵称"></el-input>
         </el-form-item>
         <el-form-item label="头像">
-          <el-upload class="avatar-uploader" :action="'/upload/avatar'" :show-file-list="false"
-            :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
+                              <el-upload class="avatar-uploader" :show-file-list="false"
+            :before-upload="beforeAvatarUpload">
             <img v-if="userForm.avatar" :src="userForm.avatar" class="avatar" />
             <el-icon v-else class="avatar-uploader-icon">
               <Plus />
@@ -231,6 +265,23 @@ onMounted(() => {
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="updateCurrentUserInfo">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Cropper Dialog -->
+    <el-dialog v-model="cropperDialogVisible" title="裁剪头像" width="50%">
+      <div style="height: 400px;">
+        <Cropper
+          ref="cropperRef"
+          :src="imageToCrop"
+          :stencil-props="{
+            aspectRatio: 1/1
+          }"
+        />
+      </div>
+      <template #footer>
+        <el-button @click="cropperDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="cropAndUpload">确认</el-button>
       </template>
     </el-dialog>
   </div>

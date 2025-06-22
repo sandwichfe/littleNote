@@ -4,10 +4,10 @@ import { LoginRequest } from './request'
 interface User {
   id?: number
   nickname: string
-  username: string
+  username?: string
   password?: string
   mobile?: string
-  email: string
+  email?: string
   avatarUrl?: string
   deleted?: boolean
   sourceFrom?: string
@@ -29,6 +29,6 @@ export const updateUser = (user: User) => LoginRequest({ method: 'post', url: '/
 export const deleteUser = (id: number) => LoginRequest({ method: 'delete', url: `/sys/user/delete/${id}` })
 
 
-export const getCurrentUser = () => LoginRequest({ method: 'get', url: `/sys/user/current` })
+export const getCurrentUser = () => LoginRequest({ method: 'get', url: `/sys/user/getCurrentUser` })
 
-export const updateCurrentUser = (user: User) => LoginRequest({ method: 'post', url: '/sys/user/update/current', data: user })
+export const updateCurrentUser = (user: User) => LoginRequest({ method: 'post', url: '/sys/user/updateCurrentUser', data: user })
