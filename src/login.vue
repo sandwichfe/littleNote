@@ -228,6 +228,9 @@ const validateEmail = (email) => {
 const switchToRegister = () => {
   isRegisterMode.value = true;
   showQrcode.value = false;
+  // 清空登录表单
+  registerForm.value.username = ''
+  registerForm.value.password = ''
 };
 
 // 切换到登录模式
@@ -254,12 +257,12 @@ const switchToLogin = () => {
         <div v-if="!showQrcode && !isRegisterMode" class="account-login-form">
           <el-form label-position="left" label-width="0px" class="login-el-form">
             <el-form-item>
-              <el-input type="text" v-model="loginForm.username" auto-complete="off" placeholder="请输入账号"
+              <el-input type="text" v-model="loginForm.username"  placeholder="请输入账号"
                 class="std-input-height"></el-input>
             </el-form-item>
 
             <el-form-item class="password-with-forgot-link">
-              <el-input type="password" v-model="loginForm.password" auto-complete="off" placeholder="请输入密码"
+              <el-input type="password" v-model="loginForm.password"  placeholder="请输入密码"
                 class="std-input-height">
               </el-input>
               <a href="#" class="forgot-password-link-inline">忘记密码?</a>
@@ -314,18 +317,18 @@ const switchToLogin = () => {
       <div v-if="isRegisterMode">
           <el-form label-position="left" label-width="0px" class="login-el-form">
             <el-form-item>
-              <el-input type="link" v-model="registerForm.username" auto-complete="off" placeholder="请输入用户名"
-                class="std-input-height"></el-input>
+              <el-input type="link" v-model="registerForm.username"  placeholder="请输入用户名"
+                class="std-input-height" autocomplete="off"></el-input>
             </el-form-item>
 
             <el-form-item>
-              <el-input type="password" v-model="registerForm.password" auto-complete="off" placeholder="请输入密码"
-                class="std-input-height"></el-input>
+              <el-input type="password" v-model="registerForm.password"  placeholder="请输入密码"
+                class="std-input-height" autocomplete="new-password"></el-input>
             </el-form-item>
 
             <el-form-item>
-              <el-input type="password" v-model="registerForm.confirmPassword" auto-complete="off" placeholder="请确认密码"
-                class="std-input-height"></el-input>
+              <el-input type="password" v-model="registerForm.confirmPassword"  placeholder="请确认密码"
+                class="std-input-height" autocomplete="new-password"></el-input>
             </el-form-item>
 
             <el-form-item>
