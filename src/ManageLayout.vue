@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Plus } from '@element-plus/icons-vue';
 import { Cropper } from 'vue-advanced-cropper';
@@ -20,6 +20,8 @@ const tabs = ref([
 ])
 const menuStore = useMenuStore()
 const menuData = menuStore.menuData
+const userInfoContainer = ref(null)
+const dropdownWidth = ref('auto')
 
 
 
@@ -39,7 +41,7 @@ onMounted(() => {
   }
 
   // 页面加载时获取用户信息
-  fetchUserInfo() 
+  fetchUserInfo()
 
 })
 
@@ -52,6 +54,10 @@ const fetchUserInfo = async () => {
     userForm.value = {
       nickname: userData.nickname || '默认昵称',
       avatar: userData.avatarUrl || 'http://49.235.149.110/favicon.ico'
+    }
+    await nextTick()
+    if (userInfoContainer.value) {
+      dropdownWidth.value = `${userInfoContainer.value.offsetWidth}px`
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)
@@ -224,9 +230,13 @@ onMounted(() => {
               <span class="nickname" :title="userForm.nickname">{{ userForm.nickname }}</span>
             </div>
             <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="openDialog" @click="openDialog">修改资料</el-dropdown-item>
-                <el-dropdown-item command="logout" @click="logout">退出登录</el-dropdown-item>
+              <el-dropdown-menu style="width: 150px;">
+                <el-dropdown-item command="openDialog" @click="openDialog">
+                   <div class="dropdown-item-content">修改资料</div>
+                 </el-dropdown-item>
+                 <el-dropdown-item command="logout" @click="logout">
+                   <div class="dropdown-item-content">退出登录</div>
+                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -290,7 +300,53 @@ onMounted(() => {
   </div>
 </template>
 
+
 <style scoped>
+.header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 20px;
+  height: 60px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
+}
+
+.user-info-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 12px;
+  height: 100%;
+  transition: background .3s;
+}
+
+.user-info-container:hover {
+  background: rgba(0,0,0,.025);
+}
+
+.avatar {
+  flex-shrink: 0;
+}
+
+.nickname {
+  margin-left: 10px;
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.dropdown-item-content {
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .manage-layout {
   display: flex;
   height: 100vh;
@@ -396,16 +452,6 @@ onMounted(() => {
   overflow: auto;
   background-color: #ffffff; /* Softer, more modern background */
   transition: background-color 0.3s ease;
-}
-
-/* Tabs styling */
-:deep(.user-dropdown .el-dropdown-menu) {
-  min-width: 150px;
-  padding: 6px 0;
-}
-
-:deep(.user-dropdown .el-dropdown-menu__item) {
-  justify-content: center;
 }
 
 .el-tabs--card > .el-tabs__header {
