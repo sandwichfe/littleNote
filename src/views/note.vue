@@ -251,12 +251,7 @@ const clearTimer = () => {
 
 // 添加或更新笔记 
 const addOrUpdateNote = (id) => {
-  openLoading();
-  if (id === -1) {
-    router.push(`/noteDetail/-1`);
-  } else {
-    router.push(`/noteDetail/${id}`);
-  }
+  router.push(`/noteDetail/${id}`);
 };
 </script>
 
