@@ -3,28 +3,25 @@
 
 
     <!-- 添加 -->
-      <div class="top-box">
-        <div class="add-btn" @click="addOrUpdateNote(-1)">
-          <svg-icon iconClass="add" className="list-btn-switch" />
-        </div>
+    <div class="top-box">
+      <div class="add-btn" @click="addOrUpdateNote(-1)">
+        <svg-icon iconClass="add" className="list-btn-switch" />
+      </div>
 
-        <!-- 分组筛选 -->
-        <div>
-          <el-select v-model="groupValue" placeholder="分组" size="large" style="width:180px; " clearable
-            @change="changeGroup">
-            <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
-          </el-select>
-        </div>
-
-
+      <!-- 分组筛选 -->
+      <div>
+        <el-select v-model="groupValue" placeholder="分组" size="large" style="width:180px; " clearable
+          @change="changeGroup">
+          <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
+        </el-select>
+      </div>
 
     </div>
 
-    <div class="head head_bg">
-      <!-- 搜索 -->
-      <div class="keyword-select">
-        <el-input v-model="searchValue" placeholder="请输入内容" ref="keywordSelect" clearable />
-      </div>
+    <!-- 搜索 -->
+    <div class="keyword-serach" >
+      <el-input v-model="searchValue" placeholder="请输入内容" ref="keywordSelect" size="large" style="width: 100%;"
+        clearable />
     </div>
 
     <div ref="scrollContainer" :style="{ height: scrollerHeight }" class="scroll_content" v-loading="loading"
@@ -320,25 +317,27 @@ const addOrUpdateNote = (id) => {
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2); /* Element Plus like focus ring */
 }
 
-.head {
-  margin-left: auto;
-  line-height: 40px;
-  height: 40px;
+.keyword-serach {
   background-color: #ffffff; /* White background for header */
-  display: flex;
-  justify-content: space-between;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); /* Subtle shadow for header */
+  border-radius: 10px;
 }
 
-.keyword-select .el-input__inner {
+.keyword-serach .el-input__inner {
   border-radius: 6px; /* Rounded input field */
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.keyword-select .el-input__inner:focus {
+.keyword-serach .el-input__inner:focus {
   border-color: #409EFF;
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+
+.keyword-serach .el-input {
+  transition: box-shadow 0.3s ease; /* Add transition for input focus */
+}
+
+.keyword-serach .el-input:focus-within {
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2); /* Element Plus like focus ring */
 }
 
 .scroll_content {
