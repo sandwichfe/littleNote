@@ -214,26 +214,24 @@ const remoteMethod = (query) => {
 };
 
 
-// 切换列表
-const switchList = () => {
-  listType.value = !listType.value;
-  // 这个方法应该是用来触发滚动
-  const vs = document.querySelector(".main_scroll_content");
-  vs?.scrollIntoView({ behavior: "smooth" });
-};
-
 const initList = () => {
   loading.value = true;
   Promise.all([
-    listNote(-1, -1),
     listNoteGroup(-1, -1)
-  ]).then(([noteRes, groupRes]) => {
-    contents.value = noteRes.data.records;
+  ]).then(([groupRes]) => {
     groups.value = groupRes.data.records;
     
-    // 默认选中第一个选项，但不触发changeGroup以避免重复加载数据
+    // 默认选中第一个选项
     if (groups.value && groups.value.length > 0) {
       groupValue.value = groups.value[0].id;
+      // 使用选中的分组ID加载笔记
+      let groupId = groupValue.value ? Number(groupValue.value) : null;
+      return listNote(-1, -1, groupId);
+    }
+    return listNote(-1, -1);
+  }).then(noteRes => {
+    if (noteRes) {
+      contents.value = noteRes.data.records;
     }
   }).catch(error => {
     console.error('Failed to load initial data:', error);

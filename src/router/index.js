@@ -36,6 +36,10 @@ const constantRoutes = [
       {
         path: '/menu',
         component: () => import('../views/menu.vue')
+      },
+      {
+        path: '/noteGroup',
+        component: () => import('../views/noteGroup.vue')
       }
     ]
   }
@@ -47,7 +51,8 @@ const componentMap = {
   '/user': () => import('../views/user.vue'),
   '/role': () => import('../views/role.vue'),
   '/menu': () => import('../views/menu.vue'),
-  '/qrcode': () => import('../views/qrcodeView.vue')
+  '/qrcode': () => import('../views/qrcodeView.vue'),
+  '/noteGroup': () => import('../views/noteGroup.vue')
 }
 
 const router = createRouter({

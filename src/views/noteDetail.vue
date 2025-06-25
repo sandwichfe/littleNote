@@ -104,6 +104,12 @@ onMounted(() => {
 
   listNoteGroup(-1, -1).then((res) => {
     groups.value = res.data.records;
+    
+    // 如果是新建笔记且没有选中分组，则默认选中第一个分组
+    if (paramId === -1 && !groupValue.value && groups.value && groups.value.length > 0) {
+      groupValue.value = groups.value[0].id;
+      noteData.value.groupId = Number(groups.value[0].id);
+    }
   });
 
 
