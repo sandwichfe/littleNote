@@ -270,7 +270,7 @@ const addOrUpdateNote = (id) => {
 }
 
 .top-box {
-  color: #42859396;
+  background: #fff;
   display: flex;
   word-break: keep-all;
   white-space: nowrap;
