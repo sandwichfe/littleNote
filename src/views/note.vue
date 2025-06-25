@@ -230,13 +230,17 @@ const initList = () => {
   ]).then(([noteRes, groupRes]) => {
     contents.value = noteRes.data.records;
     groups.value = groupRes.data.records;
+    
+    // 默认选中第一个选项，但不触发changeGroup以避免重复加载数据
+    if (groups.value && groups.value.length > 0) {
+      groupValue.value = groups.value[0].id;
+    }
   }).catch(error => {
     console.error('Failed to load initial data:', error);
     // Optionally show an error message to the user
   }).finally(() => {
     loading.value = false;
   });
-  
 };
 
 // 启动定时器
