@@ -2,11 +2,8 @@
   <div class="main_content">
 
 
-    <!-- 添加 -->
+
     <div class="top-box">
-      <div class="add-btn" @click="addOrUpdateNote(-1)">
-        <svg-icon iconClass="add" className="list-btn-switch" />
-      </div>
 
       <!-- 分组筛选 -->
       <div>
@@ -16,10 +13,15 @@
         </el-select>
       </div>
 
+      <!-- 添加 -->
+      <div class="add-btn" @click="addOrUpdateNote(-1)">
+        <svg-icon iconClass="add" className="list-btn-switch" />
+      </div>
+
     </div>
 
     <!-- 搜索 -->
-    <div class="keyword-serach" >
+    <div class="keyword-serach">
       <el-input v-model="searchValue" placeholder="请输入内容" ref="keywordSelect" size="large" style="width: 100%;"
         clearable />
     </div>
@@ -34,7 +36,6 @@
               <div class="ptime">{{ c.updateTime || c.createTime }}</div>
             </div>
           </li>
-          <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
         </ul>
       </div>
 
@@ -76,9 +77,11 @@ export default {
 import { listNote, type Note } from "@/network/base"; // 引入自己封装的axios请求函数
 import { listNoteGroup } from "@/network/noteGroup";
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick } from 'vue';
-import { openLoading, closeLoading } from "@/utils/loadingUtil";
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
-import { useStore } from "vuex"; // 引入 Vuex store
+import { useScrollStore } from "@/store/scroll"; // 引入 Pinia store
+
+// 引入 Pinia store
+const scrollStore = useScrollStore();
 
 const groupValue = ref('')
 
@@ -106,15 +109,39 @@ const changeGroup = (newValue: string) => {
 // 定义一个 ref 用于引用 DOM 元素  绑定dom的ref
 const scrollContainer = ref<HTMLElement | null>(null);
 
+
 // 设置滚动条到指定位置
 const scrollToPosition = (position) => {
+  console.log('尝试设置滚动条位置:', position);
   if (scrollContainer.value) {
     scrollContainer.value.scrollTop = position;
   }
 };
 
-// 引入 store
-const store = useStore();
+// 保存滚动条位置
+const saveScrollPosition = () => {
+  if (scrollContainer.value) {
+    const scrollTop = scrollContainer.value.scrollTop;
+    console.log('保存滚动条位置:', scrollTop);
+    scrollStore.updateScrollPosition(scrollTop);
+    return true;
+  } else {
+    console.warn('scrollContainer未找到，无法保存滚动位置');
+    return false;
+  }
+};
+
+// 恢复滚动条位置
+const restoreScrollPosition = (delay = 100) => {
+  const savedScrollPosition = scrollStore.scrollPosition;
+  if (savedScrollPosition) {
+    setTimeout(() => {
+      scrollToPosition(savedScrollPosition);
+    }, delay);
+    return true;
+  }
+  return false;
+};
 
 
 // 节流函数
@@ -135,7 +162,6 @@ const listType = ref(true);
 const contents = ref<Note[]>([]);
 const loading = ref(false);
 const backTopVisible = ref(false);
-const currentPath = ref('');
 const searchValue = ref("");
 
 
@@ -151,38 +177,18 @@ watch(searchValue, (newValue) => {
   }, 300);
 });
 
-// 生命周期钩子
-onActivated(() => {
-});
-
-onDeactivated(() => {
-});
-
 onMounted(() => {
-  console.log("huilail...")
   initList();
-  // 在页面加载完自动滚动到指定位置
+  
+  // 在页面首次加载时恢复滚动位置
   nextTick(() => {
-    setTimeout(() => {
-      const savedScrollPosition = store.state.scrollPosition;
-      if (savedScrollPosition) {
-        scrollToPosition(savedScrollPosition);  // 页面加载时滚动到 500px
-      }
-    }, 50);  // 延迟50，确保 DOM 已经渲染完成
+    restoreScrollPosition(200);
   });
 });
 
-
 onBeforeRouteLeave((to, from, next) => {
-  console.log("luyou likail ")
-
-  // 路由离开时保存滚动条位置  
-  let scrollTop = scrollContainer.value.scrollTop
-  // debugger
-  if (scrollTop) {
-    // 将滚动条的垂直位置保存vuex
-    store.dispatch("updateScrollPosition", scrollTop);
-  }
+  // 路由离开时保存滚动条位置
+  saveScrollPosition();
   next();
 });
 
@@ -268,7 +274,8 @@ const addOrUpdateNote = (id) => {
   display: flex;
   word-break: keep-all;
   white-space: nowrap;
-  flex-direction: row-reverse;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .top-box div {
@@ -276,37 +283,30 @@ const addOrUpdateNote = (id) => {
   transition: background-color 0.9s ease, transform 0.3s ease; /* Added transform transition */
 }
 
-.top-box .add-btn {
-  position: relative; /* Needed for pseudo-element positioning */
+.add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
 }
 
-.top-box .add-btn::before {
-  margin-left: 17.5px;
-  content: '';
-  position: absolute;
-  width: 25px;
-  height: 30px;
-  background-color: rgba(135, 206, 235, 0.4); /* Sky blueish with more opacity */
-  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.4s ease; /* Smoother transition */
-  border-radius: 50%; /* Circular pulse */
-  transform: scale(0);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 0; /* Ensure it's behind the icon */
+@keyframes rotateEffect {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  33% {
+    transform: rotate(-7.5deg) scale(1.1);
+  }
+  66% {
+    transform: rotate(7.5deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(0deg) scale(1.1);
+  }
 }
 
-.top-box .add-btn:hover::before {
-  transform: scale(2.5); /* Larger pulse */
-  opacity: 1;
-}
-
-.top-box .add-btn:hover {
-  transform: scale(1.1); /* Slight scale up on hover for the button itself */
-}
-
-.top-box .add-btn span {
-  position: relative;
-  z-index: 1;
+.add-btn:hover {
+  animation: rotateEffect 0.8s ease forwards;
 }
 
 .el-select {
@@ -477,7 +477,7 @@ ul>i {
   width: 35px; /* Adjusted size */
   height: 35px;
   line-height: 35px;
-  color: #555; /* Darker icon color */
+  color: #a9c0dd; /* Darker icon color */
 }
 
 /* General transitions for interactive elements */
