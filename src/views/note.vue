@@ -4,28 +4,36 @@
 
 
     <div class="top-box">
+      <div class="filter-container">
+        <!-- 分组筛选 -->
+        <div class="filter-item">
+          <el-select v-model="groupValue" placeholder="类型" size="large" clearable
+            @change="changeGroup">
+            <template #prefix>
+              <svg-icon iconClass="filter" className="filter-icon" />
+            </template>
+            <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
+          </el-select>
+        </div>
 
-      <!-- 分组筛选 -->
-      <div>
-        <el-select v-model="groupValue" placeholder="分组" size="large" style="width:180px; " clearable
-          @change="changeGroup">
-          <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
-        </el-select>
+        <!-- 搜索框移到顶部 -->
+        <div class="filter-item search-box">
+          <el-input v-model="searchValue" placeholder="搜索笔记" ref="keywordSelect" size="large" clearable>
+            <template #prefix>
+              <svg-icon iconClass="search" className="search-icon" />
+            </template>
+          </el-input>
+        </div>
       </div>
 
       <!-- 添加 -->
       <div class="add-btn" @click="addOrUpdateNote(-1)">
-        <svg-icon iconClass="add" className="list-btn-switch" />
+        <svg-icon iconClass="add" className="add-btn-svg" />
       </div>
 
     </div>
 
-    <!-- 搜索 -->
-    <div class="keyword-serach">
-      <el-input v-model="searchValue" placeholder="请输入内容" ref="keywordSelect" size="large" style="width: 100%;"
-        clearable />
-    </div>
-
+    <!-- 列表 -->
     <div ref="scrollContainer" :style="{ height: scrollerHeight }" class="scroll_content" v-loading="loading"
       element-loading-text="o(*≧▽≦)ツ加载中~">
       <div v-if="contents && contents.length > 0">
@@ -53,15 +61,6 @@
       </el-dialog>
     </div>
 
-    <div class="util-col">
-      <!-- 样式切换 -->
-      <div class="show-box" @click="switchList">
-        <button>
-          <svg-icon iconClass="list-icon" className="list-btn-switch" v-if="!listType" />
-          <svg-icon iconClass="app-icon" className="list-btn-switch" v-if="listType" />
-        </button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -167,7 +166,7 @@ const searchValue = ref("");
 
 // 计算属性
 const scrollerHeight = computed(() => {
-  return (document.documentElement.clientHeight - 30 - 65 - 41 - 5) + 'px';
+  return (document.documentElement.clientHeight - 70 -10  ) + 'px';
 });
 
 // 监听
@@ -260,7 +259,6 @@ const addOrUpdateNote = (id) => {
 
 <style scoped>
 .main_content {
-  width: 95%;
   margin: 0 auto;
   position: relative;
   overflow: hidden;
@@ -276,11 +274,42 @@ const addOrUpdateNote = (id) => {
   white-space: nowrap;
   justify-content: space-between;
   align-items: center;
+  padding: 15px 20px;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.filter-item {
+  transition: all 0.3s ease;
+  width: 180px; /* 固定宽度 */
+  flex-shrink: 0; /* 防止压缩 */
+}
+
+.filter-item .el-select {
+  width: 100%; /* 使select填满filter-item */
+}
+
+.search-box {
+  flex: 1; /* 占据剩余空间 */
+  min-width: 100px; /* 最小宽度 */
+  margin-right: 10px;
+}
+
+.filter-icon, .search-icon {
+  color: #909399;
+  margin-right: 5px;
 }
 
 .top-box div {
   cursor: pointer;
-  transition: background-color 0.9s ease, transform 0.3s ease; /* Added transform transition */
+  transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 .add-btn {
@@ -288,6 +317,8 @@ const addOrUpdateNote = (id) => {
   align-items: center;
   justify-content: center;
   transition: transform 0.3s ease;
+  width: 50px; /* 固定宽度 */
+  flex-shrink: 0; /* 防止压缩 */
 }
 
 @keyframes rotateEffect {
@@ -345,7 +376,7 @@ const addOrUpdateNote = (id) => {
   border: 1px solid #e0e0e0; /* Lighter border */
   background-color: #ffffff; /* White background for content area */
   border-bottom: none;
-  border-radius: 8px;
+  border-radius: 0 0 8px 8px;
   padding: 10px;
 }
 
@@ -354,9 +385,9 @@ ul {
   margin-right: 10px;
   list-style: none;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  flex-direction: column; /* 改为纵向排列 */
   padding: 0; /* Remove default padding */
+  width: 100%; /* 确保宽度为100% */
 }
 
 ul>i {
@@ -373,6 +404,7 @@ ul>i {
   transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover */
   opacity: 0;
   animation: itemFadeInUp 0.5s ease-out forwards;
+  box-sizing: border-box; /* 确保宽度计算包含padding和border */
 }
 
 .line:hover {
@@ -408,6 +440,7 @@ ul>i {
   flex-direction: column;
   justify-content: center; /* Center content vertically */
   padding: 10px 0; /* Add some vertical padding */
+  overflow: hidden; /* 防止内容溢出 */
 }
 
 .prename {
@@ -422,6 +455,8 @@ ul>i {
   text-overflow: ellipsis;
   white-space: nowrap;
   transition: color 0.3s ease;
+  width: 100%; /* 确保宽度为100% */
+  max-width: 100%; /* 限制最大宽度 */
 }
 
 .line:hover .prename {
@@ -458,27 +493,18 @@ ul>i {
   border-bottom-right-radius: 8px;
 }
 
-.show-box button {
-  cursor: pointer;
-  border: none;
-  outline: none;
-  background-color: transparent;
-  padding: 5px;
-  border-radius: 50%;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-}
 
-.show-box button:hover {
-  background-color: #ecf5ff; /* Light blue background on hover */
-  transform: scale(1.1);
-}
-
-.list-btn-switch {
+.add-btn-svg {
   width: 35px; /* Adjusted size */
   height: 35px;
   line-height: 35px;
-  color: #a9c0dd; /* Darker icon color */
+  color: #78a8e4; /* Darker icon color */
 }
+
+.add-btn-svg:hover {
+color: #409EFF;
+}
+
 
 /* General transitions for interactive elements */
 .el-button, .el-select, .el-input {

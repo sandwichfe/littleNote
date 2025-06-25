@@ -130,7 +130,7 @@ const extractTitleFromHtml = (htmlString: string) => {
   const doc = new DOMParser().parseFromString(htmlString, 'text/html');
   // 提取标签里面的所有文字
   let title = doc.body.textContent || "";
-  return title.replace(/\s+/g, ' ').trim().substring(0, 30);
+  return title.replace(/\s+/g, ' ').trim().substring(0, 200);
 };
 
 const saveNote = () => {
