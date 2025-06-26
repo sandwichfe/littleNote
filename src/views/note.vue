@@ -192,8 +192,12 @@ onBeforeRouteLeave((to, from, next) => {
   // 路由离开时保存滚动条位置
   saveScrollPosition();
   // 路由离开时保存当前选中的分组ID
+  // 无论groupValue是否有值，都更新pinia中的状态
+  // 如果有值，保存该值；如果无值，则重置为空字符串
   if (groupValue.value) {
     noteGroupStore.updateSelectedGroupId(groupValue.value);
+  } else {
+    noteGroupStore.resetSelectedGroupId();
   }
   next();
 });
@@ -250,8 +254,9 @@ const selectGroup = () => {
       groupValue.value = groups.value[0].id;
     }
   } else {
-    // 如果pinia中没有保存的分组ID，则使用第一个分组
-    groupValue.value = groups.value[0].id;
+    // 如果pinia中没有保存的分组ID（为空字符串），则保持groupValue为空
+    // 这样可以保持用户之前清除选择的状态
+    groupValue.value = '';
   }
   
   return groupValue.value ? Number(groupValue.value) : null;
