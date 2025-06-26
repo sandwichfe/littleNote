@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { getCurrentUserMenus } from '@/network/menu'
 import { generateRoutes } from '@/router'
 import router from '@/router'
-import Cookies from 'js-cookie'
 
 export const useMenuStore = defineStore('menu', () => {
   const menuData = ref([])

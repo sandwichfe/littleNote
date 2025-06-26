@@ -92,48 +92,50 @@ export function generateRoutes(menuData) {
 
 import { useMenuStore } from '@/store/menu'
 
+// 处理未登录用户的路由导航
+function handleUnauthenticatedUser(to, next, menuStore) {
+    menuStore.resetMenuState() // 清理状态
+    next('/login')
+}
+
+// 处理菜单和路由加载
+async function handleMenuAndRoutes(to, next, menuStore) {
+    try {
+      if (menuStore.areRoutesAdded) {
+        next()
+      } else {
+        // 异步获取菜单和路由
+        const { success } = await menuStore.fetchAndSetMenus()
+        if (success) {
+          // 使用 replace: true, 以免用户回退到之前的状态
+          next({ ...to, replace: true })
+        } else {
+          console.error('获取用户菜单失败:')
+          // 获取菜单失败，清除 token 并重定向到登录页
+          menuStore.resetMenuState()
+        }
+      }
+    } catch (error) {
+      console.error('获取用户菜单失败:', error)
+      menuStore.resetMenuState()
+    }
+}
+
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
   const token = Cookies.get('loginToken')
   const menuStore = useMenuStore()
 
+  // 访问前 检查此路由菜单用户是否有权限访问
+  if (to.path === '/login') {
+    next()
+  }
+   // 没有token
   if (!token) {
-    // 没有token
-    if (to.path !== '/login') {
-      menuStore.resetMenuState() // 清理状态
-      next('/login')
-    } else {
-      next()
-    }
+    handleUnauthenticatedUser(to, next, menuStore)
+   // 有token
   } else {
-    // 有token
-    if (to.path === '/login') {
-      next('/')
-    } else {
-      if (!menuStore.areRoutesAdded) {
-        try {
-          // 异步获取菜单和路由
-          const { success } = await menuStore.fetchAndSetMenus()
-          if (success) {
-            // 使用 replace: true, 以免用户回退到之前的状态
-            next({ ...to, replace: true })
-          } else {
-            console.error('获取用户菜单失败:')
-            // 获取菜单失败，清除 token 并重定向到登录页
-            menuStore.resetMenuState()
-            // Cookies.remove('loginToken')
-            // next('/login')
-          }
-        } catch (error) {
-          console.error('获取用户菜单失败:', error)
-          menuStore.resetMenuState()
-          // Cookies.remove('loginToken')
-          // next('/login')
-        }
-      } else {
-        next()
-      }
-    }
+    await handleMenuAndRoutes(to, next, menuStore)
   }
 })
 

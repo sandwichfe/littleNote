@@ -77,10 +77,12 @@ import { listNote, type Note } from "@/network/base"; // 引入自己封装的ax
 import { listNoteGroup } from "@/network/noteGroup";
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick } from 'vue';
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
-import { useScrollStore } from "@/store/scroll"; // 引入 Pinia store
+import { useScrollStore } from "@/store/scroll"; // 引入滚动位置 Pinia store
+import { useNoteGroupStore } from "@/store/noteGroup"; // 引入笔记分组 Pinia store
 
 // 引入 Pinia store
 const scrollStore = useScrollStore();
+const noteGroupStore = useNoteGroupStore();
 
 const groupValue = ref('')
 
@@ -94,15 +96,17 @@ const groups = ref(
 )
 
 // 处理选中项变化
-const changeGroup = (newValue: string) => {
-  let groupId = newValue?Number(newValue):null;
+const changeGroup = async (newValue: string) => {
+  // 保存选中的分组ID到pinia
+  noteGroupStore.updateSelectedGroupId(newValue);
+  
+  // 转换分组ID为数字类型
+  let groupId = newValue ? Number(newValue) : null;
+  
+  // 加载该分组的笔记
   loading.value = true;
-  listNote(-1, -1,groupId).then((res) => {
-    contents.value = res.data.records;
-  }).finally(() => {
-    loading.value = false;
-  });
-
+  await loadNotes(groupId);
+  loading.value = false;
 };
 
 // 定义一个 ref 用于引用 DOM 元素  绑定dom的ref
@@ -157,7 +161,6 @@ let timer;
 
 // 定义响应式变量
 const centerDialogVisible = ref(false);
-const listType = ref(true);
 const contents = ref<Note[]>([]);
 const loading = ref(false);
 const backTopVisible = ref(false);
@@ -188,57 +191,100 @@ onMounted(() => {
 onBeforeRouteLeave((to, from, next) => {
   // 路由离开时保存滚动条位置
   saveScrollPosition();
+  // 路由离开时保存当前选中的分组ID
+  if (groupValue.value) {
+    noteGroupStore.updateSelectedGroupId(groupValue.value);
+  }
   next();
 });
 
 
 // 搜索框内每一次输入都会执行的事件
 const remoteMethod = (query) => {
+  // 获取当前选中的分组ID
+  const groupId = groupValue.value ? Number(groupValue.value) : null;
+  
   if (query !== "") {
-    setTimeout(() => {
+    setTimeout(async () => {
       loading.value = true;
-      listNote(-1, -1).then((res) => {
-        contents.value = res.data.records;
-      }).finally(() => {
-        loading.value = false;
-      });
+      // 搜索时保留当前选中的分组筛选
+      await loadNotes(groupId);
+      loading.value = false;
     }, 200);
   } else {
-    loading.value = true;
-    listNote(-1, -1).then((res) => {
-      contents.value = res.data.records;
-    }).finally(() => {
+    // 立即执行搜索
+    (async () => {
+      loading.value = true;
+      // 搜索时保留当前选中的分组筛选
+      await loadNotes(groupId);
       loading.value = false;
-    });
+    })();
   }
 };
 
 
-const initList = () => {
-  loading.value = true;
-  Promise.all([
-    listNoteGroup(-1, -1)
-  ]).then(([groupRes]) => {
+// 加载笔记分组数据
+const loadNoteGroups = async () => {
+  try {
+    const groupRes = await listNoteGroup(-1, -1);
     groups.value = groupRes.data.records;
-    
-    // 默认选中第一个选项
-    if (groups.value && groups.value.length > 0) {
+  } catch (error) {
+    console.error('Failed to load note groups:', error);
+  }
+};
+
+// 根据当前分组列表选择合适的分组
+const selectGroup = () => {
+  if (!groups.value || groups.value.length === 0) {
+    return null;
+  }
+  
+  // 如果pinia中有保存的分组ID，则使用它
+  if (noteGroupStore.selectedGroupId) {
+    // 检查保存的分组ID是否在当前分组列表中
+    const groupExists = groups.value.some(group => group.id === noteGroupStore.selectedGroupId);
+    if (groupExists) {
+      groupValue.value = noteGroupStore.selectedGroupId;
+    } else {
+      // 如果保存的分组ID不在当前列表中，则使用第一个分组
       groupValue.value = groups.value[0].id;
-      // 使用选中的分组ID加载笔记
-      let groupId = groupValue.value ? Number(groupValue.value) : null;
-      return listNote(-1, -1, groupId);
     }
-    return listNote(-1, -1);
-  }).then(noteRes => {
-    if (noteRes) {
-      contents.value = noteRes.data.records;
-    }
-  }).catch(error => {
-    console.error('Failed to load initial data:', error);
-    // Optionally show an error message to the user
-  }).finally(() => {
+  } else {
+    // 如果pinia中没有保存的分组ID，则使用第一个分组
+    groupValue.value = groups.value[0].id;
+  }
+  
+  return groupValue.value ? Number(groupValue.value) : null;
+};
+
+// 加载笔记数据
+const loadNotes = async (groupId = null) => {
+  try {
+    const noteRes = await listNote(-1, -1, groupId);
+    contents.value = noteRes.data.records;
+    return true;
+  } catch (error) {
+    console.error('Failed to load notes:', error);
+    return false;
+  }
+};
+
+// 初始化列表数据
+const initList = async () => {
+  loading.value = true;
+  try {
+    // 1. 加载分组数据
+    await loadNoteGroups();
+    
+    // 2. 获取当前选中分组id
+    const selectedGroupId = selectGroup();
+    // 3. 加载笔记数据
+    await loadNotes(selectedGroupId);
+  } catch (error) {
+    console.error('Failed to initialize data:', error);
+  } finally {
     loading.value = false;
-  });
+  }
 };
 
 // 启动定时器

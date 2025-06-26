@@ -33,6 +33,7 @@ export function request(config) {
      instance.interceptors.response.use(res => {
         if(401==res.data.code) {
             console.log(res.data.msg);
+            Cookies.remove('loginToken');
             router.push("/login",()=>{})
          }
          return res.data;
@@ -76,6 +77,7 @@ export function LoginRequest(config) {
      instance.interceptors.response.use(res => {
         if(401==res.data.code) {
             console.log(res.data.msg);
+           Cookies.remove('loginToken');
            router.push("/login",()=>{})
         }
         return res.data;
