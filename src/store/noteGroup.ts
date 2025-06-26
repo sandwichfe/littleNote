@@ -1,22 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-// 定义一个 store 来管理笔记分组选择
 export const useNoteGroupStore = defineStore('noteGroup', () => {
-  // 当前选中的分组ID
-  const selectedGroupId = ref('')
+  // 明确声明为 number 类型（使用 TypeScript 泛型）
+  const selectedGroupId = ref<number>(0)
 
-  // 更新选中的分组ID
-  function updateSelectedGroupId(groupId: string) {
+  // 只接受 number 类型的参数
+  function updateSelectedGroupId(groupId: number) {
     selectedGroupId.value = groupId
   }
 
-  // 重置选中的分组ID
   function resetSelectedGroupId() {
-    selectedGroupId.value = ''
+    selectedGroupId.value = -1
   }
 
-  // 返回状态和方法
   return { 
     selectedGroupId, 
     updateSelectedGroupId,

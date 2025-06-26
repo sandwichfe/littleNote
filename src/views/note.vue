@@ -7,8 +7,8 @@
       <div class="filter-container">
         <!-- 分组筛选 -->
         <div class="filter-item">
-          <el-select v-model="groupValue" placeholder="类型" size="large" clearable
-            @change="changeGroup">
+          <el-select v-model="queryParams.groupId" placeholder="类型" size="large" clearable
+            @change="changeGroup" @clear="handleClear">
             <template #prefix>
               <svg-icon iconClass="filter" className="filter-icon" />
             </template>
@@ -18,7 +18,7 @@
 
         <!-- 搜索框移到顶部 -->
         <div class="filter-item search-box">
-          <el-input v-model="searchValue" placeholder="搜索笔记" ref="keywordSelect" size="large" clearable>
+          <el-input v-model="queryParams.keyword" placeholder="搜索笔记" ref="keywordSelect" size="large" clearable>
             <template #prefix>
               <svg-icon iconClass="search" className="search-icon" />
             </template>
@@ -75,38 +75,50 @@ export default {
 <script setup lang="ts">
 import { listNote, type Note } from "@/network/base"; // 引入自己封装的axios请求函数
 import { listNoteGroup } from "@/network/noteGroup";
-import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick, reactive } from 'vue';
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useScrollStore } from "@/store/scroll"; // 引入滚动位置 Pinia store
 import { useNoteGroupStore } from "@/store/noteGroup"; // 引入笔记分组 Pinia store
+
+// 定义查询对象接口
+interface QueryParams {
+  groupId: number | null;
+  keyword: string;
+}
 
 // 引入 Pinia store
 const scrollStore = useScrollStore();
 const noteGroupStore = useNoteGroupStore();
 
-const groupValue = ref('')
+// 创建响应式查询对象
+const queryParams = reactive<QueryParams>({
+  groupId: null,
+  keyword: ''
+});
+
+// 监听查询参数变化
+watch(() => [queryParams.groupId, queryParams.keyword], () => {
+  // 当查询参数变化时，延迟加载数据
+  delay(() => {
+    loadNotesByQuery();
+  }, 300);
+}, { deep: true });
 
 const groups = ref(
   [
     {
-      id: 'Option1',
+      id: 1,
       groupName: 'Option1',
     },
   ]
 )
 
 // 处理选中项变化
-const changeGroup = async (newValue: string) => {
+const changeGroup = (newValue: number| null) => {
   // 保存选中的分组ID到pinia
   noteGroupStore.updateSelectedGroupId(newValue);
-  
-  // 转换分组ID为数字类型
-  let groupId = newValue ? Number(newValue) : null;
-  
-  // 加载该分组的笔记
-  loading.value = true;
-  await loadNotes(groupId);
-  loading.value = false;
+  // queryParams.groupId 已通过 v-model 自动更新
+  // 查询参数变化会触发watch，自动加载数据
 };
 
 // 定义一个 ref 用于引用 DOM 元素  绑定dom的ref
@@ -164,7 +176,7 @@ const centerDialogVisible = ref(false);
 const contents = ref<Note[]>([]);
 const loading = ref(false);
 const backTopVisible = ref(false);
-const searchValue = ref("");
+// searchValue已在上方定义
 
 
 // 计算属性
@@ -172,12 +184,8 @@ const scrollerHeight = computed(() => {
   return (document.documentElement.clientHeight - 70 -10  ) + 'px';
 });
 
-// 监听
-watch(searchValue, (newValue) => {
-  delay(() => {
-    remoteMethod(newValue);
-  }, 300);
-});
+// 搜索框输入直接绑定到queryParams.keyword
+// queryParams的变化会通过之前设置的watch触发数据加载
 
 onMounted(() => {
   initList();
@@ -191,41 +199,26 @@ onMounted(() => {
 onBeforeRouteLeave((to, from, next) => {
   // 路由离开时保存滚动条位置
   saveScrollPosition();
+  
   // 路由离开时保存当前选中的分组ID
-  // 无论groupValue是否有值，都更新pinia中的状态
-  // 如果有值，保存该值；如果无值，则重置为空字符串
-  if (groupValue.value) {
-    noteGroupStore.updateSelectedGroupId(groupValue.value);
+  // 无论queryParams.groupId是否有值，都更新pinia中的状态  如果有值，保存该值；如果无值，则重置为空字符串
+  if (queryParams.groupId) {
+    noteGroupStore.updateSelectedGroupId(queryParams.groupId);
   } else {
     noteGroupStore.resetSelectedGroupId();
   }
+  
   next();
 });
 
 
-// 搜索框内每一次输入都会执行的事件
-const remoteMethod = (query) => {
-  // 获取当前选中的分组ID
-  const groupId = groupValue.value ? Number(groupValue.value) : null;
-  
-  if (query !== "") {
-    setTimeout(async () => {
-      loading.value = true;
-      // 搜索时保留当前选中的分组筛选
-      await loadNotes(groupId);
-      loading.value = false;
-    }, 200);
-  } else {
-    // 立即执行搜索
-    (async () => {
-      loading.value = true;
-      // 搜索时保留当前选中的分组筛选
-      await loadNotes(groupId);
-      loading.value = false;
-    })();
-  }
+// 处理清除选择事件
+const handleClear = () => {
+  // 重置pinia中保存的分组ID
+  noteGroupStore.resetSelectedGroupId();
+  // queryParams.groupId 已通过 v-model 自动更新为null
+  // 查询参数变化会触发watch，自动加载数据
 };
-
 
 // 加载笔记分组数据
 const loadNoteGroups = async () => {
@@ -243,30 +236,58 @@ const selectGroup = () => {
     return null;
   }
   
+   let storeSaveId =  noteGroupStore.selectedGroupId
+
   // 如果pinia中有保存的分组ID，则使用它
-  if (noteGroupStore.selectedGroupId) {
+  if (storeSaveId) {
     // 检查保存的分组ID是否在当前分组列表中
-    const groupExists = groups.value.some(group => group.id === noteGroupStore.selectedGroupId);
-    if (groupExists) {
-      groupValue.value = noteGroupStore.selectedGroupId;
-    } else {
-      // 如果保存的分组ID不在当前列表中，则使用第一个分组
-      groupValue.value = groups.value[0].id;
-    }
+    const groupExists = groups.value.some(group => group.id === storeSaveId);
+    // 如果保存的分组ID不在当前列表中， 就是手动设置为-1的情况 此时不需要根据下拉查询
+      if(groupExists){
+        queryParams.groupId =storeSaveId;
+        // 手动设置为-1的情况 不需要根据下拉查询 
+      }else if(storeSaveId === -1){
+        queryParams.groupId = null;
+        // 情况默认取第一个
+      }else if(storeSaveId === null){
+        queryParams.groupId = groups.value[0].id;
+      }
   } else {
-    // 如果pinia中没有保存的分组ID（为空字符串），则保持groupValue为空
-    // 这样可以保持用户之前清除选择的状态
-    groupValue.value = '';
+    // 如果pinia中没有保存的分组ID（为空字符串），则
+    queryParams.groupId = Number(groups.value[0].id);
   }
-  
-  return groupValue.value ? Number(groupValue.value) : null;
+};
+
+// 根据查询对象加载笔记数据
+const loadNotesByQuery = async () => {
+  loading.value = true;
+  try {
+    // 使用查询对象中的参数
+    await loadNotes(queryParams.groupId, queryParams.keyword);
+  } catch (error) {
+    console.error('Failed to load notes by query:', error);
+  } finally {
+    loading.value = false;
+  }
 };
 
 // 加载笔记数据
-const loadNotes = async (groupId = null) => {
+const loadNotes = async (groupId = null, keyword = '') => {
   try {
-    const noteRes = await listNote(-1, -1, groupId);
-    contents.value = noteRes.data.records;
+    // 这里可以扩展API，添加keyword参数用于后端搜索
+    // 目前仅使用groupId进行筛选
+    const noteRes = await listNote(-1, -1, groupId,keyword);
+    
+    // 如果有关键词，在前端进行过滤
+    if (keyword && keyword.trim() !== '') {
+      const lowerKeyword = keyword.toLowerCase();
+      contents.value = noteRes.data.records.filter(note => 
+        note.title.toLowerCase().includes(lowerKeyword)
+      );
+    } else {
+      contents.value = noteRes.data.records;
+    }
+    
     return true;
   } catch (error) {
     console.error('Failed to load notes:', error);
@@ -281,10 +302,12 @@ const initList = async () => {
     // 1. 加载分组数据
     await loadNoteGroups();
     
-    // 2. 获取当前选中分组id
-    const selectedGroupId = selectGroup();
-    // 3. 加载笔记数据
-    await loadNotes(selectedGroupId);
+    // 2. 获取当前选中分组id并更新查询对象
+    selectGroup();
+    
+    // 3. 使用查询对象加载笔记数据
+    // 这里不使用watch触发的自动加载，因为初始化时需要确保顺序执行
+    await loadNotes(queryParams.groupId, queryParams.keyword);
   } catch (error) {
     console.error('Failed to initialize data:', error);
   } finally {

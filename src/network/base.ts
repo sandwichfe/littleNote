@@ -10,14 +10,15 @@ export interface Note {
 }
 
 // 这里为列表和分页功能添加类型
-export function listNote(pageNum: number, pageSize: number,groupId?:number): Promise<any> {
+export function listNote(pageNum: number, pageSize: number,groupId?:number,keyword?:string): Promise<any> {
   return request({
     method: "post",
     url: "/note/listNote",
     params: {
       pageNum: pageNum,
       pageSize: pageSize,
-      groupId:groupId
+      groupId:groupId,
+      keyword:keyword
     }
   });
 }
