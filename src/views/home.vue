@@ -115,25 +115,27 @@ onMounted(() => {
 
 <style scoped>
 .home-container {
-  padding: 20px 10px;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 20px 0;
+  width: 100%;
+  margin: 0;
   animation: fadeIn 0.8s ease-out;
   overflow: hidden;
   background-color: #f8f9fa;
-  width: 95%;
+  min-height: calc(100vh - 40px); /* 减去padding的高度 */
+  display: flex;
+  flex-direction: column;
 }
 
 /* 欢迎区域样式 */
 .welcome-section {
-  background: linear-gradient(135deg, #41b883 0%, #34495e 100%);
-  border-radius: 16px;
+  background: linear-gradient(120deg, #f8f9fa 0%, #e9f5ff 35%, #f0f7ff 65%, #e6f7f2 100%);
+  border-radius: 0;
   padding: 80px 40px;
   margin-bottom: 50px;
-  color: white;
+  color: #2c3e50;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 15px 40px rgba(65, 184, 131, 0.3);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.05);
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.6s ease-out;
@@ -142,6 +144,8 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   width: 100%;
+  border: none;
+  flex: 1;
 }
 
 .welcome-section.animate-in {
@@ -156,7 +160,7 @@ onMounted(() => {
   right: -50%;
   width: 100%;
   height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  background: radial-gradient(circle, rgba(65, 184, 131, 0.05) 0%, rgba(65, 184, 131, 0) 70%);
   transform: rotate(-30deg);
   animation: shimmer 8s infinite linear;
 }
@@ -168,7 +172,7 @@ onMounted(() => {
   left: 30%;
   width: 100px;
   height: 100px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(65, 184, 131, 0.05);
   border-radius: 50%;
   animation: float 8s ease-in-out infinite reverse;
 }
@@ -177,6 +181,8 @@ onMounted(() => {
   position: relative;
   z-index: 1;
   text-align: center;
+  max-width: 1200px;
+  padding: 0 5%;
 }
 
 .logo-container {
@@ -189,7 +195,7 @@ onMounted(() => {
   position: absolute;
   width: 140px;
   height: 140px;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  background: radial-gradient(circle, rgba(65, 184, 131, 0.1) 0%, rgba(65, 184, 131, 0) 70%);
   border-radius: 50%;
   top: 50%;
   left: 50%;
@@ -201,23 +207,23 @@ onMounted(() => {
   width: 100px;
   height: 100px;
   animation: pulse 2s infinite ease-in-out, rotate 15s linear infinite;
-  color: #ffffff;
+  color: #41b883;
   font-size: 100px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
 .welcome-title {
   font-size: 3.2rem;
   font-weight: 800;
   margin-bottom: 20px;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.1);
   letter-spacing: -0.5px;
+  color: #2c3e50;
 }
 
 .highlight {
-  color: #ffffff;
   position: relative;
-  background: linear-gradient(90deg, #beecdb, #ffffff);
+  background: linear-gradient(90deg, #41b883, #34495e);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -229,7 +235,7 @@ onMounted(() => {
   left: 0;
   width: 100%;
   height: 3px;
-  background-color: #beecdb;
+  background-color: #41b883;
   transform: scaleX(0);
   transform-origin: bottom right;
   transition: transform 0.5s ease-out;
@@ -256,22 +262,27 @@ onMounted(() => {
   font-size: 1.1rem;
   font-weight: 600;
   border-radius: 8px;
-  background-color: #ffffff;
-  color: #41b883;
+  background-color: #41b883;
+  color: #ffffff;
   border: none;
   transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
 }
 
 .action-button:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  background-color: #f0f0f0;
+  box-shadow: 0 8px 20px rgba(65, 184, 131, 0.25);
+  background-color: #3ca876;
 }
 
 
 /* 功能卡片区域样式 */
 .features-section {
   margin-bottom: 40px;
+  padding: 0 5%;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
 }
 
 .section-title {
@@ -390,11 +401,13 @@ onMounted(() => {
   display: flex;
   justify-content: space-around;
   margin-top: 50px;
-  padding: 30px;
+  margin-bottom: 50px;
+  padding: 40px 5%;
   background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
-  border-radius: 16px;
+  border-radius: 0;
   box-shadow: 0 10px 30px rgba(0,0,0,0.05);
   width: 100%;
+  max-width: 100%;
 }
 
 .stat-card {
@@ -469,35 +482,34 @@ onMounted(() => {
 .decoration-circle {
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
   z-index: 0;
 }
 
 .decoration-circle-1 {
-  width: 250px;
-  height: 250px;
-  top: -80px;
-  right: 5%;
+  width: 350px;
+  height: 350px;
+  top: -120px;
+  right: 2%;
   animation: float 12s ease-in-out infinite;
-  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
+  background: radial-gradient(circle, rgba(65, 184, 131, 0.1) 0%, rgba(65, 184, 131, 0) 70%);
 }
 
 .decoration-circle-2 {
-  width: 180px;
-  height: 180px;
-  bottom: -40px;
-  left: 10%;
+  width: 280px;
+  height: 280px;
+  bottom: -80px;
+  left: 5%;
   animation: float 8s ease-in-out infinite reverse;
-  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  background: radial-gradient(circle, rgba(52, 73, 94, 0.08) 0%, rgba(52, 73, 94, 0) 70%);
 }
 
 .decoration-circle-3 {
-  width: 120px;
-  height: 120px;
-  top: 30%;
-  left: 5%;
+  width: 180px;
+  height: 180px;
+  top: 25%;
+  left: 2%;
   animation: float 6s ease-in-out infinite;
-  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 70%);
+  background: radial-gradient(circle, rgba(65, 184, 131, 0.05) 0%, rgba(65, 184, 131, 0) 70%);
 }
 
 /* 添加欢迎副标题 */
@@ -505,17 +517,18 @@ onMounted(() => {
   font-size: 1.4rem;
   font-weight: 400;
   margin-bottom: 30px;
-  opacity: 0.9;
+  opacity: 0.7;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  color: #5a6a7a;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .home-container {
-    padding: 10px 5px;
-    width: 98%;
+    padding: 10px 0;
+    width: 100%;
   }
 
   .welcome-section {
