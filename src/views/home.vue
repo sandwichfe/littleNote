@@ -2,10 +2,6 @@
   <div class="home-container">
     <!-- 欢迎区域 -->
     <div class="welcome-section">
-      <div class="decoration-circle decoration-circle-1"></div>
-      <div class="decoration-circle decoration-circle-2"></div>
-      <div class="decoration-circle decoration-circle-3"></div>
-      <div class="decoration-wave"></div>
       <div class="welcome-content">
         <div class="logo-container">
           <svg-icon icon-class="app-icon" class="app-logo" />
@@ -131,9 +127,6 @@ onMounted(() => {
 /* 欢迎区域样式 */
 .welcome-section {
   background: linear-gradient(160deg, #e6f7ff 0%, #f0f7ff 50%, #e9f5ff 100%);
-  border-radius: 0;
-  padding: 100px 40px 120px;
-  margin-bottom: 0;
   color: #2c3e50;
   position: relative;
   overflow: hidden;
@@ -153,30 +146,6 @@ onMounted(() => {
 .welcome-section.animate-in {
   opacity: 1;
   transform: translateY(0);
-}
-
-.welcome-section::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 100%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(65, 184, 131, 0.05) 0%, rgba(65, 184, 131, 0) 70%);
-  transform: rotate(-30deg);
-  animation: shimmer 8s infinite linear;
-}
-
-.welcome-section::after {
-  content: '';
-  position: absolute;
-  bottom: -30px;
-  left: 30%;
-  width: 100px;
-  height: 100px;
-  background: rgba(65, 184, 131, 0.05);
-  border-radius: 50%;
-  animation: float 8s ease-in-out infinite reverse;
 }
 
 .welcome-content {
@@ -297,10 +266,7 @@ onMounted(() => {
 
 /* 功能卡片区域样式 */
 .features-section {
-  margin-top: -50px;
   margin-bottom: 0;
-  padding: 80px 5% 60px;
-  max-width: 1600px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
