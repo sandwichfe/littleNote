@@ -36,29 +36,31 @@
     <!-- 列表 -->
     <div ref="scrollContainer" :style="{ height: scrollerHeight }" class="scroll_content" v-loading="loading"
       element-loading-text="o(*≧▽≦)ツ加载中~">
-      <div v-if="contents && contents.length > 0">
-        <ul>
-          <li v-for="(c, index) in contents" :key="index" class="line" @mousedown="startTimer()" @mouseup="clearTimer">
-            <div class="file-li-item" @click="addOrUpdateNote(c.id)">
-              <div class="prename">{{ c.title }}</div>
-              <div class="ptime">{{ c.updateTime || c.createTime }}</div>
+      <div ref="scrollWrapper" class="scroll-wrapper">
+        <div v-if="contents && contents.length > 0">
+          <ul>
+            <li v-for="(c, index) in contents" :key="index" class="line" @mousedown="startTimer()" @mouseup="clearTimer">
+              <div class="file-li-item" @click="addOrUpdateNote(c.id)">
+                <div class="prename">{{ c.title }}</div>
+                <div class="ptime">{{ c.updateTime || c.createTime }}</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <el-empty description="(ง •̀_•́)ง没有数据了" v-else image="" :image-size="200" class="empty-msg-box"></el-empty>
+
+        <!-- 确认框 -->
+        <el-dialog v-model="centerDialogVisible" title="删除" width="500" center>
+          <span>确定删除？</span>
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button @click="centerDialogVisible = false">Cancel</el-button>
+              <el-button @click="centerDialogVisible = false">Confirm</el-button>
             </div>
-          </li>
-        </ul>
+          </template>
+        </el-dialog>
       </div>
-
-      <el-empty description="(ง •̀_•́)ง没有数据了" v-else image="" :image-size="200" class="empty-msg-box"></el-empty>
-
-      <!-- 确认框 -->
-      <el-dialog v-model="centerDialogVisible" title="删除" width="500" center>
-        <span>确定删除？</span>
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button @click="centerDialogVisible = false">Cancel</el-button>
-            <el-button @click="centerDialogVisible = false">Confirm</el-button>
-          </div>
-        </template>
-      </el-dialog>
     </div>
 
   </div>
@@ -79,6 +81,7 @@ import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick, 
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useScrollStore } from "@/store/scroll"; // 引入滚动位置 Pinia store
 import { useNoteGroupStore } from "@/store/noteGroup"; // 引入笔记分组 Pinia store
+import BScroll from 'better-scroll'; // 引入Better-Scroll
 
 // 定义查询对象接口
 interface QueryParams {
@@ -121,27 +124,68 @@ const changeGroup = (newValue: number| null) => {
   // 查询参数变化会触发watch，自动加载数据
 };
 
-// 定义一个 ref 用于引用 DOM 元素  绑定dom的ref
+// 定义 ref 用于引用 DOM 元素
 const scrollContainer = ref<HTMLElement | null>(null);
+const scrollWrapper = ref<HTMLElement | null>(null);
 
+// Better-Scroll 实例
+const scroll = ref<any>(null);
+
+// 初始化 Better-Scroll
+const initScroll = () => {
+  if (scrollContainer.value && !scroll.value) {
+    nextTick(() => {
+      scroll.value = new BScroll(scrollContainer.value!, {
+        scrollY: true,
+        click: true,
+        mouseWheel: true,
+        bounce: true,
+        observeDOM: true,
+        probeType: 3, // 实时监听滚动位置
+        scrollbar: {
+          fade: true,
+          interactive: true // 允许用户拖动滚动条
+        }
+      });
+
+      // 监听滚动事件
+      scroll.value.on('scroll', (pos) => {
+        // 可以在这里处理滚动事件
+        // console.log('滚动位置:', pos.y);
+      });
+      
+      // 强制刷新以确保滚动条显示
+      setTimeout(() => {
+        refreshScroll();
+      }, 300);
+    });
+  }
+};
+
+// 刷新 Better-Scroll
+const refreshScroll = () => {
+  if (scroll.value) {
+    scroll.value.refresh();
+  }
+};
 
 // 设置滚动条到指定位置
 const scrollToPosition = (position) => {
   console.log('尝试设置滚动条位置:', position);
-  if (scrollContainer.value) {
-    scrollContainer.value.scrollTop = position;
+  if (scroll.value) {
+    scroll.value.scrollTo(0, -position, 300); // Better-Scroll 的 y 轴方向是相反的，所以需要取负值
   }
 };
 
 // 保存滚动条位置
 const saveScrollPosition = () => {
-  if (scrollContainer.value) {
-    const scrollTop = scrollContainer.value.scrollTop;
+  if (scroll.value) {
+    const scrollTop = -scroll.value.y; // Better-Scroll 的 y 轴方向是相反的，所以需要取负值
     console.log('保存滚动条位置:', scrollTop);
     scrollStore.updateScrollPosition(scrollTop);
     return true;
   } else {
-    console.warn('scrollContainer未找到，无法保存滚动位置');
+    console.warn('Better-Scroll 实例未找到，无法保存滚动位置');
     return false;
   }
 };
@@ -181,7 +225,8 @@ const backTopVisible = ref(false);
 
 // 计算属性
 const scrollerHeight = computed(() => {
-  return (document.documentElement.clientHeight - 70 -10  ) + 'px';
+  // 减去顶部导航栏高度(70px)和底部边距(10px)，再减去20px确保内容可滚动
+  return (document.documentElement.clientHeight - 70 - 10 - 20) + 'px';
 });
 
 // 搜索框输入直接绑定到queryParams.keyword
@@ -190,11 +235,22 @@ const scrollerHeight = computed(() => {
 onMounted(() => {
   initList();
   
-  // 在页面首次加载时恢复滚动位置
+  // 初始化Better-Scroll
   nextTick(() => {
-    restoreScrollPosition(200);
+    initScroll();
+    // 在页面首次加载时恢复滚动位置
+    setTimeout(() => {
+      restoreScrollPosition(300);
+    }, 100);
   });
 });
+
+// 当内容更新时，刷新Better-Scroll
+watch(() => contents.value, () => {
+  nextTick(() => {
+    refreshScroll();
+  });
+}, { deep: true });
 
 onBeforeRouteLeave((to, from, next) => {
   // 路由离开时保存滚动条位置
@@ -264,6 +320,10 @@ const loadNotesByQuery = async () => {
   try {
     // 使用查询对象中的参数
     await loadNotes(queryParams.groupId, queryParams.keyword);
+    // 数据加载完成后，刷新Better-Scroll
+    nextTick(() => {
+      refreshScroll();
+    });
   } catch (error) {
     console.error('Failed to load notes by query:', error);
   } finally {
@@ -448,12 +508,29 @@ const addOrUpdateNote = (id) => {
 }
 
 .scroll_content {
-  overflow-y: auto;
+  position: relative;
+  overflow: hidden; /* 对于Better-Scroll，外层容器需要隐藏溢出 */
   border: 1px solid #e0e0e0; /* Lighter border */
   background-color: #ffffff; /* White background for content area */
   border-bottom: none;
   border-radius: 0 0 8px 8px;
   padding: 10px;
+}
+
+.scroll-wrapper {
+  width: 100%;
+  min-height: 101%; /* 确保内容高度至少比容器高1%，这样Better-Scroll才会启用滚动 */
+}
+
+/* Better-Scroll滚动条样式 */
+.scroll_content .bscroll-vertical-scrollbar {
+  width: 6px !important;
+  right: 2px !important;
+}
+
+.scroll_content .bscroll-indicator {
+  border-radius: 3px !important;
+  background: rgba(0, 0, 0, 0.3) !important;
 }
 
 ul {
