@@ -37,12 +37,14 @@
 import '@wangeditor/editor/dist/css/style.css';
 import { onBeforeUnmount, ref, shallowRef, onMounted, nextTick } from 'vue';
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
+import { DomEditor } from '@wangeditor/editor'
 import { getNote, editNote, addNote, deleteNoteItem, uploadImage } from "@/network/base";
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus'
 import { cipherText, decrypted } from "@/utils/aesUtil";
 import { openLoading, closeLoading } from "@/utils/loadingUtil";
 import { listNoteGroup } from "@/network/noteGroup";
+import { toolbarKeys } from '@/config/editorToolbarConfig';
 
 const router = useRouter();
 
@@ -65,10 +67,13 @@ const mode = ref('default');
 const editorRef = shallowRef();
 const valueHtml = ref("");
 
-const toolbarConfig = {};
+const toolbarConfig = {
+  toolbarKeys
+};
+
 const editorConfig = {
   placeholder: '',
-  readOnly: true,
+  readOnly: true, 
   MENU_CONF: {
     uploadImage: {
       async customUpload(file: File, insertFn: any) { // InsertFnType is not exported, use any
@@ -128,6 +133,24 @@ onBeforeUnmount(() => {
 
 const handleCreated = (editor: any) => {
   editorRef.value = editor;
+
+  // 使用 nextTick 确保 DOM 已更新
+  // nextTick(() => {
+  //   // 获取工具栏实例
+  //   const toolbar = DomEditor.getToolbar(editor);
+  //   if (toolbar) {
+  //     // 获取当前工具栏配置
+  //     const curToolbarConfig = toolbar.getConfig();
+  //     // 查看当前菜单排序和分组
+  //     console.log(curToolbarConfig.toolbarKeys);
+  //   } else {
+  //     console.warn('toolbar 实例为 null');
+  //   }
+  //
+  //   // 查询编辑器注册的所有菜单 key
+  //   console.log(editor.getAllMenuKeys());
+  // });
+
 };
 
 // 将 html格式 提取为 只要正文
