@@ -5,6 +5,7 @@
       <div class="decoration-circle decoration-circle-1"></div>
       <div class="decoration-circle decoration-circle-2"></div>
       <div class="decoration-circle decoration-circle-3"></div>
+      <div class="decoration-wave"></div>
       <div class="welcome-content">
         <div class="logo-container">
           <svg-icon icon-class="app-icon" class="app-logo" />
@@ -35,6 +36,7 @@
 
     <!-- 统计信息区域 -->
     <div class="stats-section">
+      <div class="stats-decoration"></div>
       <div class="stat-card">
         <div class="stat-value">{{ stats.notes }}</div>
         <div class="stat-label">笔记总数</div>
@@ -115,31 +117,31 @@ onMounted(() => {
 
 <style scoped>
 .home-container {
-  padding: 20px 0;
+  padding: 0;
   width: 100%;
   margin: 0;
   animation: fadeIn 0.8s ease-out;
   overflow: hidden;
-  background-color: #f8f9fa;
-  min-height: calc(100vh - 40px); /* 减去padding的高度 */
+  background: linear-gradient(180deg, #f0f7ff 0%, #f8f9fa 100%);
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 /* 欢迎区域样式 */
 .welcome-section {
-  background: linear-gradient(120deg, #f8f9fa 0%, #e9f5ff 35%, #f0f7ff 65%, #e6f7f2 100%);
+  background: linear-gradient(160deg, #e6f7ff 0%, #f0f7ff 50%, #e9f5ff 100%);
   border-radius: 0;
-  padding: 80px 40px;
-  margin-bottom: 50px;
+  padding: 100px 40px 120px;
+  margin-bottom: 0;
   color: #2c3e50;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.6s ease-out;
-  min-height: 400px;
+  min-height: 450px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -213,12 +215,13 @@ onMounted(() => {
 }
 
 .welcome-title {
-  font-size: 3.2rem;
+  font-size: 3.5rem;
   font-weight: 800;
   margin-bottom: 20px;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  text-shadow: 0 2px 10px rgba(0,0,0,0.08);
   letter-spacing: -0.5px;
   color: #2c3e50;
+  line-height: 1.2;
 }
 
 .highlight {
@@ -257,15 +260,32 @@ onMounted(() => {
 
 .action-button {
   width: 100%;
-  min-width: 180px;
-  height: 50px;
-  font-size: 1.1rem;
+  min-width: 200px;
+  height: 54px;
+  font-size: 1.15rem;
   font-weight: 600;
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: #41b883;
   color: #ffffff;
   border: none;
   transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.7s;
+}
+
+.action-button:hover::before {
+  left: 100%;
 }
 
 .action-button:hover {
@@ -277,21 +297,28 @@ onMounted(() => {
 
 /* 功能卡片区域样式 */
 .features-section {
-  margin-bottom: 40px;
-  padding: 0 5%;
+  margin-top: -50px;
+  margin-bottom: 0;
+  padding: 80px 5% 60px;
   max-width: 1600px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
+  position: relative;
+  background: linear-gradient(180deg, rgba(240, 247, 255, 0.9) 0%, rgba(248, 249, 250, 0.95) 100%);
+  border-radius: 30px 30px 0 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.03);
+  z-index: 1;
 }
 
 .section-title {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin-bottom: 30px;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 40px;
   text-align: center;
-  color: #34495e;
+  color: #2c3e50;
   position: relative;
+  letter-spacing: -0.5px;
 }
 
 .section-title::after {
@@ -314,15 +341,16 @@ onMounted(() => {
 }
 
 .feature-card {
-  background-color: white;
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.03);
   transition: all 0.4s ease;
   cursor: pointer;
   opacity: 0;
   transform: translateY(20px);
-  border: 1px solid #f0f0f0;
+  border: 1px solid rgba(240, 240, 240, 0.6);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -400,22 +428,38 @@ onMounted(() => {
 .stats-section {
   display: flex;
   justify-content: space-around;
-  margin-top: 50px;
-  margin-bottom: 50px;
-  padding: 40px 5%;
-  background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 60px 5% 80px;
+  background: linear-gradient(180deg, rgba(248, 249, 250, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
   border-radius: 0;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  box-shadow: none;
   width: 100%;
   max-width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.stats-decoration {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: linear-gradient(180deg, rgba(248, 249, 250, 0.5) 0%, rgba(248, 249, 250, 0.95) 100%);
+  z-index: -1;
 }
 
 .stat-card {
   text-align: center;
-  padding: 20px;
+  padding: 30px;
   transition: all 0.3s ease;
   opacity: 0;
   transform: translateY(20px);
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  min-width: 180px;
 }
 
 .stat-card.animate-in {
@@ -425,9 +469,8 @@ onMounted(() => {
 
 .stat-card:hover {
   transform: translateY(-5px);
-  background-color: white;
-  box-shadow: 0 10px 20px rgba(65, 184, 131, 0.1);
-  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 15px 30px rgba(65, 184, 131, 0.15);
 }
 
 .stat-card:hover .stat-value {
@@ -463,6 +506,12 @@ onMounted(() => {
   100% { transform: rotate(-30deg) translateY(50%); }
 }
 
+@keyframes wave {
+  0% { transform: translateX(0) translateY(0); }
+  50% { transform: translateX(-25px) translateY(15px); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
 @keyframes underline {
   to { transform: scaleX(1); transform-origin: bottom left; }
 }
@@ -485,31 +534,43 @@ onMounted(() => {
   z-index: 0;
 }
 
+.decoration-wave {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 80px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z' style='fill: rgba(248, 249, 250, 0.95);'%3E%3C/path%3E%3C/svg%3E") no-repeat;
+  background-size: cover;
+  z-index: 2;
+  animation: wave 15s ease-in-out infinite alternate;
+}
+
 .decoration-circle-1 {
-  width: 350px;
-  height: 350px;
-  top: -120px;
-  right: 2%;
+  width: 400px;
+  height: 400px;
+  top: -150px;
+  right: 0;
   animation: float 12s ease-in-out infinite;
-  background: radial-gradient(circle, rgba(65, 184, 131, 0.1) 0%, rgba(65, 184, 131, 0) 70%);
+  background: radial-gradient(circle, rgba(65, 184, 131, 0.12) 0%, rgba(65, 184, 131, 0) 70%);
 }
 
 .decoration-circle-2 {
-  width: 280px;
-  height: 280px;
-  bottom: -80px;
-  left: 5%;
+  width: 320px;
+  height: 320px;
+  bottom: -100px;
+  left: 2%;
   animation: float 8s ease-in-out infinite reverse;
   background: radial-gradient(circle, rgba(52, 73, 94, 0.08) 0%, rgba(52, 73, 94, 0) 70%);
 }
 
 .decoration-circle-3 {
-  width: 180px;
-  height: 180px;
-  top: 25%;
-  left: 2%;
+  width: 220px;
+  height: 220px;
+  top: 20%;
+  left: 0;
   animation: float 6s ease-in-out infinite;
-  background: radial-gradient(circle, rgba(65, 184, 131, 0.05) 0%, rgba(65, 184, 131, 0) 70%);
+  background: radial-gradient(circle, rgba(65, 184, 131, 0.08) 0%, rgba(65, 184, 131, 0) 70%);
 }
 
 /* 添加欢迎副标题 */
@@ -527,14 +588,44 @@ onMounted(() => {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .home-container {
-    padding: 10px 0;
+    padding: 0;
     width: 100%;
   }
 
   .welcome-section {
-    padding: 50px 15px;
-    min-height: 300px;
+    padding: 60px 15px 100px;
+    min-height: 350px;
   }
+  
+  .decoration-wave {
+    height: 40px;
+    bottom: -1px;
+  }
+  
+  .features-section {
+    margin-top: -30px;
+    padding: 50px 5% 40px;
+  }
+  
+  .stats-section {
+    padding: 40px 5% 60px;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+  
+  .stat-card {
+    width: 90%;
+    max-width: 300px;
+    padding: 25px;
+  }
+  
+  .decoration-circle-1,
+  .decoration-circle-2,
+  .decoration-circle-3 {
+    opacity: 0.6;
+  }
+
   
   .welcome-title {
     font-size: 2.2rem;
