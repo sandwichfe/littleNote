@@ -5,16 +5,20 @@ import Cookies from 'js-cookie'
 // 基础路由
 const constantRoutes = [
   {
+    path: '/',
+    component: () => import('../views/home.vue'),
+  },
+  {
     path: '/login',
-    component: () => import('../login.vue')
+    component: () => import('../login.vue'),
   },
   {
     path: '/note',
-    component: () => import('../views/note.vue')
+    component: () => import('../views/note.vue'),
   },
   {
     path: '/noteDetail/:id',
-    component: () => import('../views/noteDetail.vue')
+    component: () => import('../views/noteDetail.vue'),
   },
   {
     path: '/',
@@ -23,31 +27,32 @@ const constantRoutes = [
     children: [
       {
         path: '/qrcode',
-        component: () => import('../views/qrcodeView.vue')
+        component: () => import('../views/qrcodeView.vue'),
       },
       {
         path: '/user',
-        component: () => import('../views/user.vue')
+        component: () => import('../views/user.vue'),
       },
       {
         path: '/role',
-        component: () => import('../views/role.vue')
+        component: () => import('../views/role.vue'),
       },
       {
         path: '/menu',
-        component: () => import('../views/menu.vue')
+        component: () => import('../views/menu.vue'),
       },
       {
         path: '/noteGroup',
-        component: () => import('../views/noteGroup.vue')
-      }
-    ]
-  }
+        component: () => import('../views/noteGroup.vue'),
+      },
+    ],
+  },
 ]
 
 
 // 动态路由映射表
 const componentMap = {
+  '/': () => import('../views/home.vue'),
   '/user': () => import('../views/user.vue'),
   '/role': () => import('../views/role.vue'),
   '/menu': () => import('../views/menu.vue'),
