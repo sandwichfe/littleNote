@@ -10,13 +10,9 @@
           <svg-icon icon-class="app-icon" class="app-logo" />
         </div>
         <h1 class="welcome-title">欢迎使用 <span class="highlight">LittleNote</span></h1>
-        <p class="welcome-subtitle">您的个人笔记管理系统</p>
         <div class="action-buttons">
-          <el-button type="primary" size="large" @click="navigateTo('/note')" class="action-button">
+          <el-button type="default" size="large" @click="navigateTo('/note')" class="action-button">
             <el-icon class="el-icon--left"><svg-icon icon-class="list-icon" /></el-icon> 开始记录
-          </el-button>
-          <el-button type="default" size="large" @click="navigateTo('/noteGroup')" class="action-button">
-            <el-icon class="el-icon--left"><svg-icon icon-class="filter" /></el-icon> 管理分组
           </el-button>
         </div>
       </div>
@@ -69,22 +65,10 @@ const features = ref([
     path: '/note'
   },
   {
-    title: '分组管理',
-    description: '对笔记进行分类和组织',
-    icon: 'filter',
-    path: '/noteGroup'
-  },
-  {
     title: '用户管理',
     description: '管理系统用户和权限',
     icon: 'search',
     path: '/user'
-  },
-  {
-    title: '角色管理',
-    description: '设置和分配用户角色',
-    icon: 'add',
-    path: '/role'
   },
 ]);
 
@@ -139,8 +123,7 @@ onMounted(() => {
 
 /* 欢迎区域样式 */
 .welcome-section {
-  /* background: linear-gradient(135deg, #41b883 0%, #34495e 100%); */
-  background: linear-gradient(135deg, #b9b9b9 0%, #c8d1da 100%);
+  /* background: linear-gradient(135deg, #b9b9b9 0%, #c8d1da 100%); */
   border-radius: 12px;
   padding: 60px 40px;
   margin-bottom: 40px;
@@ -226,12 +209,6 @@ onMounted(() => {
   animation: underline 1.5s forwards 0.5s;
 }
 
-.welcome-subtitle {
-  font-size: 1.2rem;
-  margin-bottom: 30px;
-  opacity: 0.9;
-}
-
 .action-buttons {
   display: flex;
   justify-content: center;
@@ -239,26 +216,16 @@ onMounted(() => {
   margin-top: 30px;
 }
 
+.action-buttons .el-button+.el-button {
+  margin-left: 0;
+}
+
 .action-button {
+  width: 100%;
   min-width: 150px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.action-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 7px 14px rgba(0,0,0,0.1);
-}
-
-.action-button:first-child:hover {
-  background-color: #35a573;
-  border-color: #35a573;
-}
-
-.action-button:last-child:hover {
-  background-color: rgba(65, 184, 131, 0.1);
-  border-color: #41b883;
-  color: #41b883;
-}
 
 /* 功能卡片区域样式 */
 .features-section {
