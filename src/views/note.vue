@@ -143,7 +143,7 @@ const initScroll = () => {
         observeDOM: true,
         probeType: 3, // 实时监听滚动位置
         scrollbar: {
-          fade: true,
+          fade: false, // 总是显示滚动条
           interactive: true // 允许用户拖动滚动条
         }
       });
@@ -166,6 +166,7 @@ const initScroll = () => {
 const refreshScroll = () => {
   if (scroll.value) {
     scroll.value.refresh();
+    scroll.value.scrollTo(0, 0);
   }
 };
 
@@ -173,7 +174,7 @@ const refreshScroll = () => {
 const scrollToPosition = (position) => {
   console.log('尝试设置滚动条位置:', position);
   if (scroll.value) {
-    scroll.value.scrollTo(0, -position, 300); // Better-Scroll 的 y 轴方向是相反的，所以需要取负值
+    scroll.value.scrollTo(0, -position, 100); // Better-Scroll 的 y 轴方向是相反的，所以需要取负值
   }
 };
 
@@ -415,17 +416,67 @@ const addOrUpdateNote = (id) => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .top-box {
+    padding: 10px 15px; /* 移动端减小内边距 */
+    flex-wrap: nowrap; /* 确保不换行 */
+  }
+}
+
+/* 极小屏幕适配 */
+@media screen and (max-width: 500px) {
+  .top-box {
+    padding: 8px 10px; /* 更小的内边距 */
+  }
+}
+
 .filter-container {
   display: flex;
   align-items: center;
   gap: 15px;
   flex: 1;
+  width: calc(100% - 50px); /* 减去添加按钮的宽度 */
+  justify-content: space-between; /* 确保元素之间分布均匀 */
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .filter-container {
+    gap: 8px; /* 移动端减小间距 */
+    flex: 1;
+    min-width: 0; /* 允许子元素缩小到比内容更小 */
+    width: calc(100% - 40px); /* 减去移动端添加按钮的宽度 */
+  }
+}
+
+/* 极小屏幕适配 */
+@media screen and (max-width: 500px) {
+  .filter-container {
+    gap: 5px; /* 更小的间距 */
+    width: calc(100% - 35px); /* 减去极小屏幕添加按钮的宽度 */
+  }
 }
 
 .filter-item {
   transition: all 0.3s ease;
-  width: 180px; /* 固定宽度 */
+  width: 120px; /* 固定宽度 */
   flex-shrink: 0; /* 防止压缩 */
+  flex-grow: 0; /* 不允许扩展 */
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .filter-item {
+    width: 100px; /* 移动端减小宽度 */
+  }
+}
+
+/* 极小屏幕适配 */
+@media screen and (max-width: 500px) {
+  .filter-item {
+    width: 80px; /* 更小的宽度 */
+  }
 }
 
 .filter-item .el-select {
@@ -436,6 +487,22 @@ const addOrUpdateNote = (id) => {
   flex: 1; /* 占据剩余空间 */
   min-width: 100px; /* 最小宽度 */
   margin-right: 10px;
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .search-box {
+    min-width: 60px; /* 移动端减小最小宽度 */
+    margin-right: 5px; /* 减小右边距 */
+  }
+}
+
+/* 极小屏幕适配 */
+@media screen and (max-width: 500px) {
+  .search-box {
+    min-width: 40px; /* 更小的最小宽度 */
+    margin-right: 3px; /* 更小的右边距 */
+  }
 }
 
 .filter-icon, .search-icon {
@@ -455,6 +522,23 @@ const addOrUpdateNote = (id) => {
   transition: transform 0.3s ease;
   width: 50px; /* 固定宽度 */
   flex-shrink: 0; /* 防止压缩 */
+  z-index: 1; /* 确保按钮在最上层 */
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .add-btn {
+    width: 40px; /* 移动端减小宽度 */
+    margin-left: 5px; /* 增加左边距 */
+  }
+}
+
+/* 极小屏幕适配 */
+@media screen and (max-width: 500px) {
+  .add-btn {
+    width: 35px; /* 更小的宽度 */
+    margin-left: 3px; /* 更小的左边距 */
+  }
 }
 
 @keyframes rotateEffect {
@@ -652,6 +736,24 @@ ul>i {
   height: 35px;
   line-height: 35px;
   color: #78a8e4; /* Darker icon color */
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .add-btn-svg {
+    width: 30px; /* 移动端减小图标尺寸 */
+    height: 30px;
+    line-height: 30px;
+  }
+}
+
+/* 极小屏幕适配 */
+@media screen and (max-width: 500px) {
+  .add-btn-svg {
+    width: 25px; /* 更小的图标尺寸 */
+    height: 25px;
+    line-height: 25px;
+  }
 }
 
 .add-btn-svg:hover {
