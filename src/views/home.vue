@@ -10,6 +10,7 @@
           <svg-icon icon-class="app-icon" class="app-logo" />
         </div>
         <h1 class="welcome-title">欢迎使用 <span class="highlight">LittleNote</span></h1>
+        <p class="welcome-subtitle">简单、高效的笔记管理系统</p>
         <div class="action-buttons">
           <el-button type="default" size="large" @click="navigateTo('/note')" class="action-button">
             <el-icon class="el-icon--left"><svg-icon icon-class="list-icon" /></el-icon> 开始记录
@@ -60,13 +61,13 @@ const router = useRouter();
 const features = ref([
   {
     title: '笔记管理',
-    description: '创建、编辑和管理您的个人笔记',
+    description: '创建、编辑和管理您的个人笔记，支持富文本编辑和标签分类',
     icon: 'list-icon',
     path: '/note'
   },
   {
-    title: '用户管理',
-    description: '管理系统用户和权限',
+    title: '系统管理',
+    description: '管理系统用户和权限，控制访问级别和数据安全',
     icon: 'search',
     path: '/user'
   },
@@ -114,26 +115,33 @@ onMounted(() => {
 
 <style scoped>
 .home-container {
-  padding: 20px;
-  max-width: 1200px;
+  padding: 20px 10px;
+  max-width: 1400px;
   margin: 0 auto;
   animation: fadeIn 0.8s ease-out;
   overflow: hidden;
+  background-color: #f8f9fa;
+  width: 95%;
 }
 
 /* 欢迎区域样式 */
 .welcome-section {
-  /* background: linear-gradient(135deg, #b9b9b9 0%, #c8d1da 100%); */
-  border-radius: 12px;
-  padding: 60px 40px;
-  margin-bottom: 40px;
+  background: linear-gradient(135deg, #41b883 0%, #34495e 100%);
+  border-radius: 16px;
+  padding: 80px 40px;
+  margin-bottom: 50px;
   color: white;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(65, 184, 131, 0.2);
+  box-shadow: 0 15px 40px rgba(65, 184, 131, 0.3);
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.6s ease-out;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .welcome-section.animate-in {
@@ -172,27 +180,46 @@ onMounted(() => {
 }
 
 .logo-container {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.logo-container::after {
+  content: '';
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: -1;
 }
 
 .app-logo {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   animation: pulse 2s infinite ease-in-out, rotate 15s linear infinite;
-  color: #beecdb;
-  font-size: 80px;
+  color: #ffffff;
+  font-size: 100px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
 .welcome-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-size: 3.2rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  letter-spacing: -0.5px;
 }
 
 .highlight {
-  color: #beecdb;
+  color: #ffffff;
   position: relative;
+  background: linear-gradient(90deg, #beecdb, #ffffff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .highlight::after {
@@ -213,7 +240,9 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin-top: 30px;
+  margin-top: 40px;
+  width: 100%;
+  max-width: 400px;
 }
 
 .action-buttons .el-button+.el-button {
@@ -222,8 +251,21 @@ onMounted(() => {
 
 .action-button {
   width: 100%;
-  min-width: 150px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  min-width: 180px;
+  height: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #41b883;
+  border: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  background-color: #f0f0f0;
 }
 
 
@@ -256,19 +298,23 @@ onMounted(() => {
 .feature-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 25px;
+  gap: 20px;
+  width: 100%;
 }
 
 .feature-card {
   background-color: white;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 25px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.04);
+  transition: all 0.4s ease;
   cursor: pointer;
   opacity: 0;
   transform: translateY(20px);
   border: 1px solid #f0f0f0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .feature-card.animate-in {
@@ -293,14 +339,26 @@ onMounted(() => {
 }
 
 .feature-icon {
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   background-color: rgba(65, 184, 131, 0.1);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-icon::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 70%);
+  top: 0;
+  left: 0;
 }
 
 .feature-icon .el-icon {
@@ -331,11 +389,12 @@ onMounted(() => {
 .stats-section {
   display: flex;
   justify-content: space-around;
-  margin-top: 40px;
+  margin-top: 50px;
   padding: 30px;
-  background-color: #f9f9f9;
-  border-radius: 12px;
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.03);
+  background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  width: 100%;
 }
 
 .stat-card {
@@ -415,55 +474,89 @@ onMounted(() => {
 }
 
 .decoration-circle-1 {
-  width: 150px;
-  height: 150px;
-  top: -30px;
-  right: 10%;
-  animation: float 8s ease-in-out infinite;
+  width: 250px;
+  height: 250px;
+  top: -80px;
+  right: 5%;
+  animation: float 12s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%);
 }
 
 .decoration-circle-2 {
-  width: 80px;
-  height: 80px;
-  bottom: 20px;
-  left: 15%;
-  animation: float 6s ease-in-out infinite reverse;
+  width: 180px;
+  height: 180px;
+  bottom: -40px;
+  left: 10%;
+  animation: float 8s ease-in-out infinite reverse;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
 }
 
 .decoration-circle-3 {
-  width: 40px;
-  height: 40px;
-  top: 40%;
-  left: 10%;
-  animation: float 4s ease-in-out infinite;
+  width: 120px;
+  height: 120px;
+  top: 30%;
+  left: 5%;
+  animation: float 6s ease-in-out infinite;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 70%);
+}
+
+/* 添加欢迎副标题 */
+.welcome-subtitle {
+  font-size: 1.4rem;
+  font-weight: 400;
+  margin-bottom: 30px;
+  opacity: 0.9;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  .home-container {
+    padding: 10px 5px;
+    width: 98%;
+  }
+
   .welcome-section {
-    padding: 40px 20px;
+    padding: 50px 15px;
+    min-height: 300px;
   }
   
   .welcome-title {
-    font-size: 2rem;
+    font-size: 2.2rem;
+  }
+  
+  .welcome-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 25px;
   }
   
   .action-buttons {
     flex-direction: column;
     gap: 15px;
+    max-width: 100%;
   }
   
   .stats-section {
     flex-direction: column;
     gap: 20px;
+    padding: 25px 15px;
   }
   
   .stat-card {
     padding: 15px;
+    width: 100%;
   }
   
   .feature-cards {
     grid-template-columns: 1fr;
+  }
+  
+  .app-logo {
+    width: 80px;
+    height: 80px;
+    font-size: 80px;
   }
 }
 </style>
