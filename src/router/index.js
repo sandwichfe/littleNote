@@ -6,7 +6,8 @@ import Cookies from 'js-cookie'
 const constantRoutes = [
   {
     path: '/',
-    component: () => import('../views/home.vue'),
+    component: () => import('../views/note.vue'),
+    // component: () => import('../views/home.vue'),
   },
   {
     path: '/login',

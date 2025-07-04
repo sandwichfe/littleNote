@@ -6,8 +6,6 @@
         <div class="logo-container">
           <svg-icon icon-class="app-icon" class="app-logo" />
         </div>
-        <h1 class="welcome-title">欢迎使用 <span class="highlight">LittleNote</span></h1>
-        <p class="welcome-subtitle">简单、高效的笔记管理系统</p>
         <div class="action-buttons">
           <el-button type="default" size="large" @click="navigateTo('/note')" class="action-button">
             <el-icon class="el-icon--left"><svg-icon icon-class="list-icon" /></el-icon> 开始记录
@@ -18,7 +16,6 @@
 
     <!-- 功能卡片区域 -->
     <div class="features-section">
-      <h2 class="section-title">系统功能</h2>
       <div class="feature-cards">
         <div class="feature-card" v-for="(feature, index) in features" :key="index" @click="navigateTo(feature.path)">
           <div class="feature-icon">
@@ -75,7 +72,7 @@ const features = ref([
 const stats = ref({
   notes: '500+',
   groups: '50+',
-  users: '100+'
+  users: '1+'
 });
 
 // 导航方法
@@ -126,14 +123,11 @@ onMounted(() => {
 
 /* 欢迎区域样式 */
 .welcome-section {
-  background: linear-gradient(160deg, #e6f7ff 0%, #f0f7ff 50%, #e9f5ff 100%);
   color: #2c3e50;
   position: relative;
   overflow: hidden;
   box-shadow: none;
   opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.6s ease-out;
   min-height: 450px;
   display: flex;
   align-items: center;
@@ -271,9 +265,7 @@ onMounted(() => {
   margin-right: auto;
   width: 100%;
   position: relative;
-  background: linear-gradient(180deg, rgba(240, 247, 255, 0.9) 0%, rgba(248, 249, 250, 0.95) 100%);
   border-radius: 30px 30px 0 0;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.03);
   z-index: 1;
 }
 
@@ -396,14 +388,11 @@ onMounted(() => {
   justify-content: space-around;
   margin-top: 0;
   margin-bottom: 0;
-  padding: 60px 5% 80px;
-  background: linear-gradient(180deg, rgba(248, 249, 250, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
   border-radius: 0;
   box-shadow: none;
   width: 100%;
   max-width: 100%;
   position: relative;
-  z-index: 2;
 }
 
 .stats-decoration {
@@ -434,7 +423,6 @@ onMounted(() => {
 }
 
 .stat-card:hover {
-  transform: translateY(-5px);
   background-color: rgba(255, 255, 255, 0.9);
   box-shadow: 0 15px 30px rgba(65, 184, 131, 0.15);
 }
