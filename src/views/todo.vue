@@ -97,16 +97,22 @@
             v-for="task in dailyTasks" 
             :key="task.id"
             class="task-item"
-            :class="{ completed: task.completed }"
+            :class="{ completed: task.completedCount >= task.targetCount }"
           >
-            <el-checkbox 
-              v-model="task.completed"
-              @change="toggleTask(task)"
-              class="task-checkbox"
-            />
+            <div class="task-progress">
+              <el-button 
+                size="small" 
+                type="primary" 
+                :disabled="task.completedCount >= task.targetCount"
+                @click="incrementTaskCount(task)"
+              >
+                完成一次
+              </el-button>
+              <span class="count-display">{{ task.completedCount }}/{{ task.targetCount }}</span>
+            </div>
             <span class="task-content">{{ task.content }}</span>
             <span class="task-points">+{{ task.points }}</span>
-            <span v-if="task.completed" class="task-encouragement">{{ task.encouragement }}</span>
+            <span v-if="task.completedCount >= task.targetCount" class="task-encouragement">{{ task.encouragement }}</span>
           </div>
         </div>
       </div>
@@ -154,13 +160,19 @@
             v-for="task in filteredTasks" 
             :key="task.id"
             class="task-item-full"
-            :class="{ completed: task.completed }"
+            :class="{ completed: task.completedCount >= task.targetCount }"
           >
-            <el-checkbox 
-              v-model="task.completed"
-              @change="toggleTask(task)"
-              class="task-checkbox"
-            />
+            <div class="task-progress">
+              <el-button 
+                size="small" 
+                type="primary" 
+                :disabled="task.completedCount >= task.targetCount"
+                @click="incrementTaskCount(task)"
+              >
+                完成一次
+              </el-button>
+              <span class="count-display">{{ task.completedCount }}/{{ task.targetCount }}</span>
+            </div>
             <div class="task-details">
               <div class="task-content">{{ task.content }}</div>
               <div class="task-meta">
@@ -179,7 +191,7 @@
                 type="primary" 
                 size="small" 
                 text
-                @click="copyToDaily(task)"
+                @click="handleCopyToDaily(task)"
               >
                 复制到每日待办
               </el-button>
@@ -187,7 +199,7 @@
                 type="danger" 
                 size="small" 
                 text
-                @click="deleteTask(task.id)"
+                @click="handleDeleteTask(task.id)"
               >
                 删除
               </el-button>
@@ -225,7 +237,7 @@
                 type="primary" 
                 size="small"
                 :disabled="userPoints < reward.points"
-                @click="exchangeReward(reward)"
+                @click="handleExchangeReward(reward)"
               >
                 兑换
               </el-button>
@@ -253,7 +265,7 @@
             <el-button 
               type="success" 
               size="small"
-              @click="useReward(reward)"
+              @click="handleUseReward(reward)"
             >
               使用
             </el-button>
@@ -364,13 +376,16 @@
         <el-form-item label="积分奖励">
           <el-input-number v-model="newTask.points" :min="1" :max="100" />
         </el-form-item>
+        <el-form-item label="目标次数">
+          <el-input-number v-model="newTask.targetCount" :min="1" :max="50" placeholder="需要完成的次数" />
+        </el-form-item>
         <el-form-item label="鼓励语">
           <el-input v-model="newTask.encouragement" placeholder="完成后的鼓励语" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showAddTaskDialog = false">取消</el-button>
-        <el-button type="primary" @click="addTask">确定</el-button>
+        <el-button type="primary" @click="handleAddTask">确定</el-button>
       </template>
     </el-dialog>
 
@@ -393,7 +408,7 @@
       </el-form>
       <template #footer>
         <el-button @click="showAddRewardDialog = false">取消</el-button>
-        <el-button type="primary" @click="addReward">确定</el-button>
+        <el-button type="primary" @click="handleAddReward">确定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -412,6 +427,21 @@ import {
   List
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { 
+  getTasks, 
+  getDailyTasks, 
+  addTask, 
+  updateTask, 
+  deleteTask, 
+  completeTask, 
+  copyToDaily, 
+  getUserPoints, 
+  getRewards, 
+  addReward, 
+  exchangeReward, 
+  getUserRewards, 
+  useReward
+} from '@/network/todo'
 
 // 用户信息
 const userInfo = ref({
@@ -446,87 +476,12 @@ const currentDate = computed(() => {
 })
 
 // 全局任务列表
-const allTasks = ref([
-  {
-    id: 1,
-    content: '完成产品设计方案',
-    type: 'work',
-    points: 40,
-    completed: false,
-    encouragement: '加油，这个任务很重要！',
-    createdAt: new Date('2025-01-06')
-  },
-  {
-    id: 2,
-    content: '阅读一章专业书籍',
-    type: 'study',
-    points: 20,
-    completed: false,
-    encouragement: '坚持阅读，成长更快～',
-    createdAt: new Date('2025-01-06')
-  },
-  {
-    id: 3,
-    content: '晨跑 30 分钟',
-    type: 'health',
-    points: 10,
-    completed: true,
-    encouragement: '运动让生活更有活力！',
-    createdAt: new Date('2025-01-06')
-  },
-  {
-    id: 4,
-    content: '准备周会PPT',
-    type: 'work',
-    points: 30,
-    completed: false,
-    encouragement: '认真准备，展示你的能力！',
-    createdAt: new Date('2025-01-05')
-  },
-  {
-    id: 5,
-    content: '学习Vue3新特性',
-    type: 'study',
-    points: 25,
-    completed: true,
-    encouragement: '技术进步，未来可期！',
-    createdAt: new Date('2025-01-04')
-  }
-])
+const allTasks = ref([])
+
+
 
 // 每日任务数据（独立的每日待办列表）
-const dailyTasks = ref([
-  {
-    id: 1001,
-    content: '完成产品设计方案',
-    type: 'work',
-    points: 40,
-    completed: false,
-    encouragement: '加油，这个任务很重要！',
-    createdAt: new Date('2025-01-06'),
-    originalId: 1 // 记录原始任务ID
-  },
-  {
-    id: 1002,
-    content: '阅读一章专业书籍',
-    type: 'study',
-    points: 20,
-    completed: false,
-    encouragement: '坚持阅读，成长更快～',
-    createdAt: new Date('2025-01-06'),
-    originalId: 2
-  },
-  {
-    id: 1003,
-    content: '晨跑 30 分钟',
-    type: 'health',
-    points: 10,
-    completed: true,
-    encouragement: '运动让生活更有活力！',
-    createdAt: new Date('2025-01-06'),
-    originalId: 3
-  }
-])
+const dailyTasks = ref([])
 
 // 任务筛选状态
 const taskFilter = ref('all')
@@ -534,7 +489,7 @@ const taskFilter = ref('all')
 // 任务统计
 const workTasks = computed(() => {
   const work = dailyTasks.value.filter(task => task.type === 'work')
-  const completed = work.filter(task => task.completed).length
+  const completed = work.filter(task => task.completedCount >= task.targetCount).length
   return {
     total: work.length,
     completed,
@@ -544,7 +499,7 @@ const workTasks = computed(() => {
 
 const studyTasks = computed(() => {
   const study = dailyTasks.value.filter(task => task.type === 'study')
-  const completed = study.filter(task => task.completed).length
+  const completed = study.filter(task => task.completedCount >= task.targetCount).length
   return {
     total: study.length,
     completed,
@@ -554,7 +509,7 @@ const studyTasks = computed(() => {
 
 const healthTasks = computed(() => {
   const health = dailyTasks.value.filter(task => task.type === 'health')
-  const completed = health.filter(task => task.completed).length
+  const completed = health.filter(task => task.completedCount >= task.targetCount).length
   return {
     total: health.length,
     completed,
@@ -564,7 +519,7 @@ const healthTasks = computed(() => {
 
 const totalProgress = computed(() => {
   const total = dailyTasks.value.length
-  const completed = dailyTasks.value.filter(task => task.completed).length
+  const completed = dailyTasks.value.filter(task => task.completedCount >= task.targetCount).length
   return {
     total,
     completed,
@@ -574,11 +529,11 @@ const totalProgress = computed(() => {
 
 // 任务筛选相关计算属性
 const pendingTasks = computed(() => {
-  return allTasks.value.filter(task => !task.completed)
+  return allTasks.value.filter(task => task.completedCount < task.targetCount)
 })
 
 const completedTasks = computed(() => {
-  return allTasks.value.filter(task => task.completed)
+  return allTasks.value.filter(task => task.completedCount >= task.targetCount)
 })
 
 const filteredTasks = computed(() => {
@@ -593,40 +548,10 @@ const filteredTasks = computed(() => {
 })
 
 // 奖励列表
-const rewardsList = ref([
-  {
-    id: 1,
-    name: '精美电影票',
-    description: '周末看场期待已久的电影',
-    points: 200
-  },
-  {
-    id: 2,
-    name: '按摩放松',
-    description: '犒劳一下辛苦工作的自己',
-    points: 300
-  },
-  {
-    id: 3,
-    name: '新款数码产品',
-    description: '为生活添加一些科技感',
-    points: 500
-  }
-])
+const rewardsList = ref([])
 
 // 我的奖励
-const myRewards = ref([
-  {
-    id: 1,
-    name: '美味火锅',
-    obtainedDate: '2024-01-15'
-  },
-  {
-    id: 2,
-    name: '新游戏',
-    obtainedDate: '2024-01-10'
-  }
-])
+const myRewards = ref([])
 
 // 任务视图相关
 const activeView = ref('day')
@@ -678,11 +603,12 @@ const showAddTaskDialog = ref(false)
 const showAddRewardDialog = ref(false)
 
 // 新任务表单
-const newTask = reactive({
+const newTask = ref({
   content: '',
-  type: 'work',
+  type: '',
   points: 10,
-  encouragement: ''
+  encouragement: '',
+  targetCount: 1
 })
 
 // 新奖励表单
@@ -701,38 +627,63 @@ const setActiveView = (view) => {
   activeView.value = view
 }
 
-const toggleTask = (task) => {
-  if (task.completed) {
-    userPoints.value += task.points
-    ElMessage.success(`完成任务获得 ${task.points} 积分！`)
-  } else {
-    userPoints.value -= task.points
+const incrementTaskCount = async (task) => {
+  if (task.completedCount < task.targetCount) {
+    try {
+      const result = await completeTask(task.id)
+      task.completedCount++
+      
+      if (task.completedCount >= task.targetCount) {
+        task.completed = true
+        userPoints.value += task.points
+        ElMessage.success(`任务已全部完成！获得 ${task.points} 积分！${task.encouragement}`)
+      } else {
+        ElMessage.success(`进度 +1！还需完成 ${task.targetCount - task.completedCount} 次`)
+      }
+      
+      // 刷新用户积分
+      await loadUserPoints()
+    } catch (error) {
+      ElMessage.error('完成任务失败')
+    }
   }
 }
 
-const addTask = () => {
-  const task = {
-    id: Date.now(),
-    content: newTask.content,
-    type: newTask.type,
-    points: newTask.points,
-    completed: false,
-    encouragement: newTask.encouragement || '任务完成，继续加油！',
-    createdAt: new Date()
+// 移除了toggleTask方法，现在使用incrementTaskCount
+
+const handleAddTask = async () => {
+  if (!newTask.value.content || !newTask.value.type) {
+    ElMessage.warning('请填写完整的任务信息')
+    return
   }
   
-  allTasks.value.push(task)
+  const task = {
+    content: newTask.value.content,
+    taskType: newTask.value.type,
+    category: 'global',
+    points: newTask.value.points,
+    encouragement: newTask.value.encouragement || '任务完成，继续加油！',
+    targetCount: newTask.value.targetCount || 1
+  }
   
-  // 重置表单
-  Object.assign(newTask, {
-    content: '',
-    type: 'work',
-    points: 10,
-    encouragement: ''
-  })
-  
-  showAddTaskDialog.value = false
-  ElMessage.success('任务添加成功！')
+  try {
+    const result = await addTask(task)
+    allTasks.value.push(result)
+    
+    // 重置表单
+    newTask.value = {
+      content: '',
+      type: '',
+      points: 10,
+      encouragement: '',
+      targetCount: 1
+    }
+    
+    showAddTaskDialog.value = false
+    ElMessage.success('任务添加成功！')
+  } catch (error) {
+    ElMessage.error('添加任务失败')
+  }
 }
 
 // 设置任务筛选
@@ -741,11 +692,16 @@ const setTaskFilter = (filter) => {
 }
 
 // 删除任务
-const deleteTask = (taskId) => {
-  const index = allTasks.value.findIndex(task => task.id === taskId)
-  if (index > -1) {
-    allTasks.value.splice(index, 1)
+const handleDeleteTask = async (taskId) => {
+  try {
+    await deleteTask(taskId)
+    const index = allTasks.value.findIndex(task => task.id === taskId)
+    if (index > -1) {
+      allTasks.value.splice(index, 1)
+    }
     ElMessage.success('任务删除成功！')
+  } catch (error) {
+    ElMessage.error('删除任务失败')
   }
 }
 
@@ -786,74 +742,147 @@ const formatDate = (date) => {
   return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
 }
 
-const addReward = () => {
-  const reward = {
-    id: Date.now(),
-    name: newReward.name,
-    description: newReward.description,
-    points: newReward.points
+const handleAddReward = async () => {
+  if (!newReward.name || !newReward.description) {
+    ElMessage.warning('请填写完整的奖励信息')
+    return
   }
   
-  rewardsList.value.push(reward)
+  const reward = {
+    name: newReward.name,
+    description: newReward.description,
+    points: newReward.points,
+    status: 1
+  }
   
-  // 重置表单
-  Object.assign(newReward, {
-    name: '',
-    description: '',
-    points: 100
-  })
-  
-  showAddRewardDialog.value = false
-  ElMessage.success('奖励创建成功！')
+  try {
+    const result = await addReward(reward)
+    rewardsList.value.push(result)
+    
+    // 重置表单
+    Object.assign(newReward, {
+      name: '',
+      description: '',
+      points: 100
+    })
+    
+    showAddRewardDialog.value = false
+    ElMessage.success('奖励创建成功！')
+  } catch (error) {
+    ElMessage.error('创建奖励失败')
+  }
 }
 
-const exchangeReward = (reward) => {
-  if (userPoints.value >= reward.points) {
-    userPoints.value -= reward.points
-    myRewards.value.push({
-      id: Date.now(),
-      name: reward.name,
-      obtainedDate: new Date().toISOString().split('T')[0]
-    })
-    ElMessage.success(`成功兑换 ${reward.name}！`)
+const handleExchangeReward = async (reward) => {
+  const requiredPoints = reward.requiredPoints || reward.points
+  if (userPoints.value >= requiredPoints) {
+    try {
+      await exchangeReward(reward.id)
+      userPoints.value -= requiredPoints
+      ElMessage.success(`成功兑换 ${reward.name}！`)
+      // 刷新我的奖励列表
+      await loadMyRewards()
+    } catch (error) {
+      ElMessage.error('兑换失败')
+    }
   } else {
     ElMessage.warning('积分不足，无法兑换！')
   }
 }
 
-const useReward = (reward) => {
-  const index = myRewards.value.findIndex(r => r.id === reward.id)
-  if (index > -1) {
-    myRewards.value.splice(index, 1)
+const handleUseReward = async (reward) => {
+  try {
+    await useReward(reward.id)
+    const index = myRewards.value.findIndex(r => r.id === reward.id)
+    if (index > -1) {
+      myRewards.value.splice(index, 1)
+    }
     ElMessage.success(`已使用 ${reward.name}！`)
+  } catch (error) {
+    ElMessage.error('使用奖励失败')
   }
 }
 
 // 复制任务到每日待办
-const copyToDaily = (task) => {
+const handleCopyToDaily = async (task) => {
   // 检查是否已经存在相同的任务
-  const exists = dailyTasks.value.some(dailyTask => dailyTask.originalId === task.id)
+  const exists = dailyTasks.value.some(dailyTask => dailyTask.originalTaskId === task.id)
   if (exists) {
     ElMessage.warning('该任务已存在于每日待办中！')
     return
   }
   
-  const dailyTask = {
-    id: Date.now() + Math.random(), // 确保唯一ID
-    content: task.content,
-    type: task.type,
-    points: task.points,
-    completed: false,
-    encouragement: task.encouragement,
-    createdAt: new Date(),
-    originalId: task.id
+  try {
+    const result = await copyToDaily(task.id)
+    // 重新加载每日任务列表
+    await loadDailyTasks()
+    ElMessage.success('任务已复制到每日待办！')
+  } catch (error) {
+    ElMessage.error('复制任务失败')
   }
-  
-  dailyTasks.value.push(dailyTask)
-  ElMessage.success('任务已复制到每日待办！')
 }
 
-onMounted(() => {
+// 数据加载方法
+const loadAllTasks = async () => {
+  try {
+    const result = await getTasks()
+    allTasks.value = result.records || result || []
+  } catch (error) {
+    console.error('加载任务列表失败:', error)
+  }
+}
+
+const loadDailyTasks = async () => {
+  try {
+    const result = await getDailyTasks()
+    dailyTasks.value = result.records || result || []
+  } catch (error) {
+    console.error('加载每日任务失败:', error)
+  }
+}
+
+const loadUserPoints = async () => {
+  try {
+    const result = await getUserPoints()
+    userPoints.value = result.availablePoints || 0
+  } catch (error) {
+    console.error('加载用户积分失败:', error)
+  }
+}
+
+const loadRewards = async () => {
+  try {
+    const result = await getRewards()
+    rewardsList.value = result.records || result || []
+  } catch (error) {
+    console.error('加载奖励列表失败:', error)
+  }
+}
+
+const loadMyRewards = async () => {
+  try {
+    const result = await getUserRewards()
+    myRewards.value = result.records || result || []
+  } catch (error) {
+    console.error('加载我的奖励失败:', error)
+  }
+}
+
+// 初始化所有数据
+const initData = async () => {
+  await Promise.all([
+    loadAllTasks(),
+    loadDailyTasks(),
+    loadUserPoints(),
+    loadRewards(),
+    loadMyRewards()
+  ])
+}
+
+onMounted(async () => {
+  // 初始化数据
+  await initData()
+  
   // 初始化月份日期数据
   const now = new Date()
   const year = now.getFullYear()
@@ -1053,6 +1082,19 @@ onMounted(() => {
   border-radius: 8px;
   transition: all 0.3s ease;
   position: relative;
+}
+
+.task-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 16px;
+}
+
+.count-display {
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
 }
 
 .task-item:hover {
