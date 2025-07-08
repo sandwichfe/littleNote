@@ -26,10 +26,10 @@ export default defineConfig({
   server: {
     port: 3000,
     open: false,
-    https: {
-      key: fs.readFileSync('D:\\certs\\localhost\\server.key'),
-      cert: fs.readFileSync('D:\\certs\\localhost\\server.crt')
-    }
+    // https: {
+    //   key: fs.readFileSync('D:\\certs\\localhost\\server.key'),
+    //   cert: fs.readFileSync('D:\\certs\\localhost\\server.crt')
+    // }
   },
   resolve: {
     alias: {
