@@ -1,10 +1,10 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import ManageLayout from '../ManageLayout.vue'
 import Cookies from 'js-cookie'
 
 // 基础路由
-const constantRoutes = [
-  {
+const constantRoutes: RouteRecordRaw[] = [
+    {
     path: '/',
     component: () => import('../views/note.vue'),
     // component: () => import('../views/home.vue'),
@@ -12,39 +12,52 @@ const constantRoutes = [
   {
     path: '/login',
     component: () => import('../login.vue'),
+    name: 'Login',
   },
   {
     path: '/note',
     component: () => import('../views/note.vue'),
+    name: 'Note',
   },
   {
     path: '/noteDetail/:id',
     component: () => import('../views/noteDetail.vue'),
+    name: 'NoteDetail',
+  },
+  {
+    path: '/todo',
+    component: () => import('../views/todo.vue'),
+    name: 'Todo',
   },
   {
     path: '/',
-    name: 'ManageLayout', // 为主布局路由添加名称
     component: ManageLayout,
+    name: 'ManageLayout',
     children: [
       {
-        path: '/qrcode',
+        path: 'qrcode',
         component: () => import('../views/qrcodeView.vue'),
+        name: 'QRCode',
       },
       {
-        path: '/user',
+        path: 'user',
         component: () => import('../views/user.vue'),
+        name: 'User',
       },
       {
-        path: '/role',
+        path: 'role',
         component: () => import('../views/role.vue'),
+        name: 'Role',
       },
       {
-        path: '/menu',
+        path: 'menu',
         component: () => import('../views/menu.vue'),
+        name: 'Menu',
       },
       {
-        path: '/noteGroup',
+        path: 'noteGroup',
         component: () => import('../views/noteGroup.vue'),
+        name: 'NoteGroup',
       },
     ],
   },
@@ -52,13 +65,14 @@ const constantRoutes = [
 
 
 // 动态路由映射表
-const componentMap = {
-  '/': () => import('../views/home.vue'),
+const componentMap: Record<string, () => Promise<any>> = {
+  '/home': () => import('../views/home.vue'),
   '/user': () => import('../views/user.vue'),
   '/role': () => import('../views/role.vue'),
   '/menu': () => import('../views/menu.vue'),
   '/qrcode': () => import('../views/qrcodeView.vue'),
-  '/noteGroup': () => import('../views/noteGroup.vue')
+  '/noteGroup': () => import('../views/noteGroup.vue'),
+  '/todo': () => import('../views/todo.vue')
 }
 
 const router = createRouter({

@@ -77,6 +77,7 @@ export default {
 <script setup lang="ts">
 import { listNote, type Note } from "@/network/base"; // 引入自己封装的axios请求函数
 import { listNoteGroup } from "@/network/noteGroup";
+import { getCurrentUser } from "@/network/user"; // 引入获取当前用户信息的API
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick, reactive } from 'vue';
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useScrollStore } from "@/store/scroll"; // 引入滚动位置 Pinia store
@@ -223,18 +224,39 @@ const loading = ref(false);
 const backTopVisible = ref(false);
 // searchValue已在上方定义
 
+// 用户信息
+const userForm = ref({
+  nickname: '默认昵称',
+  avatar: 'http://49.235.149.110/favicon.ico'
+});
+
 
 // 计算属性
 const scrollerHeight = computed(() => {
-  // 减去顶部导航栏高度(70px)和底部边距(10px)，再减去20px确保内容可滚动
-  return (document.documentElement.clientHeight - 70 - 10 - 20) + 'px';
+  // 减去顶部导航栏高度(70px)、header高度(60px)和底部边距(10px)，再减去20px确保内容可滚动
+  return (document.documentElement.clientHeight - 70 - 60 - 10 - 20) + 'px';
 });
 
 // 搜索框输入直接绑定到queryParams.keyword
 // queryParams的变化会通过之前设置的watch触发数据加载
 
+// 获取当前用户信息
+const fetchUserInfo = async () => {
+  try {
+    const response = await getCurrentUser(); // 调用 /sys/user/current 接口
+    const userData = response.data;
+    userForm.value = {
+      nickname: userData.nickname || '默认昵称',
+      avatar: userData.avatarUrl || 'http://49.235.149.110/favicon.ico'
+    };
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+  }
+};
+
 onMounted(() => {
   initList();
+  fetchUserInfo(); // 获取用户信息
   
   // 初始化Better-Scroll
   nextTick(() => {
@@ -402,6 +424,45 @@ const addOrUpdateNote = (id) => {
   background-color: #f4f6f8; /* Light gray background for a softer look */
   border-radius: 10px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Softer shadow */
+}
+
+/* 用户头像header样式 */
+.header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 20px;
+  height: 60px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
+  border-radius: 10px 10px 0 0;
+}
+
+.user-info-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 0 12px;
+  height: 100%;
+  transition: background .3s;
+}
+
+.user-info-container:hover {
+  background: rgba(0,0,0,.025);
+}
+
+.avatar {
+  flex-shrink: 0;
+}
+
+.nickname {
+  margin-left: 10px;
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .top-box {

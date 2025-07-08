@@ -61,6 +61,12 @@ const features = ref([
     path: '/note'
   },
   {
+    title: '待办清单',
+    description: '治愈系待办管理，完成任务获得积分，兑换奖励，让生活更有动力',
+    icon: 'calendar',
+    path: '/todo'
+  },
+  {
     title: '系统管理',
     description: '管理系统用户和权限，控制访问级别和数据安全',
     icon: 'search',
