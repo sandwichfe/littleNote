@@ -109,14 +109,91 @@
             <span v-if="task.completed" class="task-encouragement">{{ task.encouragement }}</span>
           </div>
         </div>
+      </div>
+
+      <!-- 待办列表 -->
+      <div v-if="activeNav === 'todoList'" class="content-section">
+        <div class="section-header">
+          <h2 class="section-title">待办列表</h2>
+          <el-button 
+            type="primary" 
+            @click="showAddTaskDialog = true"
+          >
+            <el-icon><Plus /></el-icon>
+            创建任务
+          </el-button>
+        </div>
         
-        <el-button 
-          type="primary" 
-          class="add-task-btn"
-          @click="showAddTaskDialog = true"
-        >
-          添加新待办
-        </el-button>
+        <!-- 任务筛选 -->
+        <div class="task-filters">
+          <el-button-group>
+            <el-button 
+              :type="taskFilter === 'all' ? 'primary' : 'default'"
+              @click="setTaskFilter('all')"
+            >
+              全部 ({{ allTasks.length }})
+            </el-button>
+            <el-button 
+              :type="taskFilter === 'pending' ? 'primary' : 'default'"
+              @click="setTaskFilter('pending')"
+            >
+              待完成 ({{ pendingTasks.length }})
+            </el-button>
+            <el-button 
+              :type="taskFilter === 'completed' ? 'primary' : 'default'"
+              @click="setTaskFilter('completed')"
+            >
+              已完成 ({{ completedTasks.length }})
+            </el-button>
+          </el-button-group>
+        </div>
+        
+        <!-- 任务列表 -->
+        <div class="all-tasks-list">
+          <div 
+            v-for="task in filteredTasks" 
+            :key="task.id"
+            class="task-item-full"
+            :class="{ completed: task.completed }"
+          >
+            <el-checkbox 
+              v-model="task.completed"
+              @change="toggleTask(task)"
+              class="task-checkbox"
+            />
+            <div class="task-details">
+              <div class="task-content">{{ task.content }}</div>
+              <div class="task-meta">
+                <el-tag 
+                  :type="getTaskTypeColor(task.type)" 
+                  size="small"
+                >
+                  {{ getTaskTypeLabel(task.type) }}
+                </el-tag>
+                <span class="task-points">+{{ task.points }}积分</span>
+                <span class="task-date">{{ formatDate(task.createdAt) }}</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <el-button 
+                type="primary" 
+                size="small" 
+                text
+                @click="copyToDaily(task)"
+              >
+                复制到每日待办
+              </el-button>
+              <el-button 
+                type="danger" 
+                size="small" 
+                text
+                @click="deleteTask(task.id)"
+              >
+                删除
+              </el-button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- 奖励超市 -->
@@ -331,7 +408,8 @@ import {
   Star, 
   Plus,
   Clock,
-  User
+  User,
+  List
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
@@ -351,6 +429,7 @@ const activeNav = ref('daily')
 // 导航菜单项
 const navItems = [
   { key: 'daily', label: '每日待办', icon: Calendar },
+  { key: 'todoList', label: '待办列表', icon: List },
   { key: 'rewards', label: '奖励超市', icon: Present },
   { key: 'myRewards', label: '我的奖励', icon: Trophy },
   { key: 'taskViews', label: '任务视图', icon: Clock }
@@ -366,15 +445,16 @@ const currentDate = computed(() => {
   return `${year}年${month}月${day}日 ${weekDay}`
 })
 
-// 每日任务数据
-const dailyTasks = ref([
+// 全局任务列表
+const allTasks = ref([
   {
     id: 1,
     content: '完成产品设计方案',
     type: 'work',
     points: 40,
     completed: false,
-    encouragement: '加油，这个任务很重要！'
+    encouragement: '加油，这个任务很重要！',
+    createdAt: new Date('2025-01-06')
   },
   {
     id: 2,
@@ -382,7 +462,8 @@ const dailyTasks = ref([
     type: 'study',
     points: 20,
     completed: false,
-    encouragement: '坚持阅读，成长更快～'
+    encouragement: '坚持阅读，成长更快～',
+    createdAt: new Date('2025-01-06')
   },
   {
     id: 3,
@@ -390,9 +471,65 @@ const dailyTasks = ref([
     type: 'health',
     points: 10,
     completed: true,
-    encouragement: '运动让生活更有活力！'
+    encouragement: '运动让生活更有活力！',
+    createdAt: new Date('2025-01-06')
+  },
+  {
+    id: 4,
+    content: '准备周会PPT',
+    type: 'work',
+    points: 30,
+    completed: false,
+    encouragement: '认真准备，展示你的能力！',
+    createdAt: new Date('2025-01-05')
+  },
+  {
+    id: 5,
+    content: '学习Vue3新特性',
+    type: 'study',
+    points: 25,
+    completed: true,
+    encouragement: '技术进步，未来可期！',
+    createdAt: new Date('2025-01-04')
   }
 ])
+
+// 每日任务数据（独立的每日待办列表）
+const dailyTasks = ref([
+  {
+    id: 1001,
+    content: '完成产品设计方案',
+    type: 'work',
+    points: 40,
+    completed: false,
+    encouragement: '加油，这个任务很重要！',
+    createdAt: new Date('2025-01-06'),
+    originalId: 1 // 记录原始任务ID
+  },
+  {
+    id: 1002,
+    content: '阅读一章专业书籍',
+    type: 'study',
+    points: 20,
+    completed: false,
+    encouragement: '坚持阅读，成长更快～',
+    createdAt: new Date('2025-01-06'),
+    originalId: 2
+  },
+  {
+    id: 1003,
+    content: '晨跑 30 分钟',
+    type: 'health',
+    points: 10,
+    completed: true,
+    encouragement: '运动让生活更有活力！',
+    createdAt: new Date('2025-01-06'),
+    originalId: 3
+  }
+])
+
+// 任务筛选状态
+const taskFilter = ref('all')
 
 // 任务统计
 const workTasks = computed(() => {
@@ -432,6 +569,26 @@ const totalProgress = computed(() => {
     total,
     completed,
     percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+  }
+})
+
+// 任务筛选相关计算属性
+const pendingTasks = computed(() => {
+  return allTasks.value.filter(task => !task.completed)
+})
+
+const completedTasks = computed(() => {
+  return allTasks.value.filter(task => task.completed)
+})
+
+const filteredTasks = computed(() => {
+  switch (taskFilter.value) {
+    case 'pending':
+      return pendingTasks.value
+    case 'completed':
+      return completedTasks.value
+    default:
+      return allTasks.value
   }
 })
 
@@ -560,10 +717,11 @@ const addTask = () => {
     type: newTask.type,
     points: newTask.points,
     completed: false,
-    encouragement: newTask.encouragement || '任务完成，继续加油！'
+    encouragement: newTask.encouragement || '任务完成，继续加油！',
+    createdAt: new Date()
   }
   
-  dailyTasks.value.push(task)
+  allTasks.value.push(task)
   
   // 重置表单
   Object.assign(newTask, {
@@ -575,6 +733,57 @@ const addTask = () => {
   
   showAddTaskDialog.value = false
   ElMessage.success('任务添加成功！')
+}
+
+// 设置任务筛选
+const setTaskFilter = (filter) => {
+  taskFilter.value = filter
+}
+
+// 删除任务
+const deleteTask = (taskId) => {
+  const index = allTasks.value.findIndex(task => task.id === taskId)
+  if (index > -1) {
+    allTasks.value.splice(index, 1)
+    ElMessage.success('任务删除成功！')
+  }
+}
+
+// 获取任务类型颜色
+const getTaskTypeColor = (type) => {
+  switch (type) {
+    case 'work':
+      return 'primary'
+    case 'study':
+      return 'success'
+    case 'health':
+      return 'warning'
+    default:
+      return 'info'
+  }
+}
+
+// 获取任务类型标签
+const getTaskTypeLabel = (type) => {
+  switch (type) {
+    case 'work':
+      return '工作任务'
+    case 'study':
+      return '学习计划'
+    case 'health':
+      return '健康习惯'
+    default:
+      return '其他'
+  }
+}
+
+// 格式化日期
+const formatDate = (date) => {
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = d.getMonth() + 1
+  const day = d.getDate()
+  return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
 }
 
 const addReward = () => {
@@ -618,6 +827,30 @@ const useReward = (reward) => {
     myRewards.value.splice(index, 1)
     ElMessage.success(`已使用 ${reward.name}！`)
   }
+}
+
+// 复制任务到每日待办
+const copyToDaily = (task) => {
+  // 检查是否已经存在相同的任务
+  const exists = dailyTasks.value.some(dailyTask => dailyTask.originalId === task.id)
+  if (exists) {
+    ElMessage.warning('该任务已存在于每日待办中！')
+    return
+  }
+  
+  const dailyTask = {
+    id: Date.now() + Math.random(), // 确保唯一ID
+    content: task.content,
+    type: task.type,
+    points: task.points,
+    completed: false,
+    encouragement: task.encouragement,
+    createdAt: new Date(),
+    originalId: task.id
+  }
+  
+  dailyTasks.value.push(dailyTask)
+  ElMessage.success('任务已复制到每日待办！')
 }
 
 onMounted(() => {
@@ -824,15 +1057,16 @@ onMounted(() => {
 
 .task-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .task-item.completed {
   opacity: 0.7;
+  background: #f0f0f0;
 }
 
 .task-checkbox {
-  margin-right: 12px;
+  margin-right: 16px;
 }
 
 .task-content {
@@ -841,23 +1075,43 @@ onMounted(() => {
   color: #333;
 }
 
+.task-item.completed .task-content {
+  text-decoration: line-through;
+  color: #999;
+}
+
 .task-points {
-  color: #8e6ff7;
+  background: #8e6ff7;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
   font-weight: 600;
-  margin-right: 12px;
+  margin-left: 12px;
 }
 
 .task-encouragement {
   position: absolute;
-  right: 16px;
   top: -8px;
+  right: 16px;
   background: #4caf50;
   color: white;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
-  opacity: 0;
-  animation: fadeInUp 0.5s ease forwards;
+  animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
 }
 
 @keyframes fadeInUp {
@@ -869,9 +1123,86 @@ onMounted(() => {
 
 .add-task-btn {
   width: 100%;
-  height: 48px;
+  padding: 12px;
   font-size: 16px;
   font-weight: 600;
+}
+
+/* 待办列表样式 */
+.task-filters {
+  margin-bottom: 24px;
+}
+
+.all-tasks-list {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.task-item-full {
+  display: flex;
+  align-items: flex-start;
+  padding: 20px;
+  margin-bottom: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #8e6ff7;
+  transition: all 0.3s ease;
+}
+
+.task-item-full:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.task-item-full.completed {
+  opacity: 0.7;
+  background: #f0f0f0;
+  border-left-color: #ccc;
+}
+
+.task-details {
+  flex: 1;
+  margin-left: 16px;
+}
+
+.task-details .task-content {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.task-item-full.completed .task-details .task-content {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #666;
+}
+
+.task-meta .task-points {
+  background: #8e6ff7;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.task-date {
+  color: #999;
+  font-size: 12px;
+}
+
+.task-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .rewards-grid {
