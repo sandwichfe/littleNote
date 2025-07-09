@@ -30,7 +30,7 @@ export function useTodo() {
   const activeNav = ref('daily')
   const allTasks = ref([])
   const dailyTasks = ref([])
-  const taskFilter = ref('all')
+  const taskFilter = ref('pending')
   const rewardsList = ref([])
   const myRewards = ref([])
   const activeView = ref('day')
@@ -86,7 +86,7 @@ export function useTodo() {
       case 'completed':
         return completedTasks.value
       default:
-        return Array.isArray(allTasks.value) ? allTasks.value : []
+        return pendingTasks.value // 默认显示待完成任务
     }
   })
 
@@ -103,6 +103,7 @@ export function useTodo() {
         await loadRewards()
         break
       case 'todoList':
+        // 每次切换到待办列表都重新加载，确保数据最新
         await loadAllTasks()
         break
       case 'daily':
@@ -133,8 +134,9 @@ export function useTodo() {
           ElMessage.success(`进度 +1！还需完成 ${task.targetCount - task.completedCount} 次`)
         }
         
-        // 刷新用户积分
+        // 刷新用户积分和任务列表
         await loadUserPoints()
+        await loadAllTasks() // 刷新任务列表以更新计数
       } catch (error) {
         ElMessage.error('完成任务失败')
       }
@@ -158,16 +160,12 @@ export function useTodo() {
     
     try {
       const result = await addTask(task)
-      if (!Array.isArray(allTasks.value)) {
-        allTasks.value = []
-      }
-      
-      // 处理API响应格式 {code, msg, data, time}
-      const taskData = result && result.data ? result.data : result
-      allTasks.value.push(taskData)
       
       showAddTaskDialog.value = false
       ElMessage.success('任务添加成功！')
+      
+      // 刷新任务列表以更新计数
+      await loadAllTasks()
     } catch (error) {
       console.error('添加任务失败:', error)
       ElMessage.error('添加任务失败')
@@ -177,12 +175,10 @@ export function useTodo() {
   const handleDeleteTask = async (taskId) => {
     try {
       await deleteTask(taskId)
-      const tasks = Array.isArray(allTasks.value) ? allTasks.value : []
-      const index = tasks.findIndex(task => task.id === taskId)
-      if (index > -1 && Array.isArray(allTasks.value)) {
-        allTasks.value.splice(index, 1)
-      }
       ElMessage.success('任务删除成功！')
+      
+      // 刷新任务列表以更新计数
+      await loadAllTasks()
     } catch (error) {
       ElMessage.error('删除任务失败')
     }

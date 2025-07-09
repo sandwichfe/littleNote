@@ -8,9 +8,16 @@ import { computed } from 'vue'
 export function useTaskStats(tasks) {
   // 安全获取任务列表的辅助函数
   const getTaskList = (tasks) => {
+    // 如果tasks是函数，调用它获取值
+    if (typeof tasks === 'function') {
+      const result = tasks()
+      return Array.isArray(result) ? result : []
+    }
+    // 如果tasks是数组，直接返回
     if (Array.isArray(tasks)) {
       return tasks
     }
+    // 如果tasks是ref，获取其value
     if (tasks && tasks.value) {
       return Array.isArray(tasks.value) ? tasks.value : []
     }

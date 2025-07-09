@@ -15,12 +15,6 @@
     <div class="task-filters">
       <el-button-group>
         <el-button 
-          :type="taskFilter === 'all' ? 'primary' : 'default'"
-          @click="$emit('filter-change', 'all')"
-        >
-          全部 ({{ allTasksCount }})
-        </el-button>
-        <el-button 
           :type="taskFilter === 'pending' ? 'primary' : 'default'"
           @click="$emit('filter-change', 'pending')"
         >
@@ -37,6 +31,7 @@
     
     <!-- 任务列表 -->
     <div class="all-tasks-list">
+
       <div 
         v-for="task in filteredTasks" 
         :key="task.id"
@@ -44,6 +39,7 @@
         :class="{ completed: task.completedCount >= task.targetCount }"
         :style="{ '--progress': (task.completedCount / task.targetCount * 100) + '%' }"
       >
+      
         <div class="task-progress">
           <el-button 
             size="small" 
@@ -55,6 +51,7 @@
           </el-button>
           <span class="count-display">{{ task.completedCount }}/{{ task.targetCount }}</span>
         </div>
+
         <div class="task-details">
           <div class="task-content">{{ task.content }}</div>
           <div class="task-meta">
@@ -68,6 +65,7 @@
             <span class="task-date">{{ formatDate(task.createdAt) }}</span>
           </div>
         </div>
+
         <div class="task-actions">
           <el-button 
             type="primary" 
@@ -86,8 +84,10 @@
             删除
           </el-button>
         </div>
+
       </div>
     </div>
+
   </div>
 </template>
 
@@ -101,7 +101,7 @@ import type { Task } from '@/network/todo'
 // Props
 const props = defineProps<{
   allTasks: Task[]
-  taskFilter: 'all' | 'pending' | 'completed'
+  taskFilter: 'pending' | 'completed'
 }>()
 
 // Emits
@@ -114,7 +114,7 @@ defineEmits<{
 }>()
 
 // 使用任务统计组合式函数
-const { allTasksCount, pendingTasks, completedTasks } = useTaskStats(props.allTasks)
+const { allTasksCount, pendingTasks, completedTasks } = useTaskStats(() => props.allTasks)
 
 // 使用任务工具函数
 const { getTaskTypeColor, getTaskTypeLabel, formatDate } = useTaskUtils()
@@ -127,7 +127,7 @@ const filteredTasks = computed(() => {
     case 'completed':
       return completedTasks.value
     default:
-      return Array.isArray(props.allTasks) ? props.allTasks : []
+      return pendingTasks.value // 默认显示待完成任务
   }
 })
 </script>
@@ -170,7 +170,6 @@ const filteredTasks = computed(() => {
   margin-bottom: 16px;
   background: #f8f9fa;
   border-radius: 12px;
-  border-left: 4px solid #8e6ff7;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;

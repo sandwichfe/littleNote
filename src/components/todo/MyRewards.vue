@@ -113,17 +113,6 @@ onMounted(() => {
   position: relative;
 }
 
-.section-title::after {
-  content: '';
-  position: absolute;
-  bottom: -16px;
-  left: 0;
-  width: 40px;
-  height: 3px;
-  background: linear-gradient(90deg, #67c23a, #85ce61);
-  border-radius: 3px;
-}
-
 .section-actions {
   display: flex;
   gap: 8px;
@@ -193,7 +182,6 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-left: 4px solid #67c23a;
   position: relative;
   overflow: hidden;
   min-height: 100px; /* 减小卡片高度 */
