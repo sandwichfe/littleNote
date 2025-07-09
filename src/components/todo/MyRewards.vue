@@ -22,18 +22,19 @@
         class="my-reward-item"
       >
         <div class="reward-card-content">
+          
           <span class="reward-points">{{ reward.pointsCost }}积分</span>
-          <div class="reward-info">
+
             <div class="reward-header">
-              <h3 class="reward-name">{{ reward.rewardName || reward.name }}</h3>
+              <h3 class="reward-name">{{ reward.rewardName}}</h3>
             </div>
+
             <div class="reward-timeline">
-              <div class="timeline-item">
-                <el-icon class="timeline-icon"><Calendar /></el-icon>
-                <span class="timeline-text">获得: {{ reward.obtainedDate }}</span>
-              </div>
+                <el-tooltip :content="`${reward.obtainedDate}获得`" placement="top">
+                    <span class="timeline-text">{{ reward.obtainedDate }}</span>
+                </el-tooltip>
             </div>
-          </div>
+
           <div class="reward-action">
             <el-button 
               v-if="reward.status === 0"
@@ -42,15 +43,15 @@
               @click="$emit('use-reward', reward)"
               class="status-unused"
             >
-              <el-icon><Timer /></el-icon>
               使用
             </el-button>
             <div v-else class="used-label status-used">
-              <el-icon><Check /></el-icon>
               <span class="timeline-text">已使用: {{ reward.usedDate }}</span>
             </div>
           </div>
+
         </div>
+        
       </div>
     </transition-group>
     
@@ -62,37 +63,22 @@
   </div>
 </template>
 
-<script setup>
-import { Refresh, Calendar, Timer, Check, Coin, Present, CircleCheck } from '@element-plus/icons-vue'
+<script setup lang="ts">
+import { Refresh } from '@element-plus/icons-vue'
 import { onMounted } from 'vue'
+import type { UserReward } from '@/network/todo'
 
 // Props
-defineProps({
-  myRewards: {
-    type: Array,
-    default: () => []
-  }
-})
+defineProps<{
+  myRewards: UserReward[]
+}>()
 
 // Emits
-defineEmits(['use-reward', 'refresh-rewards', 'go-to-shop'])
-
-// 状态相关方法
-const getStatusClass = (status) => {
-  switch (status) {
-    case 0: return 'status-unused'
-    case 1: return 'status-used'
-    default: return 'status-unknown'
-  }
-}
-
-const getStatusText = (status) => {
-  switch (status) {
-    case 0: return '未使用'
-    case 1: return '已使用'
-    default: return '未知状态'
-  }
-}
+defineEmits<{
+  'use-reward': [reward: UserReward]
+  'refresh-rewards': []
+  'go-to-shop': []
+}>()
 
 // 组件挂载时添加动画效果
 onMounted(() => {
@@ -237,8 +223,6 @@ onMounted(() => {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding-bottom: 30px; /* 为左下角的时间线留出空间 */
-  padding-left: 5px; /* 为左侧边框留出一些间距 */
 }
 
 .reward-header {

@@ -37,23 +37,21 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Plus } from '@element-plus/icons-vue'
+import type { Reward } from '@/network/todo'
 
 // Props
-defineProps({
-  rewardsList: {
-    type: Array,
-    default: () => []
-  },
-  userPoints: {
-    type: Number,
-    default: 0
-  }
-})
+defineProps<{
+  rewardsList: Reward[]
+  userPoints: number
+}>()
 
 // Emits
-defineEmits(['show-add-reward', 'exchange-reward'])
+defineEmits<{
+  'show-add-reward': []
+  'exchange-reward': [reward: Reward]
+}>()
 </script>
 
 <style scoped>

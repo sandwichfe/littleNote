@@ -9,6 +9,7 @@ export interface Task {
   targetCount: number;
   completedCount: number;
   points: number;
+  encouragement?: string;
   category: 'global' | 'daily';
   todoDate?: string;
   createTime?: string;
@@ -29,7 +30,10 @@ export interface UserReward {
   id?: number;
   rewardId: number;
   rewardName: string;
+  pointsCost: number;
   status: 0 | 1;
+  obtainedDate?: string;
+  usedDate?: string;
   obtainTime?: string;
   useTime?: string;
 }

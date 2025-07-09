@@ -9,11 +9,13 @@
     
     <!-- 任务列表 -->
     <div class="task-list">
+      
       <div 
         v-for="task in dailyTasks" 
         :key="task.id"
         class="task-item"
         :class="{ completed: task.completedCount >= task.targetCount }"
+        :style="{ '--progress': (task.completedCount / task.targetCount * 100) + '%' }"
       >
         <div class="task-progress">
           <el-button 
@@ -30,24 +32,25 @@
         <span class="task-points">+{{ task.points }}</span>
         <span v-if="task.completedCount >= task.targetCount" class="task-encouragement">{{ task.encouragement }}</span>
       </div>
+
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useTaskUtils } from '@/composables/useTaskUtils'
+import type { Task } from '@/network/todo'
 
 // Props
-const props = defineProps({
-  dailyTasks: {
-    type: Array,
-    default: () => []
-  }
-})
+const props = defineProps<{
+  dailyTasks: Task[]
+}>()
 
 // Emits
-defineEmits(['increment-task'])
+defineEmits<{
+  'increment-task': [task: Task]
+}>()
 
 // 使用工具函数
 const { getCurrentDateString } = useTaskUtils()
@@ -98,6 +101,24 @@ const currentDate = computed(() => getCurrentDateString())
   border-radius: 8px;
   transition: all 0.3s ease;
   position: relative;
+  overflow: hidden;
+}
+
+.task-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--progress, 0%);
+  background: linear-gradient(90deg, #e8f5e8, #c8e6c9);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+
+.task-item > * {
+  position: relative;
+  z-index: 1;
 }
 
 .task-progress {
@@ -121,6 +142,24 @@ const currentDate = computed(() => getCurrentDateString())
 .task-item.completed {
   opacity: 0.7;
   background: #f0f0f0;
+}
+
+.task-item.completed::before {
+  background: linear-gradient(90deg, #81c784, #4caf50);
+  animation: completedPulse 2s ease-in-out;
+}
+
+@keyframes completedPulse {
+  0% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+  }
+  100% {
+    opacity: 0.8;
+  }
 }
 
 .task-content {

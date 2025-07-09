@@ -81,32 +81,41 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useTaskUtils } from '@/composables/useTaskUtils'
+import type { Task } from '@/network/todo'
+
+// 定义视图相关的类型
+interface HourSlot {
+  time: string
+  tasks: Task[]
+}
+
+interface WeekDay {
+  date: string
+  label: string
+  taskCount: number
+}
+
+interface MonthDate {
+  date: string
+  day: number
+  taskCount: number
+}
 
 // Props
-const props = defineProps({
-  activeView: {
-    type: String,
-    default: 'day'
-  },
-  daySchedule: {
-    type: Array,
-    default: () => []
-  },
-  weekDays: {
-    type: Array,
-    default: () => []
-  },
-  monthDates: {
-    type: Array,
-    default: () => []
-  }
-})
+const props = defineProps<{
+  activeView: 'day' | 'week' | 'month'
+  daySchedule: HourSlot[]
+  weekDays: WeekDay[]
+  monthDates: MonthDate[]
+}>()
 
 // Emits
-defineEmits(['view-change'])
+defineEmits<{
+  'view-change': [viewKey: string]
+}>()
 
 // 使用工具函数
 const { getCurrentDateString } = useTaskUtils()
