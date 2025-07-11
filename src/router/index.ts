@@ -30,6 +30,11 @@ const constantRoutes: RouteRecordRaw[] = [
     name: 'Todo',
   },
   {
+    path: '/converter',
+    component: () => import('../views/converter.vue'),
+    name: 'Converter',
+  },
+  {
     path: '/',
     component: ManageLayout,
     name: 'ManageLayout',
@@ -72,7 +77,8 @@ const componentMap: Record<string, () => Promise<any>> = {
   '/menu': () => import('../views/menu.vue'),
   '/qrcode': () => import('../views/qrcodeView.vue'),
   '/noteGroup': () => import('../views/noteGroup.vue'),
-  '/todo': () => import('../views/todo.vue')
+  '/todo': () => import('../views/todo.vue'),
+  '/converter': () => import('../views/converter.vue')
 }
 
 const router = createRouter({
