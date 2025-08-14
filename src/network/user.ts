@@ -1,5 +1,6 @@
 // src/network/user.ts
 import { LoginRequest } from './request'
+import { cipherText } from '@/utils/aesUtil'
 
 interface User {
   id?: number
@@ -11,6 +12,12 @@ interface User {
   avatarUrl?: string
   deleted?: boolean
   sourceFrom?: string
+}
+
+interface ChangePasswordRequest {
+  oldPassword: string
+  newPassword: string
+  confirmPassword: string
 }
 
 interface PageVo {
@@ -32,3 +39,14 @@ export const deleteUser = (id: number) => LoginRequest({ method: 'delete', url: 
 export const getCurrentUser = () => LoginRequest({ method: 'get', url: `/sys/user/getCurrentUser` })
 
 export const updateCurrentUser = (user: User) => LoginRequest({ method: 'post', url: '/sys/user/updateCurrentUser', data: user })
+
+export const changePassword = (changePasswordData: ChangePasswordRequest) => {
+  // 对密码进行RSA加密
+  const encryptedData = {
+    ...changePasswordData,
+    oldPassword: cipherText(changePasswordData.oldPassword),
+    newPassword: cipherText(changePasswordData.newPassword),
+    confirmPassword: cipherText(changePasswordData.confirmPassword)
+  }
+  return LoginRequest({ method: 'post', url: '/api/user/change-password', data: encryptedData })
+}

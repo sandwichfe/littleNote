@@ -1,4 +1,5 @@
 import { request, LoginRequest } from "./request";
+import { cipherText } from "../utils/aesUtil";
 
 
 export interface Note {
@@ -86,12 +87,13 @@ export interface LoginResponse {
 }
 
 export function userLogin(username: string, password: string): Promise<any> {
+  const encryptedPassword = cipherText(password);
   return LoginRequest({
     url: '/user/login',
     method: 'post',
     params: {
       username,
-      password
+      password: encryptedPassword
     }
   });
 }

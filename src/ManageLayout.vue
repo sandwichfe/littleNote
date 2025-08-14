@@ -7,7 +7,8 @@ import 'vue-advanced-cropper/dist/style.css';
 import Cookies from 'js-cookie';
 import {
   getCurrentUser,
-  updateCurrentUser
+  updateCurrentUser,
+  changePassword
 } from '@/network/user'
 import { uploadImage } from '@/network/base'
 import { useMenuStore } from '@/store/menu'
@@ -119,12 +120,92 @@ const userForm = ref({
   avatar: ''
 })
 
+// 修改密码相关
+const passwordDialogVisible = ref(false)
+const passwordForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const passwordFormRef = ref(null)
+
+// 密码表单验证规则
+const passwordRules = {
+  oldPassword: [
+    { required: true, message: '请输入原密码', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认新密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== passwordForm.value.newPassword) {
+          callback(new Error('两次输入的密码不一致'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
 const cropperDialogVisible = ref(false)
 const imageToCrop = ref(null)
 const cropperRef = ref(null)
 
 const openDialog = () => {
   dialogVisible.value = true
+}
+
+// 打开修改密码对话框
+const openPasswordDialog = () => {
+  passwordDialogVisible.value = true
+  passwordForm.value = {
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  }
+}
+
+// 修改密码
+const updatePassword = async () => {
+  try {
+    await passwordFormRef.value.validate()
+    await changePassword(passwordForm.value)
+    passwordDialogVisible.value = false
+    ElMessage.success('密码修改成功')
+    passwordForm.value = {
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    }
+  } catch (error) {
+    console.error('修改密码失败:', error)
+    if (error.response && error.response.data && error.response.data.message) {
+      ElMessage.error(error.response.data.message)
+    } else {
+      ElMessage.error('修改密码失败')
+    }
+  }
+}
+
+// 处理下拉菜单命令
+const handleCommand = (command) => {
+  switch (command) {
+    case 'openDialog':
+      openDialog()
+      break
+    case 'changePassword':
+      openPasswordDialog()
+      break
+    case 'logout':
+      logout()
+      break
+  }
 }
 
 
@@ -231,10 +312,13 @@ onMounted(() => {
             </div>
             <template #dropdown>
               <el-dropdown-menu style="width: 150px;">
-                <el-dropdown-item command="openDialog" @click="openDialog">
+                <el-dropdown-item command="openDialog">
                    <div class="dropdown-item-content">修改资料</div>
                  </el-dropdown-item>
-                 <el-dropdown-item command="logout" @click="logout">
+                 <el-dropdown-item command="changePassword">
+                   <div class="dropdown-item-content">修改密码</div>
+                 </el-dropdown-item>
+                 <el-dropdown-item command="logout">
                    <div class="dropdown-item-content">退出登录</div>
                  </el-dropdown-item>
               </el-dropdown-menu>
@@ -294,6 +378,43 @@ onMounted(() => {
           <el-button @click="cropperDialogVisible = false">取 消</el-button>
           <el-button type="primary" @click="cropAndUpload">确 认</el-button>
         </span>
+      </template>
+    </el-dialog>
+
+    <!-- 修改密码对话框 -->
+    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="400px" center>
+      <el-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-width="100px">
+        <el-form-item label="原密码" prop="oldPassword">
+          <el-input 
+            v-model="passwordForm.oldPassword" 
+            type="password" 
+            placeholder="请输入原密码"
+            show-password
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input 
+            v-model="passwordForm.newPassword" 
+            type="password" 
+            placeholder="请输入新密码"
+            show-password
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input 
+            v-model="passwordForm.confirmPassword" 
+            type="password" 
+            placeholder="请再次输入新密码"
+            show-password
+            clearable
+          ></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="passwordDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="updatePassword">确认修改</el-button>
       </template>
     </el-dialog>
     
