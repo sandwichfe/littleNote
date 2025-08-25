@@ -25,20 +25,20 @@ interface PageVo {
   pageSize: number
 }
 
-export const createUser = (user: User) => LoginRequest({ method: 'post', url: '/sys/user/create', data: user })
+export const createUser = (user: User) => LoginRequest({ method: 'post', url: '/api/sys/user/create', data: user })
 
-export const getUserById = (id: number) => LoginRequest({ method: 'get', url: `/sys/user/get/${id}` })
+export const getUserById = (id: number) => LoginRequest({ method: 'get', url: `/api/sys/user/get/${id}` })
 
-export const getAllUsers = (pageVo: PageVo) => LoginRequest({ method: 'post', url: '/sys/user/list', data: pageVo })
+export const getAllUsers = (pageVo: PageVo) => LoginRequest({ method: 'post', url: '/api/sys/user/list', data: pageVo })
 
-export const updateUser = (user: User) => LoginRequest({ method: 'post', url: '/sys/user/update', data: user })
+export const updateUser = (user: User) => LoginRequest({ method: 'post', url: '/api/sys/user/update', data: user })
 
-export const deleteUser = (id: number) => LoginRequest({ method: 'delete', url: `/sys/user/delete/${id}` })
+export const deleteUser = (id: number) => LoginRequest({ method: 'delete', url: `/api/sys/user/delete/${id}` })
 
 
-export const getCurrentUser = () => LoginRequest({ method: 'get', url: `/sys/user/getCurrentUser` })
+export const getCurrentUser = () => LoginRequest({ method: 'get', url: `/api/user-center/user/getCurrentUser` })
 
-export const updateCurrentUser = (user: User) => LoginRequest({ method: 'post', url: '/sys/user/updateCurrentUser', data: user })
+export const updateCurrentUser = (user: User) => LoginRequest({ method: 'post', url: '/api/user-center/user/updateCurrentUser', data: user })
 
 export const changePassword = (changePasswordData: ChangePasswordRequest) => {
   // 对密码进行RSA加密
@@ -48,5 +48,5 @@ export const changePassword = (changePasswordData: ChangePasswordRequest) => {
     newPassword: cipherText(changePasswordData.newPassword),
     confirmPassword: cipherText(changePasswordData.confirmPassword)
   }
-  return LoginRequest({ method: 'post', url: '/api/user/change-password', data: encryptedData })
+  return LoginRequest({ method: 'post', url: '/api/user-center/user/change-password', data: encryptedData })
 }

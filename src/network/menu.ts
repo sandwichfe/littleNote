@@ -21,35 +21,35 @@ interface PageVo {
 
 export const createMenu = (menu: Menu) => LoginRequest({ 
   method: 'post', 
-  url: '/sys/menu/create', 
+  url: '/api/sys/menu/create', 
   data: menu 
 })
 
-export const getMenuById = (id: number) => LoginRequest({ method: 'get', url: `/sys/menu/get/${id}` })
+export const getMenuById = (id: number) => LoginRequest({ method: 'get', url: `/api/sys/menu/get/${id}` })
 
 // 导出 getAllMenus 方法
 export const getAllMenus = (pageVo: PageVo) => LoginRequest({ 
   method: 'post', 
-  url: '/sys/menu/list', 
+  url: '/api/sys/menu/list', 
   data: pageVo 
 })
 
 export const getTreeMenus = (pageVo: PageVo) => LoginRequest({ 
   method: 'get', 
-  url: '/sys/menu/tree', 
+  url: '/api/sys/menu/tree', 
   params: pageVo 
 })
 
 export const updateMenu = (menu: Menu) => LoginRequest({ 
   method: 'post', 
-  url: '/sys/menu/update', 
+  url: '/api/sys/menu/update', 
   data: menu 
 })
 
-export const deleteMenu = (id: number) => LoginRequest({ method: 'delete', url: `/sys/menu/delete/${id}` })
+export const deleteMenu = (id: number) => LoginRequest({ method: 'delete', url: `/api/sys/menu/delete/${id}` })
 
 // 获取当前用户菜单
 export const getCurrentUserMenus = () => LoginRequest({ 
   method: 'get', 
-  url: '/sys/menu/currentUserMenu'
+  url: '/api/user-center/user/currentUserMenu'
 })

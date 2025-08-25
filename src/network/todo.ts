@@ -48,7 +48,7 @@ export function getTasks(params: any = {}): Promise<any> {
   };
   return request({
     method: 'post',
-    url: '/todo/tasks/list',
+    url: '/api/little-note/todo/tasks/list',
     data: defaultParams
   });
 }
@@ -58,7 +58,7 @@ export function getDailyTasks(): Promise<any> {
   const today = new Date().toISOString().split('T')[0];
   return request({
     method: 'post',
-    url: '/todo/tasks/list',
+    url: '/api/little-note/todo/tasks/list',
     data: {
       pageNum: 1,
       pageSize: 100,
@@ -72,7 +72,7 @@ export function getDailyTasks(): Promise<any> {
 export function addTask(task: Partial<Task>): Promise<any> {
   return request({
     method: 'post',
-    url: '/todo/tasks',
+    url: '/api/little-note/todo/tasks',
     data: task
   });
 }
@@ -81,7 +81,7 @@ export function addTask(task: Partial<Task>): Promise<any> {
 export function updateTask(id: number, task: Partial<Task>): Promise<any> {
   return request({
     method: 'put',
-    url: `/todo/tasks/${id}`,
+    url: `/api/little-note/todo/tasks/${id}`,
     data: task
   });
 }
@@ -90,7 +90,7 @@ export function updateTask(id: number, task: Partial<Task>): Promise<any> {
 export function deleteTask(id: number): Promise<any> {
   return request({
     method: 'delete',
-    url: `/todo/tasks/${id}`
+    url: `/api/little-note/todo/tasks/${id}`
   });
 }
 
@@ -98,7 +98,7 @@ export function deleteTask(id: number): Promise<any> {
 export function completeTask(id: number): Promise<any> {
   return request({
     method: 'post',
-    url: `/todo/tasks/${id}/complete`
+    url: `/api/little-note/todo/tasks/${id}/complete`
   });
 }
 
@@ -106,7 +106,7 @@ export function completeTask(id: number): Promise<any> {
 export function copyToDaily(id: number): Promise<any> {
   return request({
     method: 'post',
-    url: `/todo/tasks/${id}/copy-to-daily`
+    url: `/api/little-note/todo/tasks/${id}/copy-to-daily`
   });
 }
 
@@ -114,7 +114,7 @@ export function copyToDaily(id: number): Promise<any> {
 export function getUserPoints(): Promise<any> {
   return request({
     method: 'get',
-    url: '/todo/points'
+    url: '/api/little-note/todo/points'
   });
 }
 
@@ -128,7 +128,7 @@ export function getRewards(params: any = {}): Promise<any> {
   };
   return request({
     method: 'post',
-    url: '/todo/rewards/list',
+    url: '/api/little-note/todo/rewards/list',
     data: defaultParams
   });
 }
@@ -137,7 +137,7 @@ export function getRewards(params: any = {}): Promise<any> {
 export function addReward(reward: Partial<Reward>): Promise<any> {
   return request({
     method: 'post',
-    url: '/todo/rewards',
+    url: '/api/little-note/todo/rewards',
     data: reward
   });
 }
@@ -146,7 +146,7 @@ export function addReward(reward: Partial<Reward>): Promise<any> {
 export function exchangeReward(id: number): Promise<any> {
   return request({
     method: 'post',
-    url: `/todo/rewards/${id}/exchange`
+    url: `/api/little-note/todo/rewards/${id}/exchange`
   });
 }
 
@@ -160,7 +160,7 @@ export function getUserRewards(params: any = {}): Promise<any> {
   };
   return request({
     method: 'get',
-    url: '/todo/user-rewards',
+    url: '/api/little-note/todo/user-rewards',
     params: defaultParams
   });
 }
@@ -169,6 +169,6 @@ export function getUserRewards(params: any = {}): Promise<any> {
 export function useReward(id: number): Promise<any> {
   return request({
     method: 'post',
-    url: `/todo/user-rewards/${id}/use`
+    url: `/api/little-note/todo/user-rewards/${id}/use`
   });
 }

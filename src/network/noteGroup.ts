@@ -10,7 +10,7 @@ export interface NoteGroup {
 export function listNoteGroup(pageNum: number, pageSize: number): Promise<any> {
     return request({
       method: "post",
-      url: "/noteGroup/listNoteGroup",
+      url: "/api/little-note/noteGroup/listNoteGroup",
       params: {
         pageNum: pageNum,
         pageSize: pageSize,
@@ -22,7 +22,7 @@ export function listNoteGroup(pageNum: number, pageSize: number): Promise<any> {
 export function addNoteGroup(groupName: string): Promise<any> {
   return request({
     method: "post",
-    url: "/noteGroup/addNoteGroup",
+    url: "/api/little-note/noteGroup/addNoteGroup",
     data: {
       groupName: groupName
     }
@@ -33,7 +33,7 @@ export function addNoteGroup(groupName: string): Promise<any> {
 export function editNoteGroup(id: number, groupName: string): Promise<any> {
   return request({
     method: "post",
-    url: "/noteGroup/editNoteGroup",
+    url: "/api/little-note/noteGroup/editNoteGroup",
     data: {
       id: id,
       groupName: groupName
@@ -45,7 +45,7 @@ export function editNoteGroup(id: number, groupName: string): Promise<any> {
 export function getNoteGroup(id: number): Promise<any> {
   return request({
     method: "get",
-    url: "/noteGroup/getNoteGroup",
+    url: "/api/little-note/noteGroup/getNoteGroup",
     params: {
       id: id
     }
@@ -56,7 +56,7 @@ export function getNoteGroup(id: number): Promise<any> {
 export function deleteNoteGroup(id: number): Promise<any> {
   return request({
     method: "get",
-    url: "/noteGroup/deleteNoteGroup",
+    url: "/api/little-note/noteGroup/deleteNoteGroup",
     params: {
       id: id
     }

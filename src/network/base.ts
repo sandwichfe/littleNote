@@ -14,7 +14,7 @@ export interface Note {
 export function listNote(pageNum: number, pageSize: number,groupId?:number,keyword?:string): Promise<any> {
   return request({
     method: "post",
-    url: "/note/listNote",
+    url: "/api/little-note/note/listNote",
     params: {
       pageNum: pageNum,
       pageSize: pageSize,
@@ -28,7 +28,7 @@ export function listNote(pageNum: number, pageSize: number,groupId?:number,keywo
 export function getNote(id: number): Promise<any> {
   return request({
     method: "get",
-    url: "/note/getNote",
+    url: "/api/little-note/note/getNote",
     params: {
       id: id,
     }
@@ -39,7 +39,7 @@ export function getNote(id: number): Promise<any> {
 export function editNote(id: number, content: string, title: string,groupId?: number): Promise<any> {
   return request({
     method: "post",
-    url: "/note/editNote",
+    url: "/api/little-note/note/editNote",
     data: {
       id: id,
       content: content,
@@ -53,7 +53,7 @@ export function editNote(id: number, content: string, title: string,groupId?: nu
 export function addNote(id: number, content: string, title: string,groupId?: number): Promise<any> {
   return request({
     method: "post",
-    url: "/note/addNote",
+    url: "/api/little-note/note/addNote",
     data: {
       id: id,
       content: content,
@@ -67,7 +67,7 @@ export function addNote(id: number, content: string, title: string,groupId?: num
 export function deleteNoteItem(id: number): Promise<any> {
   return request({
     method: "get",
-    url: "/note/deleteNote",
+    url: "/api/little-note/note/deleteNote",
     params: {
       id: id,
     }
@@ -89,7 +89,7 @@ export interface LoginResponse {
 export function userLogin(username: string, password: string): Promise<any> {
   const encryptedPassword = cipherText(password);
   return LoginRequest({
-    url: '/user/login',
+    url: '/api/user-center/user/login',
     method: 'post',
     params: {
       username,
@@ -102,7 +102,7 @@ export function userLogin(username: string, password: string): Promise<any> {
 export function generateSlider(): Promise<any> {
   return LoginRequest({
     method: "get",
-    url: "/user/slider/generate",
+    url: "/api/user-center/user/slider/generate",
   });
 }
 
@@ -110,7 +110,7 @@ export function generateSlider(): Promise<any> {
 export function verifySlider(sliderId: string, userX: number): Promise<any> {
   return LoginRequest({
     method: "post",
-    url: "/user/slider/verify",
+    url: "/api/user-center/user/slider/verify",
     params: {
       sliderId,
       userX
@@ -123,7 +123,7 @@ export function verifySlider(sliderId: string, userX: number): Promise<any> {
 export function generateQrCode(): Promise<any> {
   return LoginRequest({
     method: "get",
-    url: "/user/qrCode/login/generateQrCode",
+    url: "/api/user-center/user/qrCode/login/generateQrCode",
     params: {
     }
   });
@@ -132,7 +132,7 @@ export function generateQrCode(): Promise<any> {
 
 
 // 修改检查二维码状态接口
-export const qrCoderStatus = (qrCodeId: string) => LoginRequest({ method: 'get', url: `/user/qrCode/login/fetch/${qrCodeId}`})
+export const qrCoderStatus = (qrCodeId: string) => LoginRequest({ method: 'get', url: `/api/user-center/user/qrCode/login/fetch/${qrCodeId}`})
 
 
 // 新增用户注册接口
@@ -144,7 +144,7 @@ interface RegisterParams {
 
 export function userRegister(params: RegisterParams): Promise<any> {
   return LoginRequest({
-    url: '/user/register',
+    url: '/api/user-center/user/register',
     method: 'post',
     data: params
   });
@@ -155,7 +155,7 @@ export function uploadImage(file: File): Promise<any> {
   formData.append('uploadFile', file);
   return request({
     method: 'post',
-    url: '/upload',
+    url: '/api/oss/upload',
     data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'

@@ -4,12 +4,14 @@ import Cookies from 'js-cookie'
 import router from '../router';
 
 
-const requestIp = import.meta.env.VITE_API_URL;
+const littleNoteBaseUrl = import.meta.env.VITE_API_URL;
+const authBaseUrl = import.meta.env.VITE_AUTH_API_URL;
+console.log("32112",authBaseUrl)
 // 环境
 
 export function request(config) {
     const instance = axios.create({                       //创建移 动axios的实例
-        baseURL: `http://${requestIp}:8000`,  
+        baseURL: littleNoteBaseUrl,  
         timeout: 60000,
     });
 
@@ -54,7 +56,7 @@ export function request(config) {
 
 export function LoginRequest(config) {
     const instance = axios.create({                       //创建移 动axios的实例
-        baseURL: `http://${requestIp}:9088`,  
+        baseURL: authBaseUrl,  
         timeout: 5000,
     });
 

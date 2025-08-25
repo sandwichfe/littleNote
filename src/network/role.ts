@@ -17,24 +17,24 @@ interface PageVo {
 
 export const createRole = (role: { id?: number, roleName: string }) => LoginRequest({ 
   method: 'post', 
-  url: '/sys/role/create', 
+  url: '/api/sys/role/create', 
   data: { 
     id: role.id, 
     roleName: role.roleName 
   } 
 })
 
-export const getRoleById = (id: number) => LoginRequest({ method: 'get', url: `/sys/role/get/${id}` })
+export const getRoleById = (id: number) => LoginRequest({ method: 'get', url: `/api/sys/role/get/${id}` })
 
-export const getAllRoles = (pageVo: PageVo) => LoginRequest({ method: 'post', url: '/sys/role/list', data: pageVo })
+export const getAllRoles = (pageVo: PageVo) => LoginRequest({ method: 'post', url: '/api/sys/role/list', data: pageVo })
 
 export const updateRole = (role: { id?: number, roleName: string }) => LoginRequest({ 
   method: 'post', 
-  url: '/sys/role/update', 
+  url: '/api/sys/role/update', 
   data: { 
     id: role.id, 
     roleName: role.roleName 
   } 
 })
 
-export const deleteRole = (id: number) => LoginRequest({ method: 'delete', url: `/sys/role/delete/${id}` })
+export const deleteRole = (id: number) => LoginRequest({ method: 'delete', url: `/api/sys/role/delete/${id}` })
