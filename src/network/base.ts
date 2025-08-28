@@ -1,4 +1,4 @@
-import { request, LoginRequest } from "./request";
+import { LittleNoteRequest, UserCenterRequest, OssRequest } from "./request";
 import { cipherText } from "../utils/aesUtil";
 
 
@@ -12,9 +12,9 @@ export interface Note {
 
 // 这里为列表和分页功能添加类型
 export function listNote(pageNum: number, pageSize: number,groupId?:number,keyword?:string): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: "post",
-    url: "/api/little-note/note/listNote",
+    url: "/note/listNote",
     params: {
       pageNum: pageNum,
       pageSize: pageSize,
@@ -26,9 +26,9 @@ export function listNote(pageNum: number, pageSize: number,groupId?:number,keywo
 
 // 获取单个笔记，返回类型为 NoteResponse
 export function getNote(id: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: "get",
-    url: "/api/little-note/note/getNote",
+    url: "/note/getNote",
     params: {
       id: id,
     }
@@ -37,9 +37,9 @@ export function getNote(id: number): Promise<any> {
 
 // 编辑笔记，返回类型仍然为 NoteResponse 或 void，取决于实际需求
 export function editNote(id: number, content: string, title: string,groupId?: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: "post",
-    url: "/api/little-note/note/editNote",
+    url: "/note/editNote",
     data: {
       id: id,
       content: content,
@@ -51,9 +51,9 @@ export function editNote(id: number, content: string, title: string,groupId?: nu
 
 // 添加新笔记
 export function addNote(id: number, content: string, title: string,groupId?: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: "post",
-    url: "/api/little-note/note/addNote",
+    url: "/note/addNote",
     data: {
       id: id,
       content: content,
@@ -65,9 +65,9 @@ export function addNote(id: number, content: string, title: string,groupId?: num
 
 // 删除笔记
 export function deleteNoteItem(id: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: "get",
-    url: "/api/little-note/note/deleteNote",
+    url: "/note/deleteNote",
     params: {
       id: id,
     }
@@ -88,8 +88,8 @@ export interface LoginResponse {
 
 export function userLogin(username: string, password: string): Promise<any> {
   const encryptedPassword = cipherText(password);
-  return LoginRequest({
-    url: '/api/user-center/user/login',
+  return UserCenterRequest({
+    url: '/user/login',
     method: 'post',
     params: {
       username,
@@ -100,17 +100,17 @@ export function userLogin(username: string, password: string): Promise<any> {
 
 // 新增生成滑块验证数据的方法
 export function generateSlider(): Promise<any> {
-  return LoginRequest({
+  return UserCenterRequest({
     method: "get",
-    url: "/api/user-center/user/slider/generate",
+    url: "/user/slider/generate",
   });
 }
 
 // 新增验证滑块位置的方法
 export function verifySlider(sliderId: string, userX: number): Promise<any> {
-  return LoginRequest({
+  return UserCenterRequest({
     method: "post",
-    url: "/api/user-center/user/slider/verify",
+    url: "/user/slider/verify",
     params: {
       sliderId,
       userX
@@ -121,9 +121,9 @@ export function verifySlider(sliderId: string, userX: number): Promise<any> {
 
 // 新增生成滑块验证数据的方法
 export function generateQrCode(): Promise<any> {
-  return LoginRequest({
+  return UserCenterRequest({
     method: "get",
-    url: "/api/user-center/user/qrCode/login/generateQrCode",
+    url: "/user/qrCode/login/generateQrCode",
     params: {
     }
   });
@@ -132,7 +132,7 @@ export function generateQrCode(): Promise<any> {
 
 
 // 修改检查二维码状态接口
-export const qrCoderStatus = (qrCodeId: string) => LoginRequest({ method: 'get', url: `/api/user-center/user/qrCode/login/fetch/${qrCodeId}`})
+export const qrCoderStatus = (qrCodeId: string) => UserCenterRequest({ method: 'get', url: `/user/qrCode/login/fetch/${qrCodeId}`})
 
 
 // 新增用户注册接口
@@ -143,8 +143,8 @@ interface RegisterParams {
 }
 
 export function userRegister(params: RegisterParams): Promise<any> {
-  return LoginRequest({
-    url: '/api/user-center/user/register',
+  return UserCenterRequest({
+    url: '/user/register',
     method: 'post',
     data: params
   });
@@ -153,9 +153,9 @@ export function userRegister(params: RegisterParams): Promise<any> {
 export function uploadImage(file: File): Promise<any> {
   const formData = new FormData();
   formData.append('uploadFile', file);
-  return request({
+  return OssRequest({
     method: 'post',
-    url: '/api/oss/upload',
+    url: '/upload',
     data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'

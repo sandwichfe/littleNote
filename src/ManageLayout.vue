@@ -234,7 +234,7 @@ const cropAndUpload = () => {
       const file = new File([blob],`${Date.now()}.jpg`, { type: "image/jpeg" });
       try {
         const response = await uploadImage(file);
-        userForm.value.avatar = `${import.meta.env.VITE_UPLOAD_BASE_URL}/${response.data}`;
+        userForm.value.avatar = `${import.meta.env.VITE_OSS_LOAD_BASE_URL}/${response.data}`;
         ElMessage.success('上传成功');
         cropperDialogVisible.value = false;
       } catch (error) {

@@ -1,4 +1,4 @@
-import { request } from "./request";
+import { LittleNoteRequest } from "./request";
 
 // 定义Todo相关接口
 export interface Task {
@@ -46,9 +46,9 @@ export function getTasks(params: any = {}): Promise<any> {
     category: 'global',
     ...params
   };
-  return request({
+  return LittleNoteRequest({
     method: 'post',
-    url: '/api/little-note/todo/tasks/list',
+    url: '/todo/tasks/list',
     data: defaultParams
   });
 }
@@ -56,9 +56,9 @@ export function getTasks(params: any = {}): Promise<any> {
 // 获取每日任务列表
 export function getDailyTasks(): Promise<any> {
   const today = new Date().toISOString().split('T')[0];
-  return request({
+  return LittleNoteRequest({
     method: 'post',
-    url: '/api/little-note/todo/tasks/list',
+    url: '/todo/tasks/list',
     data: {
       pageNum: 1,
       pageSize: 100,
@@ -70,51 +70,51 @@ export function getDailyTasks(): Promise<any> {
 
 // 添加任务
 export function addTask(task: Partial<Task>): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: 'post',
-    url: '/api/little-note/todo/tasks',
+    url: '/todo/tasks',
     data: task
   });
 }
 
 // 更新任务
 export function updateTask(id: number, task: Partial<Task>): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: 'put',
-    url: `/api/little-note/todo/tasks/${id}`,
+    url: `/todo/tasks/${id}`,
     data: task
   });
 }
 
 // 删除任务
 export function deleteTask(id: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: 'delete',
-    url: `/api/little-note/todo/tasks/${id}`
+    url: `/todo/tasks/${id}`
   });
 }
 
 // 完成任务一次
 export function completeTask(id: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: 'post',
-    url: `/api/little-note/todo/tasks/${id}/complete`
+    url: `/todo/tasks/${id}/complete`
   });
 }
 
 // 复制任务到每日待办
 export function copyToDaily(id: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: 'post',
-    url: `/api/little-note/todo/tasks/${id}/copy-to-daily`
+    url: `/todo/tasks/${id}/copy-to-daily`
   });
 }
 
 // 获取用户积分
 export function getUserPoints(): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: 'get',
-    url: '/api/little-note/todo/points'
+    url: '/todo/points'
   });
 }
 
@@ -126,27 +126,27 @@ export function getRewards(params: any = {}): Promise<any> {
     status: 1,
     ...params
   };
-  return request({
+  return LittleNoteRequest({
     method: 'post',
-    url: '/api/little-note/todo/rewards/list',
+    url: '/todo/rewards/list',
     data: defaultParams
   });
 }
 
 // 添加奖励
 export function addReward(reward: Partial<Reward>): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: 'post',
-    url: '/api/little-note/todo/rewards',
+    url: '/todo/rewards',
     data: reward
   });
 }
 
 // 兑换奖励
 export function exchangeReward(id: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: 'post',
-    url: `/api/little-note/todo/rewards/${id}/exchange`
+    url: `/todo/rewards/${id}/exchange`
   });
 }
 
@@ -158,17 +158,17 @@ export function getUserRewards(params: any = {}): Promise<any> {
     status: 0,
     ...params
   };
-  return request({
+  return LittleNoteRequest({
     method: 'get',
-    url: '/api/little-note/todo/user-rewards',
+    url: '/todo/user-rewards',
     params: defaultParams
   });
 }
 
 // 使用奖励
 export function useReward(id: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: 'post',
-    url: `/api/little-note/todo/user-rewards/${id}/use`
+    url: `/todo/user-rewards/${id}/use`
   });
 }

@@ -81,7 +81,7 @@ const editorConfig = {
           const fileName = file.name === 'image.png' ? `${Date.now()}.png` : file.name;
           const uploadFile = new File([file], fileName, { type: file.type });
           const response = await uploadImage(uploadFile);
-          const url = `${import.meta.env.VITE_UPLOAD_BASE_URL}/${response.data}`;
+          const url = `${import.meta.env.VITE_OSS_LOAD_BASE_URL}/${response.data}`;
           insertFn(url, fileName, url);
         } catch (error) {
           console.error('上传失败:', error);

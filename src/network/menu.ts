@@ -1,5 +1,5 @@
 // src/network/menu.ts
-import { LoginRequest } from './request'
+import { SysRequest, UserCenterRequest } from './request'
 
 interface Menu {
   id?: number
@@ -19,37 +19,37 @@ interface PageVo {
   pageSize: number
 }
 
-export const createMenu = (menu: Menu) => LoginRequest({ 
+export const createMenu = (menu: Menu) => SysRequest({ 
   method: 'post', 
-  url: '/api/sys/menu/create', 
+  url: '/menu/create', 
   data: menu 
 })
 
-export const getMenuById = (id: number) => LoginRequest({ method: 'get', url: `/api/sys/menu/get/${id}` })
+export const getMenuById = (id: number) => SysRequest({ method: 'get', url: `/menu/get/${id}` })
 
 // 导出 getAllMenus 方法
-export const getAllMenus = (pageVo: PageVo) => LoginRequest({ 
+export const getAllMenus = (pageVo: PageVo) => SysRequest({ 
   method: 'post', 
-  url: '/api/sys/menu/list', 
+  url: '/menu/list', 
   data: pageVo 
 })
 
-export const getTreeMenus = (pageVo: PageVo) => LoginRequest({ 
+export const getTreeMenus = (pageVo: PageVo) => SysRequest({ 
   method: 'get', 
-  url: '/api/sys/menu/tree', 
+  url: '/menu/tree', 
   params: pageVo 
 })
 
-export const updateMenu = (menu: Menu) => LoginRequest({ 
+export const updateMenu = (menu: Menu) => SysRequest({ 
   method: 'post', 
-  url: '/api/sys/menu/update', 
+  url: '/menu/update', 
   data: menu 
 })
 
-export const deleteMenu = (id: number) => LoginRequest({ method: 'delete', url: `/api/sys/menu/delete/${id}` })
+export const deleteMenu = (id: number) => SysRequest({ method: 'delete', url: `/menu/delete/${id}` })
 
 // 获取当前用户菜单
-export const getCurrentUserMenus = () => LoginRequest({ 
+export const getCurrentUserMenus = () => UserCenterRequest({ 
   method: 'get', 
-  url: '/api/user-center/user/currentUserMenu'
+  url: '/user/currentUserMenu'
 })

@@ -1,5 +1,5 @@
 // src/network/role.ts
-import { LoginRequest } from './request'
+import { SysRequest } from './request'
 
 interface Role {
   id?: number
@@ -15,26 +15,26 @@ interface PageVo {
   pageSize: number
 }
 
-export const createRole = (role: { id?: number, roleName: string }) => LoginRequest({ 
+export const createRole = (role: { id?: number, roleName: string }) => SysRequest({ 
   method: 'post', 
-  url: '/api/sys/role/create', 
+  url: '/role/create', 
   data: { 
     id: role.id, 
     roleName: role.roleName 
   } 
 })
 
-export const getRoleById = (id: number) => LoginRequest({ method: 'get', url: `/api/sys/role/get/${id}` })
+export const getRoleById = (id: number) => SysRequest({ method: 'get', url: `/role/get/${id}` })
 
-export const getAllRoles = (pageVo: PageVo) => LoginRequest({ method: 'post', url: '/api/sys/role/list', data: pageVo })
+export const getAllRoles = (pageVo: PageVo) => SysRequest({ method: 'post', url: '/role/list', data: pageVo })
 
-export const updateRole = (role: { id?: number, roleName: string }) => LoginRequest({ 
+export const updateRole = (role: { id?: number, roleName: string }) => SysRequest({ 
   method: 'post', 
-  url: '/api/sys/role/update', 
+  url: '/role/update', 
   data: { 
     id: role.id, 
     roleName: role.roleName 
   } 
 })
 
-export const deleteRole = (id: number) => LoginRequest({ method: 'delete', url: `/api/sys/role/delete/${id}` })
+export const deleteRole = (id: number) => SysRequest({ method: 'delete', url: `/role/delete/${id}` })

@@ -1,4 +1,4 @@
-import { request, LoginRequest } from "./request";
+import { LittleNoteRequest } from "./request";
 
 // 定义NoteGroup接口
 export interface NoteGroup {
@@ -8,9 +8,9 @@ export interface NoteGroup {
 
 // 获取标签组列表
 export function listNoteGroup(pageNum: number, pageSize: number): Promise<any> {
-    return request({
+    return LittleNoteRequest({
       method: "post",
-      url: "/api/little-note/noteGroup/listNoteGroup",
+      url: "/noteGroup/listNoteGroup",
       params: {
         pageNum: pageNum,
         pageSize: pageSize,
@@ -20,9 +20,9 @@ export function listNoteGroup(pageNum: number, pageSize: number): Promise<any> {
 
 // 添加标签组
 export function addNoteGroup(groupName: string): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: "post",
-    url: "/api/little-note/noteGroup/addNoteGroup",
+    url: "/noteGroup/addNoteGroup",
     data: {
       groupName: groupName
     }
@@ -31,9 +31,9 @@ export function addNoteGroup(groupName: string): Promise<any> {
 
 // 编辑标签组
 export function editNoteGroup(id: number, groupName: string): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: "post",
-    url: "/api/little-note/noteGroup/editNoteGroup",
+    url: "/noteGroup/editNoteGroup",
     data: {
       id: id,
       groupName: groupName
@@ -43,9 +43,9 @@ export function editNoteGroup(id: number, groupName: string): Promise<any> {
 
 // 获取单个标签组
 export function getNoteGroup(id: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: "get",
-    url: "/api/little-note/noteGroup/getNoteGroup",
+    url: "/noteGroup/getNoteGroup",
     params: {
       id: id
     }
@@ -54,9 +54,9 @@ export function getNoteGroup(id: number): Promise<any> {
 
 // 删除标签组
 export function deleteNoteGroup(id: number): Promise<any> {
-  return request({
+  return LittleNoteRequest({
     method: "get",
-    url: "/api/little-note/noteGroup/deleteNoteGroup",
+    url: "/noteGroup/deleteNoteGroup",
     params: {
       id: id
     }
