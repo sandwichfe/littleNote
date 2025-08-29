@@ -86,7 +86,7 @@ export function LoginRequest(config) {
     const { baseURL, relativeUrl } = resolveBaseAndUrl(config.url)
     const instance = axios.create({                       //创建移 动axios的实例
         baseURL: baseURL || '',  
-        timeout: 5000,
+        timeout: 60000,
     });
 
     // 将处理后的相对路径写回 config
