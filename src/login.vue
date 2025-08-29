@@ -54,26 +54,39 @@ const success = (msg) => {
   isShow.value = false;
   openLoading('o(*≧▽≦)ツ加载中~');
     // 登录请求
-  userLogin(loginForm.value.username, loginForm.value.password).then(async (res) => {
+userLogin(loginForm.value.username, loginForm.value.password)
+  .then(async (res) => {
     if (res && res.code === 200) {
+      // 登录成功处理
       loginToken.value = res.data;
       Cookies.set("loginToken", loginToken.value, { expires: 7 });
-
       // 获取菜单和路由
       const { success, message } = await menuStore.fetchAndSetMenus();
-
       if (success) {
         router.push('/');
         ElMessage.success("登录成功");
       } else {
         ElMessage.error(message || '菜单加载失败');
-        // 可选择在这里清除 token
+        // 清除token
         Cookies.remove("loginToken");
       }
     } else {
-      ElMessage.error(res.msg || "登录失败，请检查用户名或密码");
+      // 登录失败处理（业务错误）
+      const errorMessage = res?.msg || '登录失败';
+      ElMessage.error(errorMessage);
+      
+      // 清除可能存在的旧token
+      Cookies.remove("loginToken");
     }
-  }).finally(() => {
+  })
+  .catch(error => {
+    // 处理请求错误
+    const errorMessage = error?.response?.data?.msg 
+      || error?.message 
+      || '登录请求失败，请稍后重试';
+    ElMessage.error(errorMessage);
+  })
+  .finally(() => {
     closeLoading();
   });
 
