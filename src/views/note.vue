@@ -39,7 +39,7 @@
       <div ref="scrollWrapper" class="scroll-wrapper">
         <div v-if="contents && contents.length > 0">
           <ul>
-            <li v-for="(c, index) in contents" :key="index" class="line" @mousedown="startTimer()" @mouseup="clearTimer">
+            <li v-for="(c, index) in contents" :key="index" class="line" >
               <div class="file-li-item" @click="addOrUpdateNote(c.id)">
                 <div class="prename">{{ c.title }}</div>
                 <div class="ptime">{{ c.updateTime || c.createTime }}</div>
@@ -50,16 +50,6 @@
 
         <el-empty description="(ง •̀_•́)ง没有数据了" v-else image="" :image-size="200" class="empty-msg-box"></el-empty>
 
-        <!-- 确认框 -->
-        <el-dialog v-model="centerDialogVisible" title="删除" width="500" center>
-          <span>确定删除？</span>
-          <template #footer>
-            <div class="dialog-footer">
-              <el-button @click="centerDialogVisible = false">Cancel</el-button>
-              <el-button @click="centerDialogVisible = false">Confirm</el-button>
-            </div>
-          </template>
-        </el-dialog>
       </div>
     </div>
 
@@ -79,8 +69,7 @@ import { listNote, type Note } from "@/network/base"; // 引入自己封装的ax
 import { listNoteGroup } from "@/network/noteGroup";
 import { getCurrentUser } from "@/network/user"; // 引入获取当前用户信息的API
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick, reactive } from 'vue';
-import { useRouter, onBeforeRouteLeave } from 'vue-router';
-import { useScrollStore } from "@/store/scroll"; // 引入滚动位置 Pinia store
+import { useRouter } from 'vue-router';
 import { useNoteGroupStore } from "@/store/noteGroup"; // 引入笔记分组 Pinia store
 import BScroll from 'better-scroll'; // 引入Better-Scroll
 
@@ -90,8 +79,6 @@ interface QueryParams {
   keyword: string;
 }
 
-// 引入 Pinia store
-const scrollStore = useScrollStore();
 const noteGroupStore = useNoteGroupStore();
 
 // 创建响应式查询对象
@@ -119,10 +106,7 @@ const groups = ref(
 
 // 处理选中项变化
 const changeGroup = (newValue: number| null) => {
-  // 保存选中的分组ID到pinia
-  noteGroupStore.updateSelectedGroupId(newValue);
-  // queryParams.groupId 已通过 v-model 自动更新
-  // 查询参数变化会触发watch，自动加载数据
+  console.log('changeGroup', newValue);
 };
 
 // 定义 ref 用于引用 DOM 元素
@@ -178,33 +162,9 @@ const refreshScroll = () => {
 const scrollToPosition = (position) => {
   console.log('尝试设置滚动条位置:', position);
   if (scroll.value) {
-    scroll.value.scrollTo(0, -position, 100); // Better-Scroll 的 y 轴方向是相反的，所以需要取负值
+     // Better-Scroll 的 y 轴方向是相反的，所以需要取负值
+    scroll.value.scrollTo(0, -position, 100);
   }
-};
-
-// 保存滚动条位置
-const saveScrollPosition = () => {
-  if (scroll.value) {
-    const scrollTop = -scroll.value.y; // Better-Scroll 的 y 轴方向是相反的，所以需要取负值
-    console.log('保存滚动条位置:', scrollTop);
-    scrollStore.updateScrollPosition(scrollTop);
-    return true;
-  } else {
-    console.warn('Better-Scroll 实例未找到，无法保存滚动位置');
-    return false;
-  }
-};
-
-// 恢复滚动条位置
-const restoreScrollPosition = (delay = 100) => {
-  const savedScrollPosition = scrollStore.scrollPosition;
-  if (savedScrollPosition) {
-    setTimeout(() => {
-      scrollToPosition(savedScrollPosition);
-    }, delay);
-    return true;
-  }
-  return false;
 };
 
 
@@ -217,15 +177,12 @@ const delay = (function () {
   };
 })();
 
-const router = useRouter(); // Vue 3 使用 `useRouter` 钩子进行路由跳转
-let timer;
+// Vue 3 使用 `useRouter` 钩子进行路由跳转
+const router = useRouter(); 
 
 // 定义响应式变量
-const centerDialogVisible = ref(false);
 const contents = ref<Note[]>([]);
 const loading = ref(false);
-const backTopVisible = ref(false);
-// searchValue已在上方定义
 
 // 用户信息
 const userForm = ref({
@@ -301,10 +258,6 @@ onMounted(() => {
   // 初始化Better-Scroll
   nextTick(() => {
     initScroll();
-    // 在页面首次加载时恢复滚动位置
-    setTimeout(() => {
-      restoreScrollPosition(300);
-    }, 100);
   });
 
   // 添加窗口resize监听
@@ -314,28 +267,6 @@ onMounted(() => {
 // 组件卸载时移除监听
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
-});
-
-// 当内容更新时，刷新Better-Scroll
-watch(() => contents.value, () => {
-  nextTick(() => {
-    refreshScroll();
-  });
-}, { deep: true });
-
-onBeforeRouteLeave((to, from, next) => {
-  // 路由离开时保存滚动条位置
-  saveScrollPosition();
-  
-  // 路由离开时保存当前选中的分组ID
-  // 无论queryParams.groupId是否有值，都更新pinia中的状态  如果有值，保存该值；如果无值，则重置为空字符串
-  if (queryParams.groupId) {
-    noteGroupStore.updateSelectedGroupId(queryParams.groupId);
-  } else {
-    noteGroupStore.resetSelectedGroupId();
-  }
-  
-  next();
 });
 
 
@@ -446,21 +377,11 @@ const initList = async () => {
   }
 };
 
-// 启动定时器
-const startTimer = () => {
-  timer = setTimeout(() => {
-    centerDialogVisible.value = true;
-  }, 1000);
-};
-
-// 清除定时器
-const clearTimer = () => {
-  clearTimeout(timer);
-};
 
 // 添加或更新笔记 
 const addOrUpdateNote = (id) => {
-  router.push(`/noteDetail/${id}`);
+  const url = router.resolve({ path: `/noteDetail/${id}` }).href;
+  window.open(url, '_blank');
 };
 </script>
 
