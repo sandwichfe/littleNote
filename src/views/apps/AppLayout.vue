@@ -192,7 +192,7 @@ onMounted(() => {
 
       <div class="header-right">
         <!-- 用户信息 -->
-        <el-dropdown trigger="hover" @command="handleCommand" popper-class="user-dropdown">
+        <el-dropdown trigger="hover" @command="handleCommand" >
           <div class="user-info-container" ref="userInfoContainer">
             <el-avatar :size="36" :src="userForm.avatar" class="avatar"></el-avatar>
             <span class="nickname" :title="userForm.nickname">{{ userForm.nickname }}</span>
@@ -281,6 +281,11 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* 去除el-dropdown自带的黑框 */
+.el-tooltip__trigger:focus-visible {
+  outline: unset;
+}
+
 .app-layout {
   display: flex;
   flex-direction: column;
@@ -327,6 +332,11 @@ onMounted(() => {
   align-items: center;
 }
 
+.user-dropdown{
+  border: none;
+  outline: none;
+}
+
 .user-info-container {
   display: flex;
   align-items: center;
@@ -334,7 +344,7 @@ onMounted(() => {
   cursor: pointer;
   padding: 8px 16px;
   border-radius: 20px;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
   backdrop-filter: blur(10px);
 }
 
@@ -403,6 +413,19 @@ onMounted(() => {
 .avatar-uploader-icon:hover {
   border-color: #409eff;
   color: #409eff;
+}
+
+/* Dropdown styling - 移除默认的 outline 和 border */
+:deep(.el-dropdown) {
+  outline: none !important;
+}
+
+:deep(.el-dropdown:focus) {
+  outline: none !important;
+}
+
+:deep(.el-dropdown:focus-visible) {
+  outline: none !important;
 }
 
 /* Dialog styling */
