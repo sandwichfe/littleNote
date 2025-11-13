@@ -335,12 +335,7 @@ onMounted(() => {
   padding: 8px 16px;
   border-radius: 20px;
   transition: background-color 0.3s ease;
-  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-}
-
-.user-info-container:hover {
-  background: rgba(255, 255, 255, 0.2);
 }
 
 .avatar {
@@ -354,7 +349,6 @@ onMounted(() => {
 
 .nickname {
   font-weight: 500;
-  color: #000000;
   max-width: 100px;
   white-space: nowrap;
   overflow: hidden;

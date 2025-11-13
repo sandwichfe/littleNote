@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import QRCode from '../components/QRCode.vue'
+import QRCode from '../../../components/QRCode.vue'
 import { h, ref } from 'vue'
 import { ElButton, ElRow, ElCol, ElInput } from 'element-plus';
 import { Minus, Plus } from '@element-plus/icons-vue';

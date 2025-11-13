@@ -69,9 +69,9 @@ import {
   getAllRoles, 
   updateRole, 
   deleteRole 
-} from '../network/role'
-import { getTreeMenus } from '../network/menu'
-import { getMenusByRoleId, assignMenusToRole } from '../network/roleMenu'
+} from '../../network/role.js'
+import { getTreeMenus } from '../../network/menu.js'
+import { getMenusByRoleId, assignMenusToRole } from '../../network/roleMenu.js'
 
 // 角色列表和加载状态
 const roleList = ref([])

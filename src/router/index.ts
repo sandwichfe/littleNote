@@ -1,25 +1,21 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import ManageLayout from '../ManageLayout.vue'
-import AppLayout from '../AppLayout.vue'
+import ManageLayout from '../views/manage/ManageLayout.vue'
+import AppLayout from '../views/apps/AppLayout.vue'
 import Cookies from 'js-cookie'
 
 // 基础路由
 const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/login',
-    component: () => import('../login.vue'),
+    component: () => import('../views/login/login.vue'),
     name: 'Login',
   },
   {
     path: '/todo',
-    component: () => import('../views/todo.vue'),
+    component: () => import('../views/apps/todo/todo.vue'),
     name: 'Todo',
   },
-  {
-    path: '/converter',
-    component: () => import('../views/converter.vue'),
-    name: 'Converter',
-  },
+
   // 前端应用布局 - 包含 note 相关页面
   {
     path: '/',
@@ -32,12 +28,12 @@ const constantRoutes: RouteRecordRaw[] = [
       },
       {
         path: 'note',
-        component: () => import('../views/note.vue'),
+        component: () => import('../views/apps/note/note.vue'),
         name: 'Note',
       },
       {
         path: 'noteDetail/:id',
-        component: () => import('../views/noteDetail.vue'),
+        component: () => import('../views/apps/note/noteDetail.vue'),
         name: 'NoteDetail',
       },
     ],
@@ -50,27 +46,27 @@ const constantRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: 'qrcode',
-        component: () => import('../views/qrcodeView.vue'),
+        component: () => import('../views/apps/qrcode/qrcodeView.vue'),
         name: 'QRCode',
       },
       {
         path: 'user',
-        component: () => import('../views/user.vue'),
+        component: () => import('../views/manage/user.vue'),
         name: 'User',
       },
       {
         path: 'role',
-        component: () => import('../views/role.vue'),
+        component: () => import('../views/manage/role.vue'),
         name: 'Role',
       },
       {
         path: 'menu',
-        component: () => import('../views/menu.vue'),
+        component: () => import('../views/manage/menu.vue'),
         name: 'Menu',
       },
       {
         path: 'noteGroup',
-        component: () => import('../views/noteGroup.vue'),
+        component: () => import('../views/apps/note/noteGroup.vue'),
         name: 'NoteGroup',
       },
     ],
@@ -80,16 +76,14 @@ const constantRoutes: RouteRecordRaw[] = [
 
 // 动态路由映射表
 const componentMap: Record<string, () => Promise<any>> = {
-  '/home': () => import('../views/home.vue'),
-  '/user': () => import('../views/user.vue'),
-  '/role': () => import('../views/role.vue'),
-  '/menu': () => import('../views/menu.vue'),
-  '/qrcode': () => import('../views/qrcodeView.vue'),
-  '/noteGroup': () => import('../views/noteGroup.vue'),
-  '/todo': () => import('../views/todo.vue'),
-  '/converter': () => import('../views/converter.vue'),
-  '/note': () => import('../views/note.vue'),
-  '/noteDetail': () => import('../views/noteDetail.vue')
+  '/user': () => import('../views/manage/user.vue'),
+  '/role': () => import('../views/manage/role.vue'),
+  '/menu': () => import('../views/manage/menu.vue'),
+  '/qrcode': () => import('../views/apps/qrcode/qrcodeView.vue'),
+  '/noteGroup': () => import('../views/apps/note/noteGroup.vue'),
+  '/todo': () => import('../views/apps/todo/todo.vue'),
+  '/note': () => import('../views/apps/note/note.vue'),
+  '/noteDetail': () => import('../views/apps/note/noteDetail.vue')
 }
 
 const router = createRouter({

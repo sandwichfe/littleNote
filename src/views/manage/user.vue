@@ -79,9 +79,9 @@ import {
   getAllUsers, 
   updateUser, 
   deleteUser 
-} from '../network/user'
-import { getAllRoles } from '../network/role'
-import { getRolesByUserId, assignRolesToUser } from '../network/userRole'
+} from '../../network/user.js'
+import { getAllRoles } from '../../network/role.js'
+import { getRolesByUserId, assignRolesToUser } from '../../network/userRole.js'
 
 // 用户列表和加载状态
 const userList = ref([])

@@ -73,7 +73,7 @@ import {
   getTreeMenus,
   updateMenu, 
   deleteMenu 
-} from '../network/menu'
+} from '../../network/menu.js'
 
 // 菜单列表和加载状态
 const menuList = ref([])

@@ -75,7 +75,7 @@ import RewardsShop from '@/components/todo/RewardsShop.vue'
 import MyRewards from '@/components/todo/MyRewards.vue'
 import TaskViews from '@/components/todo/TaskViews.vue'
 import TodoDialogs from '@/components/todo/TodoDialogs.vue'
-import { useTodo } from '@/composables/useTodo'
+import { useTodo } from '@/composables/useTodo.js'
 
 // 使用组合式函数
 const {
