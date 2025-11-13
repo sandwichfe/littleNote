@@ -1,5 +1,5 @@
 <template>
-  <div class="main_content">
+  <div class="main_content" :style="{ height: mainContentHeight }">
 
 
 
@@ -78,7 +78,7 @@ export default {
 import { listNote, type Note } from "@/network/base"; // 引入自己封装的axios请求函数
 import { listNoteGroup } from "@/network/noteGroup";
 import { getCurrentUser } from "@/network/user"; // 引入获取当前用户信息的API
-import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick, reactive } from 'vue';
+import { ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick, reactive } from 'vue';
 import { useRouter, onBeforeRouteLeave } from 'vue-router';
 import { useScrollStore } from "@/store/scroll"; // 引入滚动位置 Pinia store
 import { useNoteGroupStore } from "@/store/noteGroup"; // 引入笔记分组 Pinia store
@@ -128,6 +128,9 @@ const changeGroup = (newValue: number| null) => {
 // 定义 ref 用于引用 DOM 元素
 const scrollContainer = ref<HTMLElement | null>(null);
 const scrollWrapper = ref<HTMLElement | null>(null);
+
+// 窗口高度响应式变量
+const windowHeight = ref(window.innerHeight);
 
 // Better-Scroll 实例
 const scroll = ref<any>(null);
@@ -231,10 +234,21 @@ const userForm = ref({
 });
 
 
-// 计算属性
+// 计算 main_content 的高度
+const mainContentHeight = computed(() => {
+  return windowHeight.value + 'px';
+});
+
+// 计算滚动区域高度 - 优化版本
 const scrollerHeight = computed(() => {
-  // 减去顶部导航栏高度(70px)、header高度(60px)和底部边距(10px)，再减去20px确保内容可滚动
-  return (document.documentElement.clientHeight - 70 - 60 - 10 - 20) + 'px';
+  // 使用响应式的窗口高度,动态计算滚动区域高度
+
+  const topBoxHeight = 60; // top-box 的总高度(包括padding)
+  const scrollContentBorderTop = 1; // scroll_content 只有顶部border
+
+  // 计算可用高度 = 窗口高度 - top-box高度 - border-top
+  // padding 是在容器内部的，所以不影响这里的高度计算
+  return (windowHeight.value - topBoxHeight - scrollContentBorderTop) + 'px';
 });
 
 // 搜索框输入直接绑定到queryParams.keyword
@@ -254,10 +268,36 @@ const fetchUserInfo = async () => {
   }
 };
 
+// 窗口大小改变处理函数（保持滚动相对进度）
+const handleResize = () => {
+  // 记录当前相对滚动进度（基于 Better-Scroll 的 y/maxScrollY）
+  let percent = 0;
+  if (scroll.value) {
+    const y = scroll.value.y || 0; // y <= 0
+    const maxY = scroll.value.maxScrollY || 0; // maxY <= 0
+    percent = maxY ? (y / maxY) : 0; // 0~1
+  }
+
+  // 更新窗口高度，触发滚动容器高度重算
+  windowHeight.value = window.innerHeight;
+
+  // 高度变化渲染完成后，刷新并按相对进度恢复位置
+  nextTick(() => {
+    if (scroll.value) {
+      scroll.value.refresh();
+      const maxYAfter = scroll.value.maxScrollY || 0;
+      let targetY = maxYAfter ? percent * maxYAfter : 0; // targetY <= 0
+      // 保险起见做边界夹取
+      targetY = Math.min(0, Math.max(maxYAfter, targetY));
+      scroll.value.scrollTo(0, targetY, 0);
+    }
+  });
+};
+
 onMounted(() => {
   initList();
   fetchUserInfo(); // 获取用户信息
-  
+
   // 初始化Better-Scroll
   nextTick(() => {
     initScroll();
@@ -266,6 +306,14 @@ onMounted(() => {
       restoreScrollPosition(300);
     }, 100);
   });
+
+  // 添加窗口resize监听
+  window.addEventListener('resize', handleResize);
+});
+
+// 组件卸载时移除监听
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
 });
 
 // 当内容更新时，刷新Better-Scroll
