@@ -67,7 +67,6 @@ export default {
 <script setup lang="ts">
 import { listNote, type Note } from "@/network/base"; // 引入自己封装的axios请求函数
 import { listNoteGroup } from "@/network/noteGroup";
-import { getCurrentUser } from "@/network/user"; // 引入获取当前用户信息的API
 import { ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNoteGroupStore } from "@/store/noteGroup"; // 引入笔记分组 Pinia store
@@ -218,20 +217,6 @@ const scrollerHeight = computed(() => {
 // 搜索框输入直接绑定到queryParams.keyword
 // queryParams的变化会通过之前设置的watch触发数据加载
 
-// 获取当前用户信息
-const fetchUserInfo = async () => {
-  try {
-    const response = await getCurrentUser(); // 调用 /sys/user/current 接口
-    const userData = response.data;
-    userForm.value = {
-      nickname: userData.nickname || '默认昵称',
-      avatar: userData.avatarUrl || 'http://49.235.149.110/favicon.ico'
-    };
-  } catch (error) {
-    console.error('获取用户信息失败:', error);
-  }
-};
-
 // 窗口大小改变处理函数（保持滚动相对进度）
 const handleResize = () => {
   // 记录当前相对滚动进度（基于 Better-Scroll 的 y/maxScrollY）
@@ -260,7 +245,6 @@ const handleResize = () => {
 
 onMounted(() => {
   initList();
-  fetchUserInfo(); // 获取用户信息
 
   // 初始化Better-Scroll
   nextTick(() => {
@@ -398,47 +382,6 @@ const addOrUpdateNote = (id) => {
   position: relative;
   overflow: hidden;
   background-color: #f4f6f8; /* Light gray background for a softer look */
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Softer shadow */
-}
-
-/* 用户头像header样式 */
-.header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 0 20px;
-  height: 60px;
-  background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
-  border-radius: 10px 10px 0 0;
-}
-
-.user-info-container {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 0 12px;
-  height: 100%;
-  transition: background .3s;
-}
-
-.user-info-container:hover {
-  background: rgba(0,0,0,.025);
-}
-
-.avatar {
-  flex-shrink: 0;
-}
-
-.nickname {
-  margin-left: 10px;
-  font-size: 14px;
-  color: #606266;
-  white-space: nowrap;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .top-box {
@@ -450,7 +393,6 @@ const addOrUpdateNote = (id) => {
   align-items: center;
   padding: 15px 20px;
   border-radius: 10px 10px 0 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 /* 移动端适配 */

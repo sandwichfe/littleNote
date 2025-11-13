@@ -301,9 +301,9 @@ onMounted(() => {
   padding: 0 24px;
   height: 64px;
   background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 100;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .header-left {
