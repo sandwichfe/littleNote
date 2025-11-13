@@ -290,10 +290,10 @@ onMounted(() => {
           <el-sub-menu v-if="menu.children && menu.children.length" :index="menu.path || menu.name">
             <template #title>{{ menu.title }}</template>
             <template v-for="subMenu in menu.children" :key="subMenu.id">
-              <el-menu-item :index="subMenu.path">{{ subMenu.title }}</el-menu-item>
+              <el-menu-item :index="`/manage${subMenu.path}`">{{ subMenu.title }}</el-menu-item>
             </template>
           </el-sub-menu>
-          <el-menu-item v-else :index="menu.path">{{ menu.title }}</el-menu-item>
+          <el-menu-item v-else :index="`/manage${menu.path}`">{{ menu.title }}</el-menu-item>
         </template>
       </el-menu>
     </div>

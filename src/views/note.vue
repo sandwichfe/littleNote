@@ -191,21 +191,28 @@ const userForm = ref({
 });
 
 
+// 检测是否为移动端
+const isMobile = computed(() => {
+  return window.innerWidth <= 768;
+});
+
 // 计算 main_content 的高度
 const mainContentHeight = computed(() => {
-  return windowHeight.value + 'px';
+  const headerHeight = isMobile.value ? 56 : 64; // AppLayout header 高度（移动端56px，桌面端64px）
+  return (windowHeight.value - headerHeight) + 'px';
 });
 
 // 计算滚动区域高度 - 优化版本
 const scrollerHeight = computed(() => {
   // 使用响应式的窗口高度,动态计算滚动区域高度
 
+  const headerHeight = isMobile.value ? 56 : 64; // AppLayout header 高度（移动端56px，桌面端64px）
   const topBoxHeight = 60; // top-box 的总高度(包括padding)
   const scrollContentBorderTop = 1; // scroll_content 只有顶部border
 
-  // 计算可用高度 = 窗口高度 - top-box高度 - border-top
+  // 计算可用高度 = 窗口高度 - header高度 - top-box高度 - border-top
   // padding 是在容器内部的，所以不影响这里的高度计算
-  return (windowHeight.value - topBoxHeight - scrollContentBorderTop) + 'px';
+  return (windowHeight.value - headerHeight - topBoxHeight - scrollContentBorderTop) + 'px';
 });
 
 // 搜索框输入直接绑定到queryParams.keyword

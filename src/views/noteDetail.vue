@@ -243,10 +243,11 @@ const customPaste = (editor: any, event: any, callback: any) => { callback(true)
 
 <style scoped>
 #note-detail-page {
-  height: 100vh;
+  height: calc(100vh - 64px); /* 减去 AppLayout header 的高度 */
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background-color: #fff;
 }
 
 .edit-button-box {
@@ -261,6 +262,13 @@ const customPaste = (editor: any, event: any, callback: any) => { callback(true)
 
 .w-e-scroll {
   min-height: 300px !important; /* use important to override default styles */
+}
+
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  #note-detail-page {
+    height: calc(100vh - 56px); /* 移动端 header 高度为 56px */
+  }
 }
 
 </style>

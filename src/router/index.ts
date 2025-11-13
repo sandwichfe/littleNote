@@ -1,28 +1,14 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import ManageLayout from '../ManageLayout.vue'
+import AppLayout from '../AppLayout.vue'
 import Cookies from 'js-cookie'
 
 // 基础路由
 const constantRoutes: RouteRecordRaw[] = [
-    {
-    path: '/',
-    component: () => import('../views/note.vue'),
-    // component: () => import('../views/home.vue'),
-  },
   {
     path: '/login',
     component: () => import('../login.vue'),
     name: 'Login',
-  },
-  {
-    path: '/note',
-    component: () => import('../views/note.vue'),
-    name: 'Note',
-  },
-  {
-    path: '/noteDetail/:id',
-    component: () => import('../views/noteDetail.vue'),
-    name: 'NoteDetail',
   },
   {
     path: '/todo',
@@ -34,8 +20,31 @@ const constantRoutes: RouteRecordRaw[] = [
     component: () => import('../views/converter.vue'),
     name: 'Converter',
   },
+  // 前端应用布局 - 包含 note 相关页面
   {
     path: '/',
+    component: AppLayout,
+    name: 'AppLayout',
+    children: [
+      {
+        path: '',
+        redirect: '/note'
+      },
+      {
+        path: 'note',
+        component: () => import('../views/note.vue'),
+        name: 'Note',
+      },
+      {
+        path: 'noteDetail/:id',
+        component: () => import('../views/noteDetail.vue'),
+        name: 'NoteDetail',
+      },
+    ],
+  },
+  // 管理端布局
+  {
+    path: '/manage',
     component: ManageLayout,
     name: 'ManageLayout',
     children: [
@@ -78,7 +87,9 @@ const componentMap: Record<string, () => Promise<any>> = {
   '/qrcode': () => import('../views/qrcodeView.vue'),
   '/noteGroup': () => import('../views/noteGroup.vue'),
   '/todo': () => import('../views/todo.vue'),
-  '/converter': () => import('../views/converter.vue')
+  '/converter': () => import('../views/converter.vue'),
+  '/note': () => import('../views/note.vue'),
+  '/noteDetail': () => import('../views/noteDetail.vue')
 }
 
 const router = createRouter({
@@ -152,17 +163,33 @@ router.beforeEach(async (to, from, next) => {
   const token = Cookies.get('loginToken')
   const menuStore = useMenuStore()
 
-  // 访问前 检查此路由菜单用户是否有权限访问
+  // 登录页面直接放行
   if (to.path === '/login') {
     next()
+    return
   }
-   // 没有token
-  if (!token) {
-    handleUnauthenticatedUser(to, next, menuStore)
-   // 有token
-  } else {
-    await handleMenuAndRoutes(to, next, menuStore)
+
+  // 前端应用路由（note 相关）不需要权限验证
+  const publicRoutes = ['/note', '/noteDetail', '/todo', '/converter']
+  const isPublicRoute = publicRoutes.some(route => to.path.startsWith(route)) || to.path === '/'
+
+  if (isPublicRoute) {
+    next()
+    return
   }
+
+  // 管理端路由需要权限验证
+  if (to.path.startsWith('/manage')) {
+    if (!token) {
+      handleUnauthenticatedUser(to, next, menuStore)
+    } else {
+      await handleMenuAndRoutes(to, next, menuStore)
+    }
+    return
+  }
+
+  // 其他情况
+  next()
 })
 
 export default router
