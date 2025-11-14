@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Close } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
@@ -30,7 +30,9 @@ const fetchUserInfo = async () => {
     const userData = response.data
     userForm.value = {
       nickname: userData.nickname || '默认昵称',
-      avatar: userData?.avatarUrl ? `${ossLoadBaseUrl}/${userData.avatarUrl}` : defaultAvatar
+      avatar: userData?.avatarUrl ? `${ossLoadBaseUrl}/${userData.avatarUrl}` : defaultAvatar,
+      gender: userData.gender || '',
+      signature: userData.signature || ''
     }
     await nextTick()
     if (userInfoContainer.value) {
@@ -47,6 +49,8 @@ const updateCurrentUserInfo = async () => {
     await updateCurrentUser({
       nickname: userForm.value.nickname,
       avatarUrl: userForm.value.avatar.replace(ossLoadBaseUrl, ''),
+      gender: userForm.value.gender,
+      signature: userForm.value.signature
     })
     dialogVisible.value = false
     ElMessage.success('保存成功')
@@ -64,7 +68,9 @@ const logout = () => {
 const dialogVisible = ref(false)
 const userForm = ref({
   nickname: '',
-  avatar: ''
+  avatar: '',
+  gender: '',
+  signature: ''
 })
 
 const passwordDialogVisible = ref(false)
@@ -225,26 +231,87 @@ onMounted(() => {
       <RouterView />
     </main>
 
-    <!-- 用户信息修改对话框 -->
-    <el-dialog v-model="dialogVisible" title="修改用户信息" width="30%">
-      <el-form :model="userForm" label-width="80px">
-        <el-form-item label="昵称">
-          <el-input v-model="userForm.nickname" placeholder="请输入昵称"></el-input>
-        </el-form-item>
-        <el-form-item label="头像">
-          <el-upload class="avatar-uploader" :show-file-list="false" :before-upload="beforeAvatarUpload">
-            <img v-if="userForm.avatar" :src="userForm.avatar" class="avatar" />
-            <el-icon v-else class="avatar-uploader-icon">
-              <Plus />
-            </el-icon>
-          </el-upload>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="updateCurrentUserInfo">保存</el-button>
-      </template>
-    </el-dialog>
+    <!-- 用户信息修改对话框 - 自定义弹窗 -->
+    <transition name="dialog-fade">
+      <div v-if="dialogVisible" class="custom-dialog-overlay" @click.self="dialogVisible = false">
+        <div class="custom-dialog">
+          <!-- Header -->
+          <div class="custom-dialog-header">
+            <h3 class="custom-dialog-title">个人资料</h3>
+            <button class="custom-dialog-close" @click="dialogVisible = false">
+              <el-icon><Close /></el-icon>
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="custom-dialog-body">
+            <el-form :model="userForm" label-width="80px" class="user-info-form">
+              <!-- 头像区域 - 居中显示 -->
+              <div class="avatar-section">
+                <div class="avatar-wrapper">
+                  <el-upload
+                    class="avatar-uploader"
+                    :show-file-list="false"
+                    :before-upload="beforeAvatarUpload"
+                  >
+                    <div class="avatar-upload-container">
+                      <img v-if="userForm.avatar" :src="userForm.avatar" class="avatar-preview" />
+                      <el-icon v-else class="avatar-uploader-icon">
+                        <Plus />
+                      </el-icon>
+                      <div class="avatar-mask">
+                        <el-icon class="camera-icon"><Plus /></el-icon>
+                        <span class="upload-text">更换头像</span>
+                      </div>
+                    </div>
+                  </el-upload>
+                </div>
+                <p class="avatar-tip">点击头像可更换，支持 JPG、PNG 格式</p>
+              </div>
+
+              <!-- 昵称输入 -->
+              <el-form-item label="昵称" class="form-item-custom">
+                <el-input
+                  v-model="userForm.nickname"
+                  placeholder="请输入昵称"
+                  maxlength="20"
+                  show-word-limit
+                  clearable
+                ></el-input>
+              </el-form-item>
+
+              <!-- 性别选择 -->
+              <el-form-item label="性别" class="form-item-custom">
+                <el-radio-group v-model="userForm.gender">
+                  <el-radio label="male">男</el-radio>
+                  <el-radio label="female">女</el-radio>
+                  <el-radio label="">保密</el-radio>
+                </el-radio-group>
+              </el-form-item>
+
+              <!-- 个性签名 -->
+              <el-form-item label="个性签名" class="form-item-custom">
+                <el-input
+                  v-model="userForm.signature"
+                  type="textarea"
+                  placeholder="写下你的个性签名..."
+                  maxlength="100"
+                  show-word-limit
+                  :rows="2"
+                  resize="none"
+                ></el-input>
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <!-- Footer -->
+          <div class="custom-dialog-footer">
+            <el-button @click="dialogVisible = false" size="large">取消</el-button>
+            <el-button type="primary" @click="updateCurrentUserInfo" size="large">保存</el-button>
+          </div>
+        </div>
+      </div>
+    </transition>
 
     <!-- Cropper Dialog -->
     <el-dialog v-model="cropperDialogVisible" title="裁剪头像" width="500px" center>
@@ -385,41 +452,153 @@ onMounted(() => {
   background-color: #f0f2f5;
 }
 
-/* Avatar uploader styles */
-.avatar-uploader {
-  display: inline-block;
+/* User Info Form styles */
+.user-info-form {
+  padding: 0;
 }
 
-.avatar-uploader .avatar {
-  width: 120px;
-  height: 120px;
+/* Avatar Section - 居中显示 */
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.avatar-wrapper {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.avatar-uploader {
   display: block;
-  border-radius: 6px;
-  object-fit: cover;
+}
+
+.avatar-upload-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  overflow: hidden;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.avatar-uploader .avatar:hover {
-  opacity: 0.8;
+.avatar-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .avatar-uploader-icon {
   font-size: 28px;
   color: #8c939d;
-  width: 120px;
-  height: 120px;
-  line-height: 120px;
+  width: 90px;
+  height: 90px;
+  line-height: 90px;
   text-align: center;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
-  cursor: pointer;
+  border: 2px dashed #d9d9d9;
+  border-radius: 50%;
+  background-color: #fafafa;
   transition: all 0.3s ease;
 }
 
-.avatar-uploader-icon:hover {
+.avatar-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: #fff;
+  font-size: 12px;
+}
+
+.avatar-upload-container:hover .avatar-mask {
+  opacity: 1;
+}
+
+.avatar-upload-container:hover .avatar-uploader-icon {
   border-color: #409eff;
   color: #409eff;
+  background-color: #f0f9ff;
+}
+
+.camera-icon {
+  font-size: 22px;
+  margin-bottom: 2px;
+}
+
+.upload-text {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.avatar-tip {
+  font-size: 12px;
+  color: #909399;
+  margin: 0;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Form Item Custom */
+.form-item-custom {
+  margin-bottom: 16px;
+}
+
+.form-item-custom:last-of-type {
+  margin-bottom: 0;
+}
+
+.form-item-custom :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #303133;
+  font-size: 14px;
+  padding-right: 12px;
+}
+
+.form-item-custom :deep(.el-form-item__content) {
+  line-height: 40px;
+}
+
+.form-item-custom :deep(.el-input__inner) {
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+}
+
+.form-item-custom :deep(.el-textarea__inner) {
+  font-size: 14px;
+  padding: 10px 12px;
+  line-height: 1.5;
+}
+
+.form-item-custom :deep(.el-radio-group) {
+  display: flex;
+  gap: 24px;
+}
+
+.form-item-custom :deep(.el-radio) {
+  margin-right: 0;
+  height: 40px;
+  line-height: 40px;
+}
+
+.form-item-custom :deep(.el-radio__label) {
+  font-size: 14px;
+  color: #606266;
+}
+
+.form-item-custom :deep(.el-radio__input) {
+  line-height: 1;
 }
 
 /* Cropper container */
@@ -449,28 +628,113 @@ onMounted(() => {
   outline: none !important;
 }
 
-/* Dialog styling */
-:deep(.el-dialog) {
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+/* Custom Dialog Overlay */
+.custom-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
 }
 
-:deep(.el-dialog__header) {
-  padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
+/* Custom Dialog */
+.custom-dialog {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Dialog Header */
+.custom-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #e8e8e8;
+  flex-shrink: 0;
+}
+
+.custom-dialog-title {
+  margin: 0;
+  font-size: 16px;
   font-weight: 600;
   color: #303133;
+  line-height: 1.5;
 }
 
-:deep(.el-dialog__body) {
-  padding: 24px;
+.custom-dialog-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #909399;
+  font-size: 18px;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.custom-dialog-close:hover {
+  background-color: #f5f5f5;
   color: #606266;
 }
 
-:deep(.el-dialog__footer) {
-  padding: 12px 24px;
-  border-top: 1px solid #f0f0f0;
-  text-align: right;
+/* Dialog Body */
+.custom-dialog-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Dialog Footer */
+.custom-dialog-footer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid #e8e8e8;
+  flex-shrink: 0;
+}
+
+.custom-dialog-footer .el-button {
+  min-width: 100px;
+}
+
+/* Dialog Fade Animation */
+.dialog-fade-enter-active,
+.dialog-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.dialog-fade-enter-active .custom-dialog,
+.dialog-fade-leave-active .custom-dialog {
+  transition: transform 0.3s ease;
+}
+
+.dialog-fade-enter-from,
+.dialog-fade-leave-to {
+  opacity: 0;
+}
+
+.dialog-fade-enter-from .custom-dialog,
+.dialog-fade-leave-to .custom-dialog {
+  transform: scale(0.9);
 }
 
 /* Mobile responsive */
@@ -492,16 +756,45 @@ onMounted(() => {
     padding: 6px;
   }
 
-  :deep(.el-dialog) {
-    width: 90% !important;
-    margin: 5vh auto !important;
+  .custom-dialog {
+    max-width: 95%;
+    margin: 0 10px;
   }
 
+  .custom-dialog-header {
+    padding: 12px 16px;
+  }
+
+  .custom-dialog-title {
+    font-size: 15px;
+  }
+
+  .custom-dialog-body {
+    padding: 16px;
+  }
+
+  .custom-dialog-footer {
+    padding: 12px 16px;
+  }
+
+  .custom-dialog-footer .el-button {
+    min-width: 80px;
+  }
+
+  .avatar-upload-container,
   .avatar-uploader-icon,
-  .avatar-uploader .avatar {
-    width: 100px;
-    height: 100px;
-    line-height: 100px;
+  .avatar-preview {
+    width: 80px;
+    height: 80px;
+    line-height: 80px;
+  }
+
+  .camera-icon {
+    font-size: 20px;
+  }
+
+  .upload-text {
+    font-size: 10px;
   }
 
   .cropper-container {
