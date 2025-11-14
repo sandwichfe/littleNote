@@ -333,24 +333,59 @@ onMounted(() => {
       </template>
     </el-dialog>
 
-    <!-- 修改密码对话框 -->
-    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="30%">
-      <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
-        <el-form-item label="原密码" prop="oldPassword">
-          <el-input v-model="passwordForm.oldPassword" type="password" placeholder="请输入原密码" show-password></el-input>
-        </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
-          <el-input v-model="passwordForm.newPassword" type="password" placeholder="请输入新密码" show-password></el-input>
-        </el-form-item>
-        <el-form-item label="确认新密码" prop="confirmPassword">
-          <el-input v-model="passwordForm.confirmPassword" type="password" placeholder="请再次输入新密码" show-password></el-input>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="passwordDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="updatePassword">确认修改</el-button>
-      </template>
-    </el-dialog>
+    <!-- 修改密码对话框 - 自定义弹窗 -->
+    <transition name="dialog-fade">
+      <div v-if="passwordDialogVisible" class="custom-dialog-overlay" @click.self="passwordDialogVisible = false">
+        <div class="custom-dialog custom-dialog-small">
+          <!-- Header -->
+          <div class="custom-dialog-header">
+            <h3 class="custom-dialog-title">修改密码</h3>
+            <button class="custom-dialog-close" @click="passwordDialogVisible = false">
+              <el-icon><Close /></el-icon>
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="custom-dialog-body">
+            <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="90px" class="password-form">
+              <el-form-item label="原密码" prop="oldPassword">
+                <el-input
+                  v-model="passwordForm.oldPassword"
+                  type="password"
+                  placeholder="请输入原密码"
+                  show-password
+                  clearable
+                ></el-input>
+              </el-form-item>
+              <el-form-item label="新密码" prop="newPassword">
+                <el-input
+                  v-model="passwordForm.newPassword"
+                  type="password"
+                  placeholder="请输入新密码"
+                  show-password
+                  clearable
+                ></el-input>
+              </el-form-item>
+              <el-form-item label="确认密码" prop="confirmPassword">
+                <el-input
+                  v-model="passwordForm.confirmPassword"
+                  type="password"
+                  placeholder="请再次输入新密码"
+                  show-password
+                  clearable
+                ></el-input>
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <!-- Footer -->
+          <div class="custom-dialog-footer">
+            <el-button @click="passwordDialogVisible = false" size="large">取消</el-button>
+            <el-button type="primary" @click="updatePassword" size="large">确认修改</el-button>
+          </div>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -455,6 +490,31 @@ onMounted(() => {
 /* User Info Form styles */
 .user-info-form {
   padding: 0;
+}
+
+/* Password Form styles */
+.password-form {
+  padding: 0;
+}
+
+.password-form .el-form-item {
+  margin-bottom: 20px;
+}
+
+.password-form .el-form-item:last-child {
+  margin-bottom: 0;
+}
+
+.password-form :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #303133;
+  font-size: 14px;
+}
+
+.password-form :deep(.el-input__inner) {
+  height: 40px;
+  line-height: 40px;
+  font-size: 14px;
 }
 
 /* Avatar Section - 居中显示 */
@@ -654,6 +714,11 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* Small Dialog for password change */
+.custom-dialog-small {
+  max-width: 450px;
 }
 
 /* Dialog Header */
