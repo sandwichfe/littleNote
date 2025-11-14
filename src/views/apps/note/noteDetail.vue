@@ -489,61 +489,69 @@ const customPaste = (editor: any, event: any, callback: any) => { callback(true)
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   #note-detail-page {
-    height: calc(100vh - 45px); /* 移动端 header 高度为 56px */
+    height: 100vh;
   }
 
   .note-toolbar {
-    padding: 10px 12px;
-    flex-wrap: wrap;
-    gap: 10px;
+    padding: 6px 10px;
+    flex-wrap: nowrap;
+    gap: 8px;
     min-height: auto;
+    align-items: center;
   }
 
   .toolbar-left {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
   }
 
   .toolbar-right {
-    flex: 1 1 100%;
-    justify-content: flex-start;
-    gap: 8px;
-    margin-top: 8px;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    gap: 6px;
   }
 
   .toolbar-divider {
-    display: none; /* 移动端隐藏分隔线 */
+    display: none;
   }
 
   .group-select {
-    width: 120px;
+    width: 100px;
+  }
+
+  .group-select :deep(.el-input__wrapper) {
+    height: 30px;
+  }
+
+  .group-select :deep(.el-input__inner) {
+    height: 28px;
+    line-height: 28px;
+    font-size: 12px;
   }
 
   .toolbar-btn {
     height: 30px;
-    padding: 0 12px;
+    padding: 0 10px;
     font-size: 12px;
+  }
+
+  .toolbar-btn .el-icon {
+    font-size: 14px;
+  }
+
+  .mode-switch {
+    height: 30px;
+    padding: 2px;
   }
 
   .mode-switch-item {
-    height: 28px;
-    padding: 0 12px;
-    font-size: 12px;
-  }
-}
-
-/* 小屏幕手机 */
-@media screen and (max-width: 480px) {
-  .btn-text {
-    display: none; /* 隐藏按钮文字，只显示图标 */
-  }
-
-  .toolbar-btn {
+    height: 26px;
     padding: 0 10px;
-    min-width: 36px;
+    font-size: 12px;
+    gap: 4px;
   }
 
-  .toolbar-btn-save {
-    padding-right: 10px;
+  .mode-switch-item .el-icon {
+    font-size: 14px;
   }
 }
 
