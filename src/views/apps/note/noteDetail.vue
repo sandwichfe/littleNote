@@ -306,11 +306,10 @@ const customPaste = (editor: any, event: any, callback: any) => { callback(true)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 4px 16px;
   background: #fff;
-  border-bottom: 1px solid #e8e8e8;
   flex-shrink: 0;
-  min-height: 56px;
+  min-height: 45px;
   gap: 16px;
 }
 
@@ -490,7 +489,7 @@ const customPaste = (editor: any, event: any, callback: any) => { callback(true)
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   #note-detail-page {
-    height: calc(100vh - 56px); /* 移动端 header 高度为 56px */
+    height: calc(100vh - 45px); /* 移动端 header 高度为 56px */
   }
 
   .note-toolbar {
