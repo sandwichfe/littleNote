@@ -660,10 +660,11 @@ onMounted(() => {
 .custom-dialog-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 14px 20px;
   border-bottom: 1px solid #e8e8e8;
   flex-shrink: 0;
+  position: relative;
 }
 
 .custom-dialog-title {
@@ -675,6 +676,10 @@ onMounted(() => {
 }
 
 .custom-dialog-close {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 32px;
   height: 32px;
   border: none;
