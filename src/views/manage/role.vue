@@ -61,17 +61,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  createRole, 
-  getRoleById, 
-  getAllRoles, 
-  updateRole, 
-  deleteRole 
-} from '../../network/role.js'
-import { getTreeMenus } from '../../network/menu.js'
-import { getMenusByRoleId, assignMenusToRole } from '../../network/roleMenu.js'
+import {nextTick, onMounted, reactive, ref} from 'vue'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {createRole, deleteRole, getAllRoles, getRoleById, updateRole} from '@/network/role'
+import {getTreeMenus} from '@/network/menu'
+import {assignMenusToRole, getMenusByRoleId} from '@/network/roleMenu'
 
 // 角色列表和加载状态
 const roleList = ref([])

@@ -64,16 +64,9 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  createMenu, 
-  getMenuById, 
-  getAllMenus, 
-  getTreeMenus,
-  updateMenu, 
-  deleteMenu 
-} from '../../network/menu.js'
+import {onMounted, reactive, ref} from 'vue'
+import {ElMessage, ElMessageBox} from 'element-plus'
+import {createMenu, deleteMenu, getMenuById, getTreeMenus, updateMenu} from '@/network/menu'
 
 // 菜单列表和加载状态
 const menuList = ref([])
