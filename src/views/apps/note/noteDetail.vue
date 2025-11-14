@@ -1,20 +1,65 @@
 <template>
   <div id="note-detail-page">
-    <div class="edit-button-box">
-      <!-- 分组筛选 -->
-      <div>
-        <el-select v-model="groupValue" placeholder="Select" style="width: 120px;height: 32px;margin-right: 10px;"
-          @change="changeGroup">
+    <!-- 顶部工具栏 -->
+    <div class="note-toolbar">
+      <!-- 左侧：分组选择 -->
+      <div class="toolbar-left">
+        <el-select
+          v-model="groupValue"
+          placeholder="选择分组"
+          class="group-select"
+          @change="changeGroup"
+        >
           <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
         </el-select>
       </div>
 
-      <el-button @click="editOrPreview">{{ !editStatus ? '编辑' : '预览' }}</el-button>
-      <el-button @click="saveNote" plain type="primary">保存</el-button>
-      <div style="height: 32px; margin-left: 14px; margin-bottom: 10px;">
-        <el-popconfirm title="确定删除吗?" @confirm="delNote">
+      <!-- 右侧：模式切换 + 操作按钮 -->
+      <div class="toolbar-right">
+        <!-- 模式切换 -->
+        <div class="mode-switch">
+          <button
+            class="mode-switch-item"
+            :class="{ 'is-active': viewMode === 'edit' }"
+            @click="viewMode = 'edit'"
+          >
+            <el-icon><Edit /></el-icon>
+            <span>编辑</span>
+          </button>
+          <button
+            class="mode-switch-item"
+            :class="{ 'is-active': viewMode === 'preview' }"
+            @click="viewMode = 'preview'"
+          >
+            <el-icon><View /></el-icon>
+            <span>预览</span>
+          </button>
+        </div>
+
+        <!-- 分隔线 -->
+        <div class="toolbar-divider"></div>
+
+        <!-- 保存按钮 -->
+        <button
+          @click="saveNote"
+          class="toolbar-btn toolbar-btn-save"
+        >
+          <el-icon><DocumentChecked /></el-icon>
+          <span class="btn-text">保存</span>
+        </button>
+
+        <!-- 删除按钮 -->
+        <el-popconfirm
+          title="确定删除这篇笔记吗？"
+          confirm-button-text="确定"
+          cancel-button-text="取消"
+          @confirm="delNote"
+        >
           <template #reference>
-            <el-button plain type="danger" style="margin-top: 5px;">删除</el-button>
+            <button class="toolbar-btn toolbar-btn-delete">
+              <el-icon><Delete /></el-icon>
+              <span class="btn-text">删除</span>
+            </button>
           </template>
         </el-popconfirm>
       </div>
@@ -35,12 +80,12 @@
 
 <script setup lang="ts">
 import '@wangeditor/editor/dist/css/style.css';
-import { onBeforeUnmount, ref, shallowRef, onMounted, nextTick } from 'vue';
+import { onBeforeUnmount, ref, shallowRef, onMounted, watch } from 'vue';
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
-import { DomEditor } from '@wangeditor/editor'
 import { getNote, editNote, addNote, deleteNoteItem, uploadImage } from "@/network/base";
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus'
+import { Edit, View, DocumentChecked, Delete } from '@element-plus/icons-vue'
 import { cipherText, decrypted } from "@/utils/aesUtil";
 import { openLoading, closeLoading } from "@/utils/loadingUtil";
 import { listNoteGroup } from "@/network/noteGroup";
@@ -66,6 +111,23 @@ const editStatus = ref(false);
 const mode = ref('default');
 const editorRef = shallowRef();
 const valueHtml = ref("");
+
+// 视图模式：edit（编辑）、preview（预览）
+const viewMode = ref('preview');
+
+// 监听视图模式变化
+watch(viewMode, (newMode) => {
+  const editor = editorRef.value;
+  if (!editor) return;
+
+  if (newMode === 'edit') {
+    editor.enable();
+    editStatus.value = true;
+  } else {
+    editor.disable();
+    editStatus.value = false;
+  }
+});
 
 const toolbarConfig = {
   toolbarKeys
@@ -198,18 +260,7 @@ const delNote = () => {
   });
 };
 
-const editOrPreview = () => {
-  const editor = editorRef.value;
-  if (!editor) return;
-  if (editStatus.value) {
-    editor.disable();
-    ElMessage.success('已禁用编辑！');
-  } else {
-    editor.enable();
-    ElMessage.success('已开启编辑！');
-  }
-  editStatus.value = !editStatus.value;
-};
+
 
 let ctrlS_timer: NodeJS.Timeout | null = null;
 
@@ -250,14 +301,186 @@ const customPaste = (editor: any, event: any, callback: any) => { callback(true)
   background-color: #fff;
 }
 
-.edit-button-box {
-  margin-left: 5px;
-  margin-top: 2px;
-  height: 37px;
+/* 顶部工具栏 */
+.note-toolbar {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
-  flex-wrap: nowrap;
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  flex-shrink: 0;
+  min-height: 56px;
+  gap: 16px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* 模式切换器 */
+.mode-switch {
+  display: inline-flex;
+  background-color: #e8eaed;
+  padding: 3px;
+  border-radius: 6px;
+  height: 36px;
+  gap: 0;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.mode-switch-item {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: #5f6368;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  position: relative;
+}
+
+.mode-switch-item .el-icon {
+  font-size: 15px;
+}
+
+.mode-switch-item:hover:not(.is-active) {
+  color: #202124;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.mode-switch-item.is-active {
+  background-color: #fff;
+  color: #202124;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+
+/* 工具栏分隔线 */
+.toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: #e8e8e8;
+  flex-shrink: 0;
+}
+
+/* 分组选择器 */
+.group-select {
+  width: 140px;
+}
+
+.group-select :deep(.el-input__wrapper) {
+  height: 36px;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px #dcdfe6 inset;
+  transition: all 0.2s;
+  background-color: #fff;
+}
+
+.group-select :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #c0c4cc inset;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 0 0 1px #c0c4cc inset;
+}
+
+.group-select :deep(.el-input__wrapper.is-focus) {
+  box-shadow: 0 0 0 1px #409eff inset;
+}
+
+.group-select :deep(.el-input__inner) {
+  height: 34px;
+  line-height: 34px;
+  font-size: 14px;
+}
+
+/* 工具栏按钮 */
+.toolbar-btn {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background-color: #fff;
+  color: #5f6368;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-btn:hover {
+  background-color: #f8f9fa;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.toolbar-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-btn .el-icon {
+  font-size: 15px;
+}
+
+.btn-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 保存按钮 */
+.toolbar-btn-save {
+  background-color: #5f6368;
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.toolbar-btn-save:hover {
+  background-color: #202124;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16), 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.toolbar-btn-save:active {
+  background-color: #3c4043;
+  transform: scale(0.98);
+}
+
+/* 删除按钮 */
+.toolbar-btn-delete {
+  background-color: #fff;
+  color: #d93025;
+  border-color: transparent;
+}
+
+.toolbar-btn-delete:hover {
+  background-color: #fce8e6;
+  color: #c5221f;
+}
+
+.toolbar-btn-delete:active {
+  background-color: #f9dedc;
 }
 
 .w-e-scroll {
@@ -268,6 +491,60 @@ const customPaste = (editor: any, event: any, callback: any) => { callback(true)
 @media screen and (max-width: 768px) {
   #note-detail-page {
     height: calc(100vh - 56px); /* 移动端 header 高度为 56px */
+  }
+
+  .note-toolbar {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: auto;
+  }
+
+  .toolbar-left {
+    flex: 1 1 auto;
+  }
+
+  .toolbar-right {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .toolbar-divider {
+    display: none; /* 移动端隐藏分隔线 */
+  }
+
+  .group-select {
+    width: 120px;
+  }
+
+  .toolbar-btn {
+    height: 30px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .mode-switch-item {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+}
+
+/* 小屏幕手机 */
+@media screen and (max-width: 480px) {
+  .btn-text {
+    display: none; /* 隐藏按钮文字，只显示图标 */
+  }
+
+  .toolbar-btn {
+    padding: 0 10px;
+    min-width: 36px;
+  }
+
+  .toolbar-btn-save {
+    padding-right: 10px;
   }
 }
 
