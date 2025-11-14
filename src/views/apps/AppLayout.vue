@@ -247,14 +247,15 @@ onMounted(() => {
     </el-dialog>
 
     <!-- Cropper Dialog -->
-    <el-dialog v-model="cropperDialogVisible" title="裁剪头像" width="650px" center>
-      <div style="height: 450px;">
+    <el-dialog v-model="cropperDialogVisible" title="裁剪头像" width="500px" center>
+      <div class="cropper-container">
         <Cropper
           ref="cropperRef"
           :src="imageToCrop"
           :stencil-props="{
             aspectRatio: 1/1
           }"
+          class="cropper"
         />
       </div>
       <template #footer>
@@ -329,8 +330,8 @@ onMounted(() => {
 .logo-text {
   font-size: 24px;
   font-weight: 600;
-  color: #82e7eb82;
-  letter-spacing: 0.5px;
+  color: #44474770;
+  letter-spacing: 1px;
 }
 
 .header-right {
@@ -421,6 +422,20 @@ onMounted(() => {
   color: #409eff;
 }
 
+/* Cropper container */
+.cropper-container {
+  width: 100%;
+  height: 400px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cropper {
+  width: 100%;
+  height: 100%;
+}
+
 /* Dropdown styling - 移除默认的 outline 和 border */
 :deep(.el-dropdown) {
   outline: none !important;
@@ -487,6 +502,17 @@ onMounted(() => {
     width: 100px;
     height: 100px;
     line-height: 100px;
+  }
+
+  .cropper-container {
+    height: 300px;
+  }
+}
+
+/* Small mobile screens */
+@media (max-width: 480px) {
+  .cropper-container {
+    height: 250px;
   }
 }
 </style>
