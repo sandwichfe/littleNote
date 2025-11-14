@@ -17,14 +17,18 @@ const router = useRouter()
 const userInfoContainer = ref(null)
 const dropdownWidth = ref('auto')
 
+const ossLoadBaseUrl = import.meta.env.VITE_OSS_LOAD_BASE_URL;
+
 // 获取当前用户信息
 const fetchUserInfo = async () => {
   try {
     const response = await getCurrentUser()
     const userData = response.data
+    console.log(response.data)
     userForm.value = {
       nickname: userData.nickname || '默认昵称',
-      avatar: userData.avatarUrl || 'http://49.235.149.110/favicon.ico'
+      avatar: `${ossLoadBaseUrl}/${userData.avatarUrl}` || 'http://49.235.149.110/favicon.ico'
+      
     }
     await nextTick()
     if (userInfoContainer.value) {
@@ -40,7 +44,7 @@ const updateCurrentUserInfo = async () => {
   try {
     await updateCurrentUser({
       nickname: userForm.value.nickname,
-      avatarUrl: userForm.value.avatar,
+      avatarUrl: userForm.value.avatar.replace(ossLoadBaseUrl, ''),
     })
     dialogVisible.value = false
     ElMessage.success('保存成功')
@@ -162,7 +166,7 @@ const cropAndUpload = () => {
       const file = new File([blob], `${Date.now()}.jpg`, { type: "image/jpeg" })
       try {
         const response = await uploadImage(file)
-        userForm.value.avatar = `${import.meta.env.VITE_OSS_LOAD_BASE_URL}/${response.data}`
+        userForm.value.avatar = `${ossLoadBaseUrl}/${response.data}`
         ElMessage.success('上传成功')
         cropperDialogVisible.value = false
       } catch (error) {

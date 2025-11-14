@@ -29,7 +29,14 @@ export default defineConfig({
     https: {
       key: fs.readFileSync('D:\\certs\\localhost\\server.key'),
       cert: fs.readFileSync('D:\\certs\\localhost\\server.crt')
-    }
+    },
+    proxy: {
+      '/assets/oss': {
+        target: 'https://yun.yiruserene.top:58888',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/assets\/oss/, '/assets/oss'),
+      }
+    },
   },
   resolve: {
     alias: {
