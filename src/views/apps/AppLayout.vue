@@ -2,16 +2,20 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
 import Cookies from 'js-cookie'
+import { uploadImage } from '@/network/base'
+// 导入图片 自动转化成地址
+import defaultAvatar from "@/assets/img/default_avatar.jpg";
 import {
   getCurrentUser,
   updateCurrentUser,
   changePassword
 } from '@/network/user'
-import { uploadImage } from '@/network/base'
-import { ElMessage } from 'element-plus'
+
+
 
 const router = useRouter()
 const userInfoContainer = ref(null)
@@ -24,11 +28,9 @@ const fetchUserInfo = async () => {
   try {
     const response = await getCurrentUser()
     const userData = response.data
-    console.log(response.data)
     userForm.value = {
       nickname: userData.nickname || '默认昵称',
-      avatar: `${ossLoadBaseUrl}/${userData.avatarUrl}` || 'http://49.235.149.110/favicon.ico'
-      
+      avatar: userData?.avatarUrl ? `${ossLoadBaseUrl}/${userData.avatarUrl}` : defaultAvatar
     }
     await nextTick()
     if (userInfoContainer.value) {
