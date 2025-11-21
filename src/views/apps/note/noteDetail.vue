@@ -123,9 +123,11 @@ watch(viewMode, (newMode) => {
   if (newMode === 'edit') {
     editor.enable();
     editStatus.value = true;
+    ElMessage.success('进入编辑模式');  
   } else {
     editor.disable();
     editStatus.value = false;
+    ElMessage.success('进入预览模式');
   }
 });
 
