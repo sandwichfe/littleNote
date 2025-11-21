@@ -5,12 +5,12 @@
       <!-- 左侧：分组选择 -->
       <div class="toolbar-left">
         <el-select
-          v-model="groupValue"
-          placeholder="选择分组"
-          class="group-select"
-          @change="changeGroup"
+            v-model="groupValue"
+            placeholder="选择分组"
+            class="group-select"
+            @change="changeGroup"
         >
-          <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
+          <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id"/>
         </el-select>
       </div>
 
@@ -19,19 +19,23 @@
         <!-- 模式切换 -->
         <div class="mode-switch">
           <button
-            class="mode-switch-item"
-            :class="{ 'is-active': viewMode === 'edit' }"
-            @click="viewMode = 'edit'"
+              class="mode-switch-item"
+              :class="{ 'is-active': viewMode === 'edit' }"
+              @click="viewMode = 'edit'"
           >
-            <el-icon><Edit /></el-icon>
+            <el-icon>
+              <Edit/>
+            </el-icon>
             <span>编辑</span>
           </button>
           <button
-            class="mode-switch-item"
-            :class="{ 'is-active': viewMode === 'preview' }"
-            @click="viewMode = 'preview'"
+              class="mode-switch-item"
+              :class="{ 'is-active': viewMode === 'preview' }"
+              @click="viewMode = 'preview'"
           >
-            <el-icon><View /></el-icon>
+            <el-icon>
+              <View/>
+            </el-icon>
             <span>预览</span>
           </button>
         </div>
@@ -41,23 +45,27 @@
 
         <!-- 保存按钮 -->
         <button
-          @click="saveNote"
-          class="toolbar-btn toolbar-btn-save"
+            @click="saveNote"
+            class="toolbar-btn toolbar-btn-save"
         >
-          <el-icon><DocumentChecked /></el-icon>
+          <el-icon>
+            <DocumentChecked/>
+          </el-icon>
           <span class="btn-text">保存</span>
         </button>
 
         <!-- 删除按钮 -->
         <el-popconfirm
-          title="确定删除这篇笔记吗？"
-          confirm-button-text="确定"
-          cancel-button-text="取消"
-          @confirm="delNote"
+            title="确定删除这篇笔记吗？"
+            confirm-button-text="确定"
+            cancel-button-text="取消"
+            @confirm="delNote"
         >
           <template #reference>
             <button class="toolbar-btn toolbar-btn-delete">
-              <el-icon><Delete /></el-icon>
+              <el-icon>
+                <Delete/>
+              </el-icon>
               <span class="btn-text">删除</span>
             </button>
           </template>
@@ -65,31 +73,34 @@
       </div>
     </div>
 
-    <div style="border: 1px solid #ccc; margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
+    <div
+        style="border: 1px solid #ccc; margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
       <Toolbar :editor="editorRef" :defaultConfig="toolbarConfig" :mode="mode" style="border-bottom: 1px solid #ccc;"
-        id="editor-Toolbar" />
+               id="editor-Toolbar"/>
       <div style="flex-grow: 1; overflow-y: auto;">
         <Editor id="myEditor" :defaultConfig="editorConfig" :mode="mode" v-model="valueHtml"
-          :style="{ height: '100%' }"
-          @onCreated="handleCreated" @onChange="handleChange" @onDestroyed="handleDestroyed" @onFocus="handleFocus"
-          @onBlur="handleBlur" @customAlert="customAlert" @customPaste="customPaste" />
+                :style="{ height: '100%' }"
+                @onCreated="handleCreated" @onChange="handleChange" @onDestroyed="handleDestroyed"
+                @onFocus="handleFocus"
+                @onBlur="handleBlur" @customAlert="customAlert" @customPaste="customPaste"/>
       </div>
     </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import '@wangeditor/editor/dist/css/style.css';
-import { onBeforeUnmount, ref, shallowRef, onMounted, watch } from 'vue';
-import { Editor, Toolbar } from '@wangeditor/editor-for-vue';
-import { getNote, editNote, addNote, deleteNoteItem, uploadImage } from "@/network/base";
-import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus'
-import { Edit, View, DocumentChecked, Delete } from '@element-plus/icons-vue'
-import { cipherText, decrypted } from "@/utils/aesUtil";
-import { openLoading, closeLoading } from "@/utils/loadingUtil";
-import { listNoteGroup } from "@/network/noteGroup";
-import { toolbarKeys } from '@/config/editorToolbarConfig';
+import {onBeforeUnmount, ref, shallowRef, onMounted, watch} from 'vue';
+import {Editor, Toolbar} from '@wangeditor/editor-for-vue';
+import {getNote, editNote, addNote, deleteNoteItem, uploadImage} from "@/network/base";
+import {useRouter} from 'vue-router';
+import {ElMessage} from 'element-plus'
+import {Edit, View, DocumentChecked, Delete} from '@element-plus/icons-vue'
+import {cipherText, decrypted} from "@/utils/aesUtil";
+import {openLoading, closeLoading} from "@/utils/loadingUtil";
+import {listNoteGroup} from "@/network/noteGroup";
+import {toolbarKeys} from '@/config/editorToolbarConfig';
 
 const router = useRouter();
 
@@ -104,7 +115,6 @@ const groups = ref<any[]>([]);
 const changeGroup = (newValue: string) => {
   noteData.value.groupId = newValue ? Number(newValue) : null;
 };
-
 
 
 const editStatus = ref(false);
@@ -123,7 +133,7 @@ watch(viewMode, (newMode) => {
   if (newMode === 'edit') {
     editor.enable();
     editStatus.value = true;
-    ElMessage.success('进入编辑模式');  
+    ElMessage.success('进入编辑模式');
   } else {
     editor.disable();
     editStatus.value = false;
@@ -137,13 +147,13 @@ const toolbarConfig = {
 
 const editorConfig = {
   placeholder: '',
-  readOnly: true, 
+  readOnly: true,
   MENU_CONF: {
     uploadImage: {
       async customUpload(file: File, insertFn: any) { // InsertFnType is not exported, use any
         try {
           const fileName = file.name === 'image.png' ? `${Date.now()}.png` : file.name;
-          const uploadFile = new File([file], fileName, { type: file.type });
+          const uploadFile = new File([file], fileName, {type: file.type});
           const response = await uploadImage(uploadFile);
           const url = `${import.meta.env.VITE_OSS_LOAD_BASE_URL}/${response.data}`;
           insertFn(url, fileName, url);
@@ -173,7 +183,7 @@ onMounted(() => {
 
   listNoteGroup(-1, -1).then((res) => {
     groups.value = res.data.records;
-    
+
     // 如果是新建笔记且没有选中分组，则默认选中第一个分组
     if (paramId === -1 && !groupValue.value && groups.value && groups.value.length > 0) {
       groupValue.value = groups.value[0].id;
@@ -246,7 +256,7 @@ const saveNote = () => {
     });
   } else {
     editNote(noteData.value.noteId, noteValue, title, noteData.value.groupId).then((res) => {
-       ElMessage.success('保存成功！');
+      ElMessage.success('保存成功！');
     });
   }
 };
@@ -263,7 +273,6 @@ const delNote = () => {
 };
 
 
-
 let ctrlS_timer: NodeJS.Timeout | null = null;
 
 function handleEvent(event: KeyboardEvent) {
@@ -273,7 +282,7 @@ function handleEvent(event: KeyboardEvent) {
     if (ctrlS_timer) {
       ElMessage({
         message: `⚡️ 少侠，你的手速突破系统结界啦！`,
-        type:'success',
+        type: 'success',
       });
       return;
     }
@@ -285,12 +294,19 @@ function handleEvent(event: KeyboardEvent) {
 }
 
 // Empty functions from original editor, can be removed if not used
-const handleChange = (editor: any) => {};
-const handleDestroyed = (editor: any) => {};
-const handleFocus = (editor: any) => {};
-const handleBlur = (editor: any) => {};
-const customAlert = (info: any, type: any) => {};
-const customPaste = (editor: any, event: any, callback: any) => { callback(true) };
+const handleChange = (editor: any) => {
+};
+const handleDestroyed = (editor: any) => {
+};
+const handleFocus = (editor: any) => {
+};
+const handleBlur = (editor: any) => {
+};
+const customAlert = (info: any, type: any) => {
+};
+const customPaste = (editor: any, event: any, callback: any) => {
+  callback(true)
+};
 
 </script>
 
@@ -491,7 +507,8 @@ const customPaste = (editor: any, event: any, callback: any) => { callback(true)
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   #note-detail-page {
-    height: 100vh;
+    height: calc(100vh - 56px);  /* 减去layout-header的高度 */
+    overflow: hidden; /* 确保移动端也不会出现页面级滚动 */
   }
 
   .note-toolbar {
