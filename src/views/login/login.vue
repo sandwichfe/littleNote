@@ -15,7 +15,7 @@ import QRCode from '@/components/QRCode.vue';
 import { userLogin, generateQrCode, qrCoderStatus, userRegister } from '@/network/base';
 import { useMenuStore } from '@/store/menu';
 import { openLoading, closeLoading } from "@/utils/loadingUtil";
-import { RefreshRight } from '@element-plus/icons-vue';
+import { RefreshRight, ArrowLeft } from '@element-plus/icons-vue';
 
 
 onMounted(() => {
@@ -297,6 +297,11 @@ const switchToLogin = () => {
 
         <!-- 二维码登录 -->
         <div v-if="showQrcode" class="qrcode-container animated-qrcode">
+          <!-- 返回按钮 -->
+          <div class="back-button" @click="switchToLogin">
+            <el-icon><ArrowLeft /></el-icon>
+          </div>
+
           <div class="qrcode-wrapper">
             <QRCode :value="qrcodeUrl" :size="200" class="qrcode" v-loading="!qrcodeUrl" />
             <el-icon class="refresh-icon" @click="refreshQrcode" v-if="qrcodeStatus !== 'expired'"><RefreshRight /></el-icon>
@@ -318,10 +323,6 @@ const switchToLogin = () => {
             <template v-else-if="qrcodeStatus === 'confirmed'">
               登录成功，跳转中...
             </template>
-            <template v-else-if="qrcodeStatus === 'expired'">
-              <!-- 此处内容已移至二维码图片上方 -->
-            </template>
-            <div  @click="switchToLogin">返回</div>
           </div>
         </div>
 
@@ -639,6 +640,54 @@ const switchToLogin = () => {
   justify-content: center; /* 垂直居中（如果需要） */
   min-height: 280px;
   padding: 20px 10px; /* 增加上下内边距 */
+  position: relative; /* 为返回按钮定位 */
+}
+
+/* 返回按钮样式 */
+.back-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  opacity: 0;
+  transform: translateX(-10px);
+  animation: slideInLeft 0.4s ease-out forwards;
+}
+
+@keyframes slideInLeft {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.back-button:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+  transform: scale(1.1);
+}
+
+.back-button:active {
+  background-color: rgba(0, 123, 255, 0.2);
+  transform: scale(0.95);
+}
+
+.back-button .el-icon {
+  font-size: 20px;
+  color: #333;
+  transition: color 0.3s ease;
+}
+
+.back-button:hover .el-icon {
+  color: #007bff;
 }
 
 .qrcode-wrapper {
