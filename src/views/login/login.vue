@@ -428,7 +428,7 @@ const switchToLogin = () => {
 
 .login-image {
   flex: 1;
-  background-image: url('@/assets/img/login_bg1.png');
+  background-image: url('@/assets/img/login_bg1.jpg');
   background-position: center;
   background-size: cover;
 }
