@@ -1,7 +1,13 @@
 <template>
   <div class="user-container">
-    <!-- 新增用户按钮和表格 -->
-    <el-button type="primary" @click="handleCreate">新增用户</el-button>
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <el-button type="primary" @click="handleCreate" class="toolbar-btn">
+          <el-icon><Plus /></el-icon>
+          <span>新增用户</span>
+        </el-button>
+      </div>
+    </div>
     
     <el-table :data="userList" style="width: 100%" v-loading="loading">
       <el-table-column prop="id" label="ID" width="80"></el-table-column>
@@ -82,6 +88,7 @@ import {
 } from '@/network/user'
 import { getAllRoles } from '@/network/role'
 import { getRolesByUserId, assignRolesToUser } from '@/network/userRole'
+import { Plus } from '@element-plus/icons-vue'
 
 // 用户列表和加载状态
 const userList = ref([])
@@ -258,81 +265,93 @@ const submitAssignRole = async () => {
 
 <style scoped>
 .user-container {
-  padding: 20px;
-  background-color: #ffffff; /* Consistent background */
+  padding: 16px;
+  background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.el-button {
-  transition: all 0.3s ease;
-  margin-bottom: 20px;
+/* 顶部工具栏 */
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 16px;
 }
 
-.el-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toolbar-btn {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background-color: #5f6368;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.toolbar-btn:hover {
+  background-color: #202124;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16), 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.toolbar-btn:active {
+  transform: scale(0.98);
+  background-color: #3c4043;
 }
 
 .el-table {
   border-radius: 8px;
-  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #e8e8e8;
+  flex-grow: 1;
 }
 
 .el-table th {
-  background-color: #eef1f6;
+  background-color: #fafafa;
   color: #333;
-  font-weight: 600;
+  font-weight: 500;
+  border-bottom: 1px solid #e8e8e8;
 }
 
-.el-table td,
-.el-table th {
-  padding: 12px 0;
-}
-
-.el-table .el-button {
-  margin-right: 5px;
+.el-table td {
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .el-pagination {
   margin-top: 20px;
-  text-align: right;
+  justify-content: flex-end;
 }
 
-.el-dialog {
-  border-radius: 8px;
-}
-
-.el-dialog__header {
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-}
-
-.el-dialog__footer {
-  border-top: 1px solid #eee;
-  padding-top: 10px;
-}
-
-.el-table__row {
-  opacity: 0;
-  animation: fadeIn 0.5s ease-out forwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+/* 移动端适配 */
+@media screen and (max-width: 768px) {
+  .user-container {
+    padding: 10px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-.el-table__row:nth-child(odd) {
-  animation-delay: 0.1s;
-}
-.el-table__row:nth-child(even) {
-  animation-delay: 0.2s;
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-left {
+    justify-content: flex-start;
+  }
 }
 </style>

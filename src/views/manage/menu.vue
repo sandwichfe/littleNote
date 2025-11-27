@@ -1,7 +1,14 @@
 <template>
   <div class="menu-container">
-    <!-- 新增菜单按钮和表格 -->
-    <el-button type="primary" @click="handleCreate">新增菜单</el-button>
+    <!-- 顶部工具栏 -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <el-button type="primary" @click="handleCreate" class="toolbar-btn">
+          <el-icon><Plus /></el-icon>
+          <span>新增菜单</span>
+        </el-button>
+      </div>
+    </div>
     
     <el-table 
       :data="menuList" 
@@ -67,6 +74,7 @@
 import {onMounted, reactive, ref} from 'vue'
 import {ElMessage, ElMessageBox} from 'element-plus'
 import {createMenu, deleteMenu, getMenuById, getTreeMenus, updateMenu} from '@/network/menu'
+import { Plus } from '@element-plus/icons-vue'
 
 // 菜单列表和加载状态
 const menuList = ref([])
@@ -210,36 +218,50 @@ const handleCascaderChange = (value) => {
 
 <style scoped>
 .menu-container {
-  padding: 24px;
-  background-color: #ffffff; /* Consistent background */
-  height: 100%; /* Ensure it takes full height if needed */
+  padding: 16px;
+  background-color: #fff;
+  height: 100%;
   box-sizing: border-box;
 }
 
-/* Button styling */
-.el-button--primary {
-  background-color: #1890ff;
-  border-color: #1890ff;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
-.el-button--primary:hover {
-  background-color: #40a9ff;
-  border-color: #40a9ff;
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.el-button--danger {
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+.toolbar-btn {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background-color: #5f6368;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
-.el-button {
-  border-radius: 4px;
-  margin-bottom: 20px; /* Add some space below the main button */
+.toolbar-btn:hover {
+  background-color: #202124;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16), 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 
-/* Table styling */
 .el-table {
-  border-radius: 4px;
+  border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   border: 1px solid #e8e8e8;
 }
@@ -259,13 +281,11 @@ const handleCascaderChange = (value) => {
   margin-right: 8px;
 }
 
-/* Pagination styling */
 .el-pagination {
   margin-top: 20px;
   text-align: right;
 }
 
-/* Dialog styling - similar to ManageLayout.vue */
 :deep(.el-dialog) {
   border-radius: 8px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
@@ -300,14 +320,19 @@ const handleCascaderChange = (value) => {
   border-radius: 4px;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .menu-container {
-    padding: 15px;
+    padding: 10px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .el-table-column[label="操作"] {
-    width: auto !important; /* Allow actions to wrap if needed */
+    width: auto !important;
   }
 
   .el-dialog {
