@@ -1,31 +1,15 @@
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Plus } from '@element-plus/icons-vue';
-import { Cropper } from 'vue-advanced-cropper';
-import 'vue-advanced-cropper/dist/style.css';
-import Cookies from 'js-cookie';
-import {
-  getCurrentUser,
-  updateCurrentUser,
-  changePassword
-} from '@/network/user'
-import { uploadImage } from '@/network/base'
 import { useMenuStore } from '@/store/menu'
-import { ElMessage } from 'element-plus';
+import UserAvatarDropdown from '@/components/UserAvatarDropdown.vue'
 
 const route = useRoute()
 const router = useRouter()
 const activeTab = ref(route.path)
-const tabs = ref([
-])
+const tabs = ref([])
 const menuStore = useMenuStore()
 const menuData = menuStore.menuData
-const userInfoContainer = ref(null)
-const dropdownWidth = ref('auto')
-
-
-
 
 const handleSelect = (index) => {
   router.push(index)
@@ -40,52 +24,11 @@ onMounted(() => {
   if (route.path !== '/' && !tabs.value.some(tab => tab.name === route.path)) {
     tabs.value.push({ name: route.path, label: route.path.slice(1) })
   }
-
-  // 页面加载时获取用户信息
-  fetchUserInfo()
-
+  
+  checkMobile()
+  console.log('isMobile', isMobile.value)
+  window.addEventListener('resize', checkMobile)
 })
-
-
-// 获取当前用户信息
-const fetchUserInfo = async () => {
-  try {
-    const response = await getCurrentUser() // 调用 /sys/user/current 接口
-    const userData = response.data
-    userForm.value = {
-      nickname: userData.nickname || '默认昵称',
-      avatar: userData.avatarUrl || 'http://49.235.149.110/favicon.ico'
-    }
-    await nextTick()
-    if (userInfoContainer.value) {
-      dropdownWidth.value = `${userInfoContainer.value.offsetWidth}px`
-    }
-  } catch (error) {
-    console.error('获取用户信息失败:', error)
-  }
-}
-
-// 更新当前用户信息
-const updateCurrentUserInfo = async () => {
-  try {
-    const response = await updateCurrentUser({
-      nickname: userForm.value.nickname,
-      avatarUrl: userForm.value.avatar,
-    })
-    dialogVisible.value = false
-    ElMessage.success('保存成功')
-    fetchUserInfo();
-  } catch (error) {
-    console.error('更新用户信息失败:', error)
-  }
-}
-
-
-const logout = () => {
-  menuStore.resetMenuState()
-  Cookies.remove('loginToken')
-  router.push('/login');
-}
 
 // 关闭单个 Tab
 const handleTabRemove = (tabName) => {
@@ -114,137 +57,6 @@ watch(activeTab, (newTab) => {
   }
 })
 
-const dialogVisible = ref(false)
-const userForm = ref({
-  nickname: '',
-  avatar: ''
-})
-
-// 修改密码相关
-const passwordDialogVisible = ref(false)
-const passwordForm = ref({
-  oldPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-})
-const passwordFormRef = ref(null)
-
-// 密码表单验证规则
-const passwordRules = {
-  oldPassword: [
-    { required: true, message: '请输入原密码', trigger: 'blur' }
-  ],
-  newPassword: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
-  ],
-  confirmPassword: [
-    { required: true, message: '请确认新密码', trigger: 'blur' },
-    {
-      validator: (rule, value, callback) => {
-        if (value !== passwordForm.value.newPassword) {
-          callback(new Error('两次输入的密码不一致'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'blur'
-    }
-  ]
-}
-
-const cropperDialogVisible = ref(false)
-const imageToCrop = ref(null)
-const cropperRef = ref(null)
-
-const openDialog = () => {
-  dialogVisible.value = true
-}
-
-// 打开修改密码对话框
-const openPasswordDialog = () => {
-  passwordDialogVisible.value = true
-  passwordForm.value = {
-    oldPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  }
-}
-
-// 修改密码
-const updatePassword = async () => {
-  try {
-    await passwordFormRef.value.validate()
-    await changePassword(passwordForm.value)
-    passwordDialogVisible.value = false
-    ElMessage.success('密码修改成功')
-    passwordForm.value = {
-      oldPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    }
-  } catch (error) {
-    console.error('修改密码失败:', error)
-    if (error.response && error.response.data && error.response.data.message) {
-      ElMessage.error(error.response.data.message)
-    } else {
-      ElMessage.error('修改密码失败')
-    }
-  }
-}
-
-// 处理下拉菜单命令
-const handleCommand = (command) => {
-  switch (command) {
-    case 'openDialog':
-      openDialog()
-      break
-    case 'changePassword':
-      openPasswordDialog()
-      break
-    case 'logout':
-      logout()
-      break
-  }
-}
-
-
-
-const beforeAvatarUpload = (file) => {
-  const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
-  if (!isJPG) {
-    ElMessage.error('上传头像图片只能是 JPG 或 PNG 格式!');
-    return false;
-  }
-
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = () => {
-    imageToCrop.value = reader.result;
-    cropperDialogVisible.value = true;
-  };
-
-  return false; // Prevent el-upload from uploading automatically
-};
-
-const cropAndUpload = () => {
-  const { canvas } = cropperRef.value.getResult();
-  if (canvas) {
-    canvas.toBlob(async (blob) => {
-      const file = new File([blob],`${Date.now()}.jpg`, { type: "image/jpeg" });
-      try {
-        const response = await uploadImage(file);
-        userForm.value.avatar = `${import.meta.env.VITE_OSS_LOAD_BASE_URL}/${response.data}`;
-        ElMessage.success('上传成功');
-        cropperDialogVisible.value = false;
-      } catch (error) {
-        console.error('上传头像失败:', error);
-        ElMessage.error('上传头像失败');
-      }
-    }, 'image/jpeg');
-  }
-};
-
 const isMobileMenuVisible = ref(false)
 const isMobile = ref(false)
 
@@ -257,18 +69,6 @@ const checkMobile = () => {
 const toggleMobileMenu = () => {
   isMobileMenuVisible.value = !isMobileMenuVisible.value
 }
-
-// 初始化时检测
-onMounted(() => {
-  checkMobile()
-  console.log('isMobile', isMobile.value)
-  window.addEventListener('resize', checkMobile)
-})
-
-
-
-
-
 </script>
 
 <template>
@@ -305,27 +105,8 @@ onMounted(() => {
 
            <!--用户信息  -->
         <div>
-          <el-dropdown trigger="hover" @command="handleCommand" popper-class="user-dropdown">
-            <div class="user-info-container">
-              <el-avatar :size="40" :src="userForm.avatar" class="avatar"></el-avatar>
-              <span class="nickname" :title="userForm.nickname">{{ userForm.nickname }}</span>
-            </div>
-            <template #dropdown>
-              <el-dropdown-menu style="width: 150px;">
-                <el-dropdown-item command="openDialog">
-                   <div class="dropdown-item-content">修改资料</div>
-                 </el-dropdown-item>
-                 <el-dropdown-item command="changePassword">
-                   <div class="dropdown-item-content">修改密码</div>
-                 </el-dropdown-item>
-                 <el-dropdown-item command="logout">
-                   <div class="dropdown-item-content">退出登录</div>
-                 </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+          <UserAvatarDropdown />
         </div>
-
 
       </header>
 
@@ -339,84 +120,6 @@ onMounted(() => {
       </div>
 
     </div>
-
-    <!-- 用户信息修改对话框 -->
-    <el-dialog v-model="dialogVisible" title="修改用户信息" width="30%">
-      <el-form :model="userForm" label-width="80px">
-        <el-form-item label="昵称">
-          <el-input v-model="userForm.nickname" placeholder="请输入昵称"></el-input>
-        </el-form-item>
-        <el-form-item label="头像">
-                              <el-upload class="avatar-uploader" :show-file-list="false"
-            :before-upload="beforeAvatarUpload">
-            <img v-if="userForm.avatar" :src="userForm.avatar" class="avatar" />
-            <el-icon v-else class="avatar-uploader-icon">
-              <Plus />
-            </el-icon>
-          </el-upload>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="updateCurrentUserInfo">保存</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- Cropper Dialog -->
-    <el-dialog v-model="cropperDialogVisible" title="裁剪头像" width="650px" center>
-      <div style="height: 450px;">
-        <Cropper
-          ref="cropperRef"
-          :src="imageToCrop"
-          :stencil-props="{
-            aspectRatio: 1/1
-          }"
-        />
-      </div>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="cropperDialogVisible = false">取 消</el-button>
-          <el-button type="primary" @click="cropAndUpload">确 认</el-button>
-        </span>
-      </template>
-    </el-dialog>
-
-    <!-- 修改密码对话框 -->
-    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="400px" center>
-      <el-form ref="passwordFormRef" :model="passwordForm" :rules="passwordRules" label-width="100px">
-        <el-form-item label="原密码" prop="oldPassword">
-          <el-input 
-            v-model="passwordForm.oldPassword" 
-            type="password" 
-            placeholder="请输入原密码"
-            show-password
-            clearable
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
-          <el-input 
-            v-model="passwordForm.newPassword" 
-            type="password" 
-            placeholder="请输入新密码"
-            show-password
-            clearable
-          ></el-input>
-        </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input 
-            v-model="passwordForm.confirmPassword" 
-            type="password" 
-            placeholder="请再次输入新密码"
-            show-password
-            clearable
-          ></el-input>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="passwordDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="updatePassword">确认修改</el-button>
-      </template>
-    </el-dialog>
     
   </div>
 </template>
@@ -431,41 +134,6 @@ onMounted(() => {
   height: 60px;
   background: #fff;
   box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
-}
-
-.user-info-container {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 0 12px;
-  height: 100%;
-  transition: background .3s;
-}
-
-.user-info-container:hover {
-  background: rgba(0,0,0,.025);
-}
-
-.avatar {
-  flex-shrink: 0;
-}
-
-.nickname {
-  margin-left: 10px;
-  font-size: 14px;
-  color: #606266;
-  white-space: nowrap;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
-.dropdown-item-content {
-  height: 25px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .manage-layout {
@@ -514,57 +182,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden; /* Prevent content overflow issues */
-}
-
-.header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 0 24px; /* Adjusted padding */
-  height: 64px; /* Standard header height */
-  border-bottom: 1px solid #e8e8e8;
-  background-color: #ffffff;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
-}
-
-.user-info-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px; /* Increased gap */
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.3s ease;
-  outline: none;
-  min-width: 150px; /* Prevent layout shift */
-  justify-content: flex-start;
-}
-
-.user-info-container:hover {
-  background-color: #f0f2f5; /* Light hover effect */
-}
-
-.avatar {
-  transition: transform 0.3s ease;
-}
-
-.user-info-container:hover .avatar {
-  transform: scale(1.1); /* Slight zoom on avatar hover */
-}
-
-.nickname {
-  font-weight: 500;
-  color: #333;
-}
-
-.user-info-container .nickname {
-  display: inline-block;
-  max-width: 80px; /* Approx 5 Chinese characters */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: middle; /* Helps align with avatar */
 }
 
 .content {
@@ -626,57 +243,6 @@ onMounted(() => {
   min-height: calc(100vh - 160px); /* Ensure content area fills space, adjust as needed */
 }
 
-/* Dialog styling */
-.el-dialog {
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.el-dialog__header {
-  padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
-  font-weight: 600;
-  color: #303133;
-  border-radius: 8px 8px 0 0;
-}
-
-.el-dialog__body {
-  padding: 24px;
-  color: #606266;
-}
-
-.el-dialog__footer {
-  padding: 12px 24px;
-  border-top: 1px solid #f0f0f0;
-  text-align: right;
-  border-radius: 0 0 8px 8px;
-}
-
-.avatar-uploader .el-upload {
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.3s ease;
-}
-.avatar-uploader .el-upload:hover {
-  border-color: #409EFF;
-}
-.avatar-uploader-icon {
-  font-size: 28px;
-  color: #8c939d;
-  width: 120px; /* Adjusted size */
-  height: 120px;
-  line-height: 120px;
-  text-align: center;
-}
-.avatar-uploader .avatar {
-  width: 120px;
-  height: 120px;
-  display: block;
-}
-
 /* Hamburger menu for mobile */
 .hamburger {
   position: fixed; /* Keep it fixed for mobile */
@@ -716,11 +282,6 @@ onMounted(() => {
     transition: margin-left 0.3s ease; /* Smooth transition when menu opens/closes */
   }
 
-  /* Removed margin-left push when menu is visible to allow full screen content with overlay menu */
-  /* .menu.mobile-menu-visible + .right-content {
-    margin-left: 250px; 
-  } */
-
   .header {
     padding: 0 15px;
     height: 56px;
@@ -736,20 +297,5 @@ onMounted(() => {
     height: 36px;
     line-height: 36px;
   }
-
-  .el-dialog {
-    width: 90% !important;
-    margin: 5vh auto !important;
-  }
-
-
-
-  .avatar-uploader-icon,
-  .avatar-uploader .avatar {
-    width: 100px;
-    height: 100px;
-    line-height: 100px;
-  }
 }
-
 </style>
