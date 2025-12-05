@@ -10,6 +10,7 @@ interface User {
   mobile?: string
   email?: string
   avatarUrl?: string
+  deptIds?: number[]
   deleted?: boolean
   sourceFrom?: string
 }
@@ -23,6 +24,7 @@ interface ChangePasswordRequest {
 interface PageVo {
   pageNum: number
   pageSize: number
+  deptId?: number
 }
 
 export const createUser = (user: User) => SysRequest({ method: 'post', url: '/user/create', data: user })

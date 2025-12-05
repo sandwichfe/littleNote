@@ -1,41 +1,86 @@
 <template>
   <div class="user-container">
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <el-button type="primary" @click="handleCreate" class="toolbar-btn">
-          <el-icon><Plus /></el-icon>
-          <span>新增用户</span>
-        </el-button>
-      </div>
-    </div>
-    
-    <el-table :data="userList" style="width: 100%" v-loading="loading">
-      <el-table-column prop="id" label="ID" width="80"></el-table-column>
-      <el-table-column prop="nickname" label="昵称"></el-table-column>
-      <el-table-column prop="username" label="账号"></el-table-column>
-      <el-table-column prop="email" label="邮箱"></el-table-column>
-      <el-table-column prop="mobile" label="手机号"></el-table-column>
-      <el-table-column label="操作" width="240">
-        <template #default="scope">
-          <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
-          <el-button size="small" type="warning" @click="handleAssignRole(scope.row)">分配角色</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <el-container style="height: 100%">
+      <!-- 左侧部门树 -->
+      <el-aside width="220px" class="dept-sidebar">
+        <div class="sidebar-header">
+          <span>部门列表</span>
+          <el-button link type="primary" @click="fetchDepts">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
+        <div class="sidebar-content">
+          <el-tree
+            ref="deptTreeRef"
+            :data="allDepts"
+            :props="{ label: 'name', children: 'children' }"
+            node-key="id"
+            default-expand-all
+            :expand-on-click-node="false"
+            highlight-current
+            @node-click="handleNodeClick"
+          >
+            <template #default="{ node, data }">
+              <span class="custom-tree-node">
+                <el-icon v-if="data.children && data.children.length"><Folder /></el-icon>
+                <el-icon v-else><Document /></el-icon>
+                <span class="node-label">{{ node.label }}</span>
+              </span>
+            </template>
+          </el-tree>
+        </div>
+      </el-aside>
 
-    <!-- 分页组件 -->
-    <el-pagination
-      :page-size="pageSize"
-      :current-page="currentPage"
-      layout="prev, pager, next"
-      :total="total"
-      @current-change="handlePageChange"
-    />
+      <!-- 右侧用户列表 -->
+      <el-main class="user-main">
+        <div class="toolbar">
+          <div class="toolbar-left">
+            <el-button type="primary" @click="handleCreate" class="toolbar-btn">
+              <el-icon><Plus /></el-icon>
+              <span>新增用户</span>
+            </el-button>
+          </div>
+        </div>
+        
+        <el-table :data="userList" style="width: 100%" v-loading="loading">
+          <el-table-column prop="id" label="ID" width="80"></el-table-column>
+          <el-table-column prop="nickname" label="昵称"></el-table-column>
+          <el-table-column prop="username" label="账号"></el-table-column>
+          <el-table-column prop="email" label="邮箱"></el-table-column>
+          <el-table-column prop="mobile" label="手机号"></el-table-column>
+          <el-table-column label="操作" width="240">
+            <template #default="scope">
+              <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
+              <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+              <el-button size="small" type="warning" @click="handleAssignRole(scope.row)">分配角色</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <!-- 分页组件 -->
+        <el-pagination
+          :page-size="pageSize"
+          :current-page="currentPage"
+          layout="prev, pager, next"
+          :total="total"
+          @current-change="handlePageChange"
+        />
+      </el-main>
+    </el-container>
 
     <!-- 用户表单对话框 -->
     <el-dialog v-model="dialogVisible" :title="formTitle">
       <el-form :model="form" label-width="100px" :rules="rules" ref="formRef">
+        <el-form-item label="所属部门" prop="deptIds">
+          <el-cascader
+            v-model="form.deptIds"
+            :options="allDepts"
+            :props="{ checkStrictly: true, value: 'id', label: 'name', children: 'children', emitPath: false, multiple: true }"
+            placeholder="请选择部门"
+            clearable
+            style="width: 100%"
+          />
+        </el-form-item>
         <el-form-item label="昵称" prop="nickname">
           <el-input v-model="form.nickname" placeholder="请输入昵称"></el-input>
         </el-form-item>
@@ -87,12 +132,18 @@ import {
   deleteUser 
 } from '@/network/user'
 import { getAllRoles } from '@/network/role'
+import { getTreeDepts } from '@/network/dept'
 import { getRolesByUserId, assignRolesToUser } from '@/network/userRole'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Folder, Document, Refresh } from '@element-plus/icons-vue'
 
 // 用户列表和加载状态
 const userList = ref([])
 const loading = ref(false)
+
+// 部门相关状态
+const allDepts = ref([])
+const currentDeptId = ref(null)
+const deptTreeRef = ref(null)
 
 // 分页相关状态
 const pageSize = ref(10)
@@ -114,6 +165,7 @@ const roleTree = ref(null)
 // 表单数据和校验规则
 const form = reactive({
   id: null,
+  deptIds: [],
   nickname: '',
   username: '',
   password: '',
@@ -133,15 +185,39 @@ const rules = reactive({
 
 // 生命周期钩子
 onMounted(() => {
+  fetchDepts()
   fetchUsers()
   fetchAllRoles()
 })
+
+// 获取部门树
+const fetchDepts = async () => {
+  try {
+    const response = await getTreeDepts()
+    allDepts.value = response.data
+  } catch (error) {
+    console.error('获取部门列表失败:', error)
+    ElMessage.error('获取部门列表失败')
+  }
+}
+
+// 部门节点点击
+const handleNodeClick = (data) => {
+  currentDeptId.value = data.id
+  currentPage.value = 1 // 重置页码
+  fetchUsers()
+}
 
 // 获取用户列表
 const fetchUsers = async () => {
   try {
     loading.value = true
-    const response = await getAllUsers({ pageNum: currentPage.value, pageSize: pageSize.value })
+    const params = { 
+      pageNum: currentPage.value, 
+      pageSize: pageSize.value,
+      deptId: currentDeptId.value 
+    }
+    const response = await getAllUsers(params)
     userList.value = response.data.records
     total.value = response.data.total
   } catch (error) {
@@ -162,7 +238,11 @@ const handlePageChange = (newPage) => {
 const handleCreate = () => {
   isCreate.value = true
   formTitle.value = '新建用户'
-  Object.keys(form).forEach(key => form[key] = key === 'id' ? null : '')
+  Object.keys(form).forEach(key => form[key] = key === 'id' ? null : (key === 'deptIds' ? [] : ''))
+  // 如果当前选中了部门，自动填充
+  if (currentDeptId.value) {
+    form.deptIds = [currentDeptId.value]
+  }
   dialogVisible.value = true
 }
 
@@ -273,6 +353,51 @@ const submitAssignRole = async () => {
   flex-direction: column;
 }
 
+.dept-sidebar {
+  border-right: 1px solid #e6e6e6;
+  margin-right: 16px;
+  padding-right: 16px;
+  background-color: #fafafa;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-weight: bold;
+  color: #333;
+  border-bottom: 1px solid #e6e6e6;
+  margin-bottom: 8px;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.user-main {
+  padding: 0 !important; /* Remove default padding to align with layout */
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-tree-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.node-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* 顶部工具栏 */
 .toolbar {
   display: flex;
@@ -298,60 +423,19 @@ const submitAssignRole = async () => {
   background-color: #5f6368;
   color: #fff;
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
-.toolbar-btn:hover {
-  background-color: #202124;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16), 0 1px 2px rgba(0, 0, 0, 0.12);
+/* Element Plus 样式覆盖 */
+:deep(.el-tree) {
+  background: transparent;
 }
 
-.toolbar-btn:active {
-  transform: scale(0.98);
-  background-color: #3c4043;
+:deep(.el-tree-node__content) {
+  height: 32px;
 }
 
-.el-table {
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e8e8e8;
-  flex-grow: 1;
-}
-
-.el-table th {
-  background-color: #fafafa;
-  color: #333;
-  font-weight: 500;
-  border-bottom: 1px solid #e8e8e8;
-}
-
-.el-table td {
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.el-pagination {
-  margin-top: 20px;
-  justify-content: flex-end;
-}
-
-/* 移动端适配 */
-@media screen and (max-width: 768px) {
-  .user-container {
-    padding: 10px;
-  }
-
-  .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .toolbar-left {
-    justify-content: flex-start;
-  }
+:deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background-color: #e6f7ff;
+  color: #409eff;
 }
 </style>

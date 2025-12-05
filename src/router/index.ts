@@ -65,6 +65,11 @@ const constantRoutes: RouteRecordRaw[] = [
         name: 'Menu',
       },
       {
+        path: 'dept',
+        component: () => import('../views/manage/dept.vue'),
+        name: 'Dept',
+      },
+      {
         path: 'noteGroup',
         component: () => import('../views/apps/note/noteGroup.vue'),
         name: 'NoteGroup',
