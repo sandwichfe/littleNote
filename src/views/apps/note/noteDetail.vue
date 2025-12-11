@@ -101,6 +101,7 @@ import {cipherText, decrypted} from "@/utils/aesUtil";
 import {openLoading, closeLoading} from "@/utils/loadingUtil";
 import {listNoteGroup} from "@/network/noteGroup";
 import {toolbarKeys} from '@/config/editorToolbarConfig';
+import { de } from 'element-plus/es/locales.mjs';
 
 const router = useRouter();
 
@@ -172,12 +173,12 @@ onMounted(() => {
 
   if (paramId !== -1) {
     getNote(paramId).then((res) => {
-      if (res.content == null) {
-        res.content = ''
+      if (res.data.content == null) {
+        res.data.content = ''
       }
-      valueHtml.value = decrypted(res.content);
-      groupValue.value = res.groupId;
-      noteData.value.groupId = res.groupId;
+      valueHtml.value = decrypted(res.data.content);
+      groupValue.value = res.data.groupId;
+      noteData.value.groupId = res.data.groupId;
     });
   }
 

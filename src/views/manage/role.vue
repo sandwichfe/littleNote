@@ -13,6 +13,7 @@
       <el-table-column prop="id" label="ID" width="80"></el-table-column>
       <el-table-column prop="roleName" label="角色名称"></el-table-column>
       <el-table-column prop="description" label="描述"></el-table-column>
+      <el-table-column prop="createTime" label="创建时间" width="180"></el-table-column>
       <el-table-column label="操作" width="240">
         <template #default="scope">
           <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>

@@ -48,6 +48,7 @@
           <el-table-column prop="username" label="账号"></el-table-column>
           <el-table-column prop="email" label="邮箱"></el-table-column>
           <el-table-column prop="mobile" label="手机号"></el-table-column>
+          <el-table-column prop="createTime" label="创建时间" width="180"></el-table-column>
           <el-table-column label="操作" width="240">
             <template #default="scope">
               <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>

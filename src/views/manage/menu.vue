@@ -20,6 +20,7 @@
       <el-table-column prop="name" label="菜单名称"></el-table-column>
       <el-table-column prop="path" label="路径"></el-table-column>
       <el-table-column prop="type" label="类型"></el-table-column>
+      <el-table-column prop="sort" label="排序" width="80"></el-table-column>
       <el-table-column label="操作" width="200">
         <template #default="scope">
           <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
@@ -56,6 +57,9 @@
         </el-form-item>
         <el-form-item label="路径" prop="path">
           <el-input v-model="form.path" placeholder="请输入路径"></el-input>
+        </el-form-item>
+        <el-form-item label="排序" prop="sort">
+          <el-input-number v-model="form.sort" :min="0" controls-position="right"></el-input-number>
         </el-form-item>
         <el-form-item label="类型" prop="type">
           <el-input v-model="form.type" placeholder="请输入类型"></el-input>
@@ -96,12 +100,14 @@ const form = reactive({
   name: '',
   path: '',
   type: '',
-  menuPid: null // 新增父级菜单ID字段
+  sort: 0,
+  menuPid: null
 })
 
 const rules = reactive({
   name: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
   path: [{ required: true, message: '请输入路径', trigger: 'blur' }],
+  sort: [{ required: true, message: '请输入排序', trigger: 'change' }],
   type: [{ required: true, message: '请输入类型', trigger: 'blur' }]
 })
 
@@ -140,7 +146,12 @@ const handlePageChange = (newPage) => {
 const handleCreate = () => {
   isCreate.value = true
   formTitle.value = '新建菜单'
-  Object.keys(form).forEach(key => form[key] = key === 'id' ? null : '')
+  form.id = null
+  form.name = ''
+  form.path = ''
+  form.type = ''
+  form.sort = 0
+  form.menuPid = null
   dialogVisible.value = true
 }
 
