@@ -25,6 +25,7 @@
         @show-add-task="showAddTaskDialog = true"
         @filter-change="setTaskFilter"
         @increment-task="incrementTaskCount"
+        @edit-task="handleEditTask"
         @copy-to-daily="handleCopyToDaily"
         @delete-task="handleDeleteTask"
       />
@@ -59,8 +60,11 @@
     <!-- 对话框组件 -->
     <TodoDialogs 
       v-model:show-add-task-dialog="showAddTaskDialog"
+      v-model:show-edit-task-dialog="showEditTaskDialog"
       v-model:show-add-reward-dialog="showAddRewardDialog"
+      :editing-task="editingTask"
       @add-task="handleAddTask"
+      @update-task="handleUpdateTask"
       @add-reward="handleAddReward"
     />
   </div>
@@ -93,13 +97,17 @@ const {
   weekDays,
   monthDates,
   showAddTaskDialog,
+  showEditTaskDialog,
   showAddRewardDialog,
+  editingTask,
 
   // 方法
   setActiveNav,
   setActiveView,
   incrementTaskCount,
   handleAddTask,
+  handleEditTask,
+  handleUpdateTask,
   setTaskFilter,
   handleDeleteTask,
   handleAddReward,

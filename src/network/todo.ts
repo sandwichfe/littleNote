@@ -14,6 +14,7 @@ export interface Task {
   todoDate?: string;
   createTime?: string;
   updateTime?: string;
+  isDailyLimit?: number;
 }
 
 export interface Reward {

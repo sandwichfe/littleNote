@@ -71,6 +71,14 @@
             type="primary" 
             size="small" 
             text
+            @click="$emit('edit-task', task)"
+          >
+            编辑
+          </el-button>
+          <el-button 
+            type="primary" 
+            size="small" 
+            text
             @click="$emit('copy-to-daily', task)"
           >
             复制到每日待办
@@ -109,6 +117,7 @@ defineEmits<{
   'show-add-task': []
   'filter-change': [filter: string]
   'increment-task': [task: Task]
+  'edit-task': [task: Task]
   'copy-to-daily': [task: Task]
   'delete-task': [taskId: number]
 }>()

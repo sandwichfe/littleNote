@@ -35,7 +35,9 @@ export function useTodo() {
   const myRewards = ref([])
   const activeView = ref('day')
   const showAddTaskDialog = ref(false)
+  const showEditTaskDialog = ref(false)
   const showAddRewardDialog = ref(false)
+  const editingTask = ref(null)
 
   // 任务视图数据
   const daySchedule = ref([
@@ -138,7 +140,9 @@ export function useTodo() {
         await loadUserPoints()
         await loadAllTasks() // 刷新任务列表以更新计数
       } catch (error) {
-        ElMessage.error('完成任务失败')
+        // 优先使用后端返回的错误信息
+        const msg = error.response?.data?.msg || '完成任务失败'
+        ElMessage.error(msg)
       }
     }
   }
@@ -155,7 +159,8 @@ export function useTodo() {
       category: 'global',
       points: taskData.points,
       encouragement: taskData.encouragement || '任务完成，继续加油！',
-      targetCount: taskData.targetCount || 1
+      targetCount: taskData.targetCount || 1,
+      isDailyLimit: taskData.isDailyLimit || 0
     }
     
     try {
@@ -169,6 +174,40 @@ export function useTodo() {
     } catch (error) {
       console.error('添加任务失败:', error)
       ElMessage.error('添加任务失败')
+    }
+  }
+
+  const handleEditTask = (task) => {
+    editingTask.value = {
+      ...task,
+      type: task.taskType || task.type
+    }
+    showEditTaskDialog.value = true
+  }
+
+  const handleUpdateTask = async (taskData) => {
+    if (!taskData.content || !taskData.type) {
+      ElMessage.warning('请填写完整的任务信息')
+      return
+    }
+
+    const task = {
+      content: taskData.content,
+      taskType: taskData.type,
+      points: taskData.points,
+      encouragement: taskData.encouragement,
+      targetCount: taskData.targetCount,
+      isDailyLimit: taskData.isDailyLimit
+    }
+
+    try {
+      await updateTask(taskData.id, task)
+      showEditTaskDialog.value = false
+      ElMessage.success('任务更新成功！')
+      await loadAllTasks()
+    } catch (error) {
+      console.error('更新任务失败:', error)
+      ElMessage.error('更新任务失败')
     }
   }
 
@@ -377,7 +416,9 @@ export function useTodo() {
     myRewards,
     activeView,
     showAddTaskDialog,
+    showEditTaskDialog,
     showAddRewardDialog,
+    editingTask,
     daySchedule,
     weekDays,
     monthDates,
@@ -403,6 +444,8 @@ export function useTodo() {
     setTaskFilter,
     incrementTaskCount,
     handleAddTask,
+    handleEditTask,
+    handleUpdateTask,
     handleDeleteTask,
     handleCopyToDaily,
     handleAddReward,

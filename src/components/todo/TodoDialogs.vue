@@ -21,6 +21,9 @@
       </el-form-item>
       <el-form-item label="目标次数">
         <el-input-number v-model="newTask.targetCount" :min="1" :max="50" placeholder="需要完成的次数" />
+        <div class="ml-2" v-if="newTask.targetCount > 1">
+           <el-checkbox v-model="newTask.isDailyLimit" :true-label="1" :false-label="0">每日仅可完成一次</el-checkbox>
+        </div>
       </el-form-item>
       <el-form-item label="鼓励语">
         <el-input v-model="newTask.encouragement" placeholder="完成后的鼓励语" />
@@ -29,6 +32,42 @@
     <template #footer>
       <el-button @click="handleCancelAddTask">取消</el-button>
       <el-button type="primary" @click="handleConfirmAddTask">确定</el-button>
+    </template>
+  </el-dialog>
+
+  <!-- 编辑任务对话框 -->
+  <el-dialog 
+    v-model="showEditTaskDialog" 
+    title="编辑任务" 
+    width="500px"
+  >
+    <el-form :model="editTaskForm" label-width="80px">
+      <el-form-item label="任务名称">
+        <el-input v-model="editTaskForm.content" placeholder="请输入任务名称" />
+      </el-form-item>
+      <el-form-item label="任务类型">
+        <el-select v-model="editTaskForm.type" placeholder="请选择任务类型">
+          <el-option label="工作任务" value="work" />
+          <el-option label="学习计划" value="study" />
+          <el-option label="健康习惯" value="health" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="积分奖励">
+        <el-input-number v-model="editTaskForm.points" :min="1" :max="100" />
+      </el-form-item>
+      <el-form-item label="目标次数">
+        <el-input-number v-model="editTaskForm.targetCount" :min="1" :max="50" placeholder="需要完成的次数" />
+        <div class="ml-2" v-if="editTaskForm.targetCount > 1">
+           <el-checkbox v-model="editTaskForm.isDailyLimit" :true-label="1" :false-label="0">每日仅可完成一次</el-checkbox>
+        </div>
+      </el-form-item>
+      <el-form-item label="鼓励语">
+        <el-input v-model="editTaskForm.encouragement" placeholder="完成后的鼓励语" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="handleCancelEditTask">取消</el-button>
+      <el-button type="primary" @click="handleConfirmEditTask">确定</el-button>
     </template>
   </el-dialog>
 
@@ -68,6 +107,14 @@ const props = defineProps({
   showAddRewardDialog: {
     type: Boolean,
     default: false
+  },
+  showEditTaskDialog: {
+    type: Boolean,
+    default: false
+  },
+  editingTask: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -75,13 +122,16 @@ const props = defineProps({
 const emit = defineEmits([
   'update:showAddTaskDialog',
   'update:showAddRewardDialog',
+  'update:showEditTaskDialog',
   'add-task',
-  'add-reward'
+  'add-reward',
+  'update-task'
 ])
 
 // 本地状态
 const showAddTaskDialog = ref(props.showAddTaskDialog)
 const showAddRewardDialog = ref(props.showAddRewardDialog)
+const showEditTaskDialog = ref(props.showEditTaskDialog)
 
 // 监听props变化
 watch(() => props.showAddTaskDialog, (val) => {
@@ -90,6 +140,14 @@ watch(() => props.showAddTaskDialog, (val) => {
 
 watch(() => props.showAddRewardDialog, (val) => {
   showAddRewardDialog.value = val
+})
+
+watch(() => props.showEditTaskDialog, (val) => {
+  showEditTaskDialog.value = val
+  if (val && props.editingTask) {
+    // 初始化编辑表单
+    editTaskForm.value = { ...props.editingTask }
+  }
 })
 
 // 监听本地状态变化，同步到父组件
@@ -101,13 +159,29 @@ watch(showAddRewardDialog, (val) => {
   emit('update:showAddRewardDialog', val)
 })
 
+watch(showEditTaskDialog, (val) => {
+  emit('update:showEditTaskDialog', val)
+})
+
 // 新任务表单
 const newTask = ref({
   content: '',
   type: '',
   points: 10,
   encouragement: '',
-  targetCount: 1
+  targetCount: 1,
+  isDailyLimit: 0
+})
+
+// 编辑任务表单
+const editTaskForm = ref({
+  id: null,
+  content: '',
+  type: '',
+  points: 10,
+  encouragement: '',
+  targetCount: 1,
+  isDailyLimit: 0
 })
 
 // 新奖励表单
@@ -134,8 +208,19 @@ const resetTaskForm = () => {
     type: '',
     points: 10,
     encouragement: '',
-    targetCount: 1
+    targetCount: 1,
+    isDailyLimit: 0
   }
+}
+
+// 处理编辑任务
+const handleConfirmEditTask = () => {
+  emit('update-task', { ...editTaskForm.value })
+  showEditTaskDialog.value = false
+}
+
+const handleCancelEditTask = () => {
+  showEditTaskDialog.value = false
 }
 
 // 处理添加奖励
