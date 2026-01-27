@@ -4,14 +4,27 @@
     <div class="note-toolbar">
       <!-- 左侧：分组选择 -->
       <div class="toolbar-left">
-        <el-select
-            v-model="groupValue"
-            placeholder="选择分组"
-            class="group-select"
-            @change="changeGroup"
-        >
-          <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id"/>
-        </el-select>
+        <div class="filter-item">
+          <el-select
+              v-model="groupValue"
+              placeholder="类型"
+              size="large"
+              clearable
+              class="group-select"
+              @change="changeGroup"
+              @clear="handleClear"
+          >
+            <template #prefix>
+              <svg-icon iconClass="filter" className="filter-icon"/>
+            </template>
+            <el-option
+                v-for="item in groups"
+                :key="item.id"
+                :label="item.groupName"
+                :value="item.id"
+            />
+          </el-select>
+        </div>
       </div>
 
       <!-- 右侧：模式切换 + 操作按钮 -->
@@ -115,6 +128,11 @@ const groups = ref<any[]>([]);
 
 const changeGroup = (newValue: string) => {
   noteData.value.groupId = newValue ? Number(newValue) : null;
+};
+
+const handleClear = () => {
+  groupValue.value = '';
+  noteData.value.groupId = null;
 };
 
 
@@ -339,6 +357,25 @@ const customPaste = (editor: any, event: any, callback: any) => {
   flex-shrink: 0;
 }
 
+.filter-item {
+  transition: all 0.3s ease;
+  width: 120px;
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .filter-item {
+    width: 100px;
+  }
+}
+
+@media screen and (max-width: 500px) {
+  .filter-item {
+    width: 80px;
+  }
+}
+
 .toolbar-right {
   display: flex;
   align-items: center;
@@ -427,6 +464,19 @@ const customPaste = (editor: any, event: any, callback: any) => {
   height: 34px;
   line-height: 34px;
   font-size: 14px;
+}
+
+.filter-icon {
+  color: #909399;
+  margin-right: 5px;
+}
+
+.el-select {
+  transition: box-shadow 0.3s ease;
+}
+
+.el-select:focus-within {
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
 }
 
 /* 工具栏按钮 */
