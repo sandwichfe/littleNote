@@ -41,6 +41,18 @@ export function useTaskUtils() {
     return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
   }
 
+  // 格式化日期时间
+  const formatDateTime = (date) => {
+    if (!date) return ''
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = d.getMonth() + 1
+    const day = d.getDate()
+    const hour = d.getHours()
+    const minute = d.getMinutes()
+    return `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')} ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+  }
+
   // 获取当前日期字符串
   const getCurrentDateString = () => {
     const now = new Date()
@@ -55,6 +67,7 @@ export function useTaskUtils() {
     getTaskTypeColor,
     getTaskTypeLabel,
     formatDate,
+    formatDateTime,
     getCurrentDateString
   }
 }

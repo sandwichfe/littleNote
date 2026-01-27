@@ -40,57 +40,80 @@
         :style="{ '--progress': (task.completedCount / task.targetCount * 100) + '%' }"
       >
       
-        <div class="task-progress">
-          <el-button 
-            size="small" 
-            type="primary" 
-            :disabled="task.completedCount >= task.targetCount"
-            @click="$emit('increment-task', task)"
+        <div class="task-check-section">
+          <el-tooltip 
+            :content="task.completedCount >= task.targetCount ? '已完成' : '完成一次'" 
+            placement="top"
           >
-            完成一次
-          </el-button>
-          <span class="count-display">{{ task.completedCount }}/{{ task.targetCount }}</span>
+            <el-button 
+              circle
+              :type="task.completedCount >= task.targetCount ? 'success' : 'primary'"
+              :plain="task.completedCount < task.targetCount"
+              :disabled="task.completedCount >= task.targetCount"
+              class="check-btn"
+              @click.stop="$emit('increment-task', task)"
+            >
+              <el-icon v-if="task.completedCount >= task.targetCount"><Check /></el-icon>
+              <el-icon v-else><Finished /></el-icon>
+            </el-button>
+          </el-tooltip>
+          <span class="count-badge" v-if="task.targetCount > 0">
+            {{ task.completedCount }}/{{ task.targetCount }}
+          </span>
         </div>
 
-        <div class="task-details">
-          <div class="task-content">{{ task.content }}</div>
-          <div class="task-meta">
+        <div class="task-main-content">
+          <div class="task-title" :class="{ 'is-completed': task.completedCount >= task.targetCount }">
+            {{ task.content }}
+          </div>
+          <div class="task-meta-row">
             <el-tag 
               :type="getTaskTypeColor(task.type)" 
               size="small"
+              effect="light"
+              round
+              class="meta-tag"
             >
               {{ getTaskTypeLabel(task.type) }}
             </el-tag>
-            <span class="task-points">+{{ task.points }}积分</span>
-            <span class="task-date">{{ formatDate(task.createdAt) }}</span>
+            
+            <span class="meta-item points">
+              +{{ task.points }}积分
+            </span>
+            
+            <span class="meta-divider">|</span>
+            
+            <span class="meta-item date">
+              创建于 {{ formatDate(task.createTime || task.createdAt) }}
+            </span>
+
+            <template v-if="task.lastCompleteTime">
+              <span class="meta-divider">|</span>
+              <span class="meta-item date">
+                {{ task.completedCount >= task.targetCount ? '完成于' : '上次完成' }} {{ formatDateTime(task.lastCompleteTime) }}
+              </span>
+            </template>
           </div>
         </div>
 
-        <div class="task-actions">
-          <el-button 
-            type="primary" 
-            size="small" 
-            text
-            @click="$emit('edit-task', task)"
-          >
-            编辑
-          </el-button>
-          <el-button 
-            type="primary" 
-            size="small" 
-            text
-            @click="$emit('copy-to-daily', task)"
-          >
-            复制到每日待办
-          </el-button>
-          <el-button 
-            type="danger" 
-            size="small" 
-            text
-            @click="$emit('delete-task', task.id)"
-          >
-            删除
-          </el-button>
+        <div class="task-action-group">
+          <el-tooltip content="编辑" placement="top" :show-after="500">
+            <el-button link class="action-btn" @click.stop="$emit('edit-task', task)">
+              <el-icon><Edit /></el-icon>
+            </el-button>
+          </el-tooltip>
+          
+          <el-tooltip content="复制到每日待办" placement="top" :show-after="500">
+            <el-button link class="action-btn" @click.stop="$emit('copy-to-daily', task)">
+              <el-icon><CopyDocument /></el-icon>
+            </el-button>
+          </el-tooltip>
+          
+          <el-tooltip content="删除" placement="top" :show-after="500">
+            <el-button link type="danger" class="action-btn delete-btn" @click.stop="$emit('delete-task', task.id)">
+              <el-icon><Delete /></el-icon>
+            </el-button>
+          </el-tooltip>
         </div>
 
       </div>
@@ -101,7 +124,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, Check, Edit, Delete, CopyDocument,Finished } from '@element-plus/icons-vue'
 import { useTaskStats } from '@/composables/useTaskStats'
 import { useTaskUtils } from '@/composables/useTaskUtils'
 import type { Task } from '@/network/todo'
@@ -126,7 +149,7 @@ defineEmits<{
 const { allTasksCount, pendingTasks, completedTasks } = useTaskStats(() => props.allTasks)
 
 // 使用任务工具函数
-const { getTaskTypeColor, getTaskTypeLabel, formatDate } = useTaskUtils()
+const { getTaskTypeColor, getTaskTypeLabel, formatDate, formatDateTime } = useTaskUtils()
 
 // 筛选后的任务列表
 const filteredTasks = computed(() => {
@@ -174,7 +197,7 @@ const filteredTasks = computed(() => {
 
 .task-item-full {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   padding: 20px;
   margin-bottom: 16px;
   background: #f8f9fa;
@@ -230,61 +253,129 @@ const filteredTasks = computed(() => {
   }
 }
 
-.task-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-right: 16px;
-}
-
-.count-display {
-  font-weight: 600;
-  color: #666;
-  font-size: 14px;
-}
-
-.task-details {
-  flex: 1;
-  margin-left: 16px;
-}
-
-.task-details .task-content {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.task-item-full.completed .task-details .task-content {
-  text-decoration: line-through;
-  color: #999;
-}
-
-.task-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 14px;
-  color: #666;
-}
-
-.task-meta .task-points {
-  background: #8e6ff7;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.task-date {
-  color: #999;
-  font-size: 12px;
-}
-
-.task-actions {
+.task-check-section {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20px;
+  min-width: 48px;
+}
+
+.check-btn {
+  width: 36px;
+  height: 36px;
+  font-size: 18px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-width: 2px;
+}
+
+.check-btn:not(.is-disabled):hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.count-badge {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 6px;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.task-main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  padding-right: 16px;
+}
+
+.task-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  transition: color 0.3s;
+}
+
+.task-title.is-completed {
+  color: #909399;
+  text-decoration: line-through;
+}
+
+.task-meta-row {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  color: #909399;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.meta-tag {
+  border: none;
+  font-weight: 500;
+}
+
+.meta-divider {
+  color: #e4e7ed;
+  margin: 0 4px;
+  transform: scaleY(0.8);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.meta-item.points {
+  color: #8e6ff7;
+  font-weight: 600;
+  background: rgba(142, 111, 247, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.meta-item.date {
+  color: #a8abb2;
+}
+
+.task-action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: auto;
+  padding-left: 16px;
+  border-left: 1px solid transparent;
+}
+
+.task-item-full:hover .task-action-group {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.action-btn {
+  font-size: 18px;
+  padding: 8px;
+  color: #909399;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  color: #409eff;
+  background-color: #ecf5ff;
+}
+
+.action-btn.delete-btn:hover {
+  color: #f56c6c;
+  background-color: #fef0f0;
 }
 </style>
