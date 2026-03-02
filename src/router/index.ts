@@ -11,7 +11,7 @@ const constantRoutes: RouteRecordRaw[] = [
     name: 'Login',
   },
   {
-    path: '/todo',
+    path: '/todo/:section?',
     component: () => import('../views/apps/todo/todo.vue'),
     name: 'Todo',
   },

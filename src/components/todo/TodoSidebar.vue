@@ -63,8 +63,6 @@ defineEmits(['nav-change'])
 const navItems = [
   { key: 'daily', label: '每日待办', icon: Calendar },
   { key: 'todoList', label: '待办列表', icon: List },
-  { key: 'rewards', label: '奖励超市', icon: Present },
-  { key: 'myRewards', label: '我的奖励', icon: Trophy },
   { key: 'taskViews', label: '任务视图', icon: Clock }
 ]
 </script>

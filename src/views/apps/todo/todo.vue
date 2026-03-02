@@ -5,7 +5,7 @@
       :user-info="userInfo"
       :user-points="userPoints"
       :active-nav="activeNav"
-      @nav-change="setActiveNav"
+      @nav-change="handleNavChange"
     />
 
     <!-- 主内容区域 -->
@@ -28,22 +28,6 @@
         @edit-task="handleEditTask"
         @copy-to-daily="handleCopyToDaily"
         @delete-task="handleDeleteTask"
-      />
-
-      <!-- 奖励超市 -->
-      <RewardsShop 
-        v-if="activeNav === 'rewards'"
-        :rewards-list="rewardsList"
-        :user-points="userPoints"
-        @show-add-reward="showAddRewardDialog = true"
-        @exchange-reward="handleExchangeReward"
-      />
-
-      <!-- 我的奖励 -->
-      <MyRewards 
-        v-if="activeNav === 'myRewards'"
-        :my-rewards="myRewards"
-        @use-reward="handleUseReward"
       />
 
       <!-- 任务视图 -->
@@ -71,15 +55,17 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import TodoSidebar from '@/components/todo/TodoSidebar.vue'
 import DailyTasks from '@/components/todo/DailyTasks.vue'
 import TodoList from '@/components/todo/TodoList.vue'
-import RewardsShop from '@/components/todo/RewardsShop.vue'
-import MyRewards from '@/components/todo/MyRewards.vue'
 import TaskViews from '@/components/todo/TaskViews.vue'
 import TodoDialogs from '@/components/todo/TodoDialogs.vue'
 import { useTodo } from '@/composables/useTodo.js'
+
+const route = useRoute()
+const router = useRouter()
 
 // 使用组合式函数
 const {
@@ -90,8 +76,6 @@ const {
   allTasks,
   dailyTasks,
   taskFilter,
-  rewardsList,
-  myRewards,
   activeView,
   daySchedule,
   weekDays,
@@ -111,15 +95,40 @@ const {
   setTaskFilter,
   handleDeleteTask,
   handleAddReward,
-  handleExchangeReward,
-  handleUseReward,
   handleCopyToDaily,
   initData
 } = useTodo()
 
+const syncActiveNavWithRoute = async (section) => {
+  const nav = typeof section === 'string' && section.length ? section : 'daily'
+  if (nav === activeNav.value && nav !== 'daily') {
+    return
+  }
+  await setActiveNav(nav)
+}
+
+const handleNavChange = (nav) => {
+  const currentSection = typeof route.params.section === 'string' ? route.params.section : undefined
+  if (nav === currentSection) {
+    return
+  }
+  router.push({
+    name: 'Todo',
+    params: { section: nav }
+  })
+}
+
 onMounted(async () => {
   await initData()
+  await syncActiveNavWithRoute(route.params.section)
 })
+
+watch(
+  () => route.params.section,
+  (newSection) => {
+    syncActiveNavWithRoute(newSection)
+  }
+)
 </script>
 
 <style scoped>

@@ -9,11 +9,6 @@ import {
   completeTask, 
   copyToDaily, 
   getUserPoints, 
-  getRewards, 
-  addReward, 
-  exchangeReward, 
-  getUserRewards, 
-  useReward
 } from '@/network/todo'
 import { useTaskStats } from './useTaskStats'
 import { useTaskUtils } from './useTaskUtils'
@@ -242,67 +237,6 @@ export function useTodo() {
     }
   }
 
-  const handleAddReward = async (rewardData) => {
-    if (!rewardData.name || !rewardData.description) {
-      ElMessage.warning('请填写完整的奖励信息')
-      return
-    }
-    
-    const reward = {
-      name: rewardData.name,
-      description: rewardData.description,
-      points: rewardData.points,
-      status: 1
-    }
-    
-    try {
-      const result = await addReward(reward)
-      if (!Array.isArray(rewardsList.value)) {
-        rewardsList.value = []
-      }
-      
-      // 处理API响应格式 {code, msg, data, time}
-      const rewardData = result && result.data ? result.data : result
-      rewardsList.value.push(rewardData)
-      
-      showAddRewardDialog.value = false
-      ElMessage.success('奖励创建成功！')
-    } catch (error) {
-      ElMessage.error('创建奖励失败')
-    }
-  }
-
-  const handleExchangeReward = async (reward) => {
-    const requiredPoints = reward.requiredPoints || reward.points
-    if (userPoints.value >= requiredPoints) {
-      try {
-        await exchangeReward(reward.id)
-        ElMessage.success(`成功兑换 ${reward.name}！`)
-        // 重新获取用户积分
-        await loadUserPoints()
-        // 刷新我的奖励列表
-        await loadMyRewards()
-      } catch (error) {
-        ElMessage.error('兑换失败')
-      }
-    } else {
-      ElMessage.warning('积分不足，无法兑换！')
-    }
-  }
-
-  const handleUseReward = async (reward) => {
-    try {
-      await useReward(reward.id)
-      const rewards = Array.isArray(myRewards.value) ? myRewards.value : []
-      const index = rewards.findIndex(r => r.id === reward.id)
-      if (index > -1 && Array.isArray(myRewards.value)) {
-        myRewards.value.splice(index, 1)
-      }
-      ElMessage.success(`已使用 ${reward.name}！`)
-    } catch (error) {
-      ElMessage.error('使用奖励失败')
-    }
-  }
 
   // 数据加载方法
   const loadAllTasks = async () => {
@@ -340,44 +274,15 @@ export function useTodo() {
       const result = await getUserPoints()
       // 处理API响应格式
       if (result && result.data) {
-        userPoints.value = result.data.availablePoints || result.data.points || 0
+        userPoints.value = result.data.totalPoints || 0
       } else {
-        userPoints.value = result.availablePoints || result.points || 0
+        userPoints.value =  0
       }
     } catch (error) {
       console.error('加载用户积分失败:', error)
     }
   }
 
-  const loadRewards = async () => {
-    try {
-      const result = await getRewards()
-      // 处理API响应格式 {code, msg, data, time}
-      if (result && result.data) {
-        rewardsList.value = Array.isArray(result.data) ? result.data : result.data.records || []
-      } else {
-        rewardsList.value = result.records || result || []
-      }
-    } catch (error) {
-      console.error('加载奖励列表失败:', error)
-      rewardsList.value = []
-    }
-  }
-
-  const loadMyRewards = async () => {
-    try {
-      const result = await getUserRewards()
-      // 处理API响应格式 {code, msg, data, time}
-      if (result && result.data) {
-        myRewards.value = Array.isArray(result.data) ? result.data : result.data.records || []
-      } else {
-        myRewards.value = result.records || result || []
-      }
-    } catch (error) {
-      console.error('加载我的奖励失败:', error)
-      myRewards.value = []
-    }
-  }
 
   // 初始化所有数据
   const initData = async () => {
@@ -385,8 +290,6 @@ export function useTodo() {
       loadAllTasks(),
       loadDailyTasks(),
       loadUserPoints(),
-      loadRewards(),
-      loadMyRewards()
     ])
   }
 
@@ -448,14 +351,9 @@ export function useTodo() {
     handleUpdateTask,
     handleDeleteTask,
     handleCopyToDaily,
-    handleAddReward,
-    handleExchangeReward,
-    handleUseReward,
     loadAllTasks,
     loadDailyTasks,
     loadUserPoints,
-    loadRewards,
-    loadMyRewards,
     initData,
     initMonthData
   }
