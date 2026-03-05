@@ -169,11 +169,11 @@ const filteredTasks = computed(() => {
 
 <style scoped>
 .content-section {
-  background: linear-gradient(135deg, #ffffff, #f9fbff);
+  background: linear-gradient(135deg, #fdfdff 0%, #f7f9ff 55%, #eef4ff 100%);
   border-radius: 18px;
   padding: 24px 24px 20px;
-  border: 1px solid #edf1ff;
-  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(226, 232, 255, 0.9);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
 }
 
 .section-header {

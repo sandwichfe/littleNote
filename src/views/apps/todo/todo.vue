@@ -2,7 +2,6 @@
   <div class="todo-container">
     <!-- 侧边栏导航 -->
     <TodoSidebar 
-      :user-info="userInfo"
       :user-points="userPoints"
       :active-nav="activeNav"
       @nav-change="handleNavChange"
@@ -10,35 +9,37 @@
 
     <!-- 主内容区域 -->
     <main class="todo-main">
-      <!-- 每日待办 -->
-      <DailyTasks 
-        v-if="activeNav === 'daily'"
-        :daily-tasks="dailyTasks"
-        @increment-task="incrementTaskCount"
-      />
+      <div class="todo-main-inner">
+        <!-- 每日待办 -->
+        <DailyTasks 
+          v-if="activeNav === 'daily'"
+          :daily-tasks="dailyTasks"
+          @increment-task="incrementTaskCount"
+        />
 
-      <!-- 待办列表 -->
-      <TodoList 
-        v-if="activeNav === 'todoList'"
-        :all-tasks="allTasks"
-        :task-filter="taskFilter"
-        @show-add-task="showAddTaskDialog = true"
-        @filter-change="setTaskFilter"
-        @increment-task="incrementTaskCount"
-        @edit-task="handleEditTask"
-        @copy-to-daily="handleCopyToDaily"
-        @delete-task="handleDeleteTask"
-      />
+        <!-- 待办列表 -->
+        <TodoList 
+          v-if="activeNav === 'todoList'"
+          :all-tasks="allTasks"
+          :task-filter="taskFilter"
+          @show-add-task="showAddTaskDialog = true"
+          @filter-change="setTaskFilter"
+          @increment-task="incrementTaskCount"
+          @edit-task="handleEditTask"
+          @copy-to-daily="handleCopyToDaily"
+          @delete-task="handleDeleteTask"
+        />
 
-      <!-- 任务视图 -->
-      <TaskViews 
-        v-if="activeNav === 'taskViews'"
-        :active-view="activeView"
-        :day-schedule="daySchedule"
-        :week-days="weekDays"
-        :month-dates="monthDates"
-        @view-change="setActiveView"
-      />
+        <!-- 任务视图 -->
+        <TaskViews 
+          v-if="activeNav === 'taskViews'"
+          :active-view="activeView"
+          :day-schedule="daySchedule"
+          :week-days="weekDays"
+          :month-dates="monthDates"
+          @view-change="setActiveView"
+        />
+      </div>
     </main>
 
     <!-- 对话框组件 -->
@@ -134,14 +135,30 @@ watch(
 <style scoped>
 .todo-container {
   display: flex;
-  height: 100vh;
-  background: linear-gradient(to bottom, #fef7f7, #e3f2fd);
+  height: 100%;
+  background: linear-gradient(135deg, #f9fbff 0%, #e6f2ff 40%, #f5f7ff 100%);
 }
 
 .todo-main {
   flex: 1;
-  padding: 24px;
+  padding: 28px 32px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+.todo-main-inner {
+  width: 100%;
+  max-width: 1120px;
+  height: 100%;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px 28px;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.16);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* 响应式设计 */
@@ -151,7 +168,13 @@ watch(
   }
   
   .todo-main {
-    padding: 15px;
+    padding: 16px;
+  }
+
+  .todo-main-inner {
+    border-radius: 18px;
+    padding: 18px 14px;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.04);
   }
 }
 </style>
