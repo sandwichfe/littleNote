@@ -36,8 +36,11 @@
         v-for="task in filteredTasks" 
         :key="task.id"
         class="task-item-full"
-        :class="{ completed: task.completedCount >= task.targetCount }"
-        :style="{ '--progress': (task.completedCount / task.targetCount * 100) + '%' }"
+        :class="{
+          completed: task.completedCount >= task.targetCount,
+          'with-progress': taskFilter === 'pending'
+        }"
+        :style="taskFilter === 'pending' ? { '--progress': (task.completedCount / task.targetCount * 100) + '%' } : null"
       >
       
         <div class="task-check-section">
@@ -166,10 +169,11 @@ const filteredTasks = computed(() => {
 
 <style scoped>
 .content-section {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #ffffff, #f9fbff);
+  border-radius: 18px;
+  padding: 24px 24px 20px;
+  border: 1px solid #edf1ff;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
 }
 
 .section-header {
@@ -180,43 +184,69 @@ const filteredTasks = computed(() => {
 }
 
 .section-title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  color: #333;
+  color: #1f2933;
   margin: 0;
+  letter-spacing: 0.02em;
 }
 
 .task-filters {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+}
+
+.task-filters :deep(.el-button-group) {
+  background: #f5f7ff;
+  padding: 4px;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.task-filters :deep(.el-button-group .el-button) {
+  border: none;
+  background-color: transparent;
+  color: #64748b;
+  font-weight: 500;
+  border-radius: 999px;
+  padding: 6px 18px;
+}
+
+.task-filters :deep(.el-button-group .el-button--primary) {
+  background-image: linear-gradient(135deg, #8e6ff7, #4f46e5);
+  color: #ffffff;
+  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.35);
 }
 
 .all-tasks-list {
   max-height: 600px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .task-item-full {
   display: flex;
-  align-items: center;
-  padding: 20px;
-  margin-bottom: 16px;
-  background: #f8f9fa;
-  border-radius: 12px;
-  transition: all 0.3s ease;
+  align-items: flex-start;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #edf1ff;
+  transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
 }
 
-.task-item-full::before {
+.task-item-full.with-progress::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
+  left: 20px;
+  bottom: 10px;
+  height: 3px;
   width: var(--progress, 0%);
-  background: linear-gradient(90deg, #e8f5e8, #c8e6c9);
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(142, 111, 247, 0.55), rgba(56, 189, 248, 0.35));
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 0;
+  pointer-events: none;
 }
 
 .task-item-full > * {
@@ -225,32 +255,18 @@ const filteredTasks = computed(() => {
 }
 
 .task-item-full:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  border-color: #d4ddff;
 }
 
 .task-item-full.completed {
-  opacity: 0.7;
-  background: #f0f0f0;
-  border-left-color: #ccc;
+  background: linear-gradient(135deg, #ffffff, #f4f2ff);
+  border-color: #e0d9ff;
 }
 
-.task-item-full.completed::before {
-  background: linear-gradient(90deg, #81c784, #4caf50);
-  animation: completedPulse 2s ease-in-out;
-}
-
-@keyframes completedPulse {
-  0% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
-  }
-  100% {
-    opacity: 0.8;
-  }
+.task-item-full.with-progress.completed::before {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.7), rgba(52, 211, 153, 0.6));
 }
 
 .task-check-section {
@@ -258,29 +274,29 @@ const filteredTasks = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-right: 20px;
-  min-width: 48px;
+  margin-right: 18px;
+  min-width: 52px;
 }
 
 .check-btn {
   width: 36px;
   height: 36px;
   font-size: 18px;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border-width: 2px;
 }
 
 .check-btn:not(.is-disabled):hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+  transform: translateY(-1px) scale(1.06);
+  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.35);
 }
 
 .count-badge {
   font-size: 12px;
-  color: #909399;
+  color: #94a3b8;
   margin-top: 6px;
   font-weight: 600;
-  font-family: monospace;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
 }
 
 .task-main-content {
@@ -289,28 +305,28 @@ const filteredTasks = computed(() => {
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
-  padding-right: 16px;
+  padding-right: 12px;
 }
 
 .task-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  color: #303133;
+  color: #111827;
   margin-bottom: 8px;
-  line-height: 1.4;
-  transition: color 0.3s;
+  line-height: 1.5;
+  transition: color 0.25s;
 }
 
 .task-title.is-completed {
-  color: #909399;
-  text-decoration: line-through;
+  color: #94a3b8;
+  text-decoration: none;
 }
 
 .task-meta-row {
   display: flex;
   align-items: center;
-  font-size: 13px;
-  color: #909399;
+  font-size: 12px;
+  color: #9ca3af;
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -321,7 +337,7 @@ const filteredTasks = computed(() => {
 }
 
 .meta-divider {
-  color: #e4e7ed;
+  color: #e5e7eb;
   margin: 0 4px;
   transform: scaleY(0.8);
 }
@@ -333,27 +349,27 @@ const filteredTasks = computed(() => {
 }
 
 .meta-item.points {
-  color: #8e6ff7;
+  color: #7c3aed;
   font-weight: 600;
-  background: rgba(142, 111, 247, 0.1);
-  padding: 2px 8px;
-  border-radius: 4px;
+  background: rgba(124, 58, 237, 0.06);
+  padding: 2px 10px;
+  border-radius: 999px;
 }
 
 .meta-item.date {
-  color: #a8abb2;
+  color: #9ca3af;
 }
 
 .task-action-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   opacity: 0;
-  transform: translateX(20px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(16px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   margin-left: auto;
-  padding-left: 16px;
-  border-left: 1px solid transparent;
+  padding-left: 14px;
+  border-left: 1px solid rgba(226, 232, 240, 0.9);
 }
 
 .task-item-full:hover .task-action-group {
@@ -363,19 +379,19 @@ const filteredTasks = computed(() => {
 
 .action-btn {
   font-size: 18px;
-  padding: 8px;
-  color: #909399;
-  border-radius: 8px;
-  transition: all 0.2s;
+  padding: 6px;
+  color: #9ca3af;
+  border-radius: 999px;
+  transition: all 0.18s;
 }
 
 .action-btn:hover {
-  color: #409eff;
-  background-color: #ecf5ff;
+  color: #4f46e5;
+  background-color: #eef2ff;
 }
 
 .action-btn.delete-btn:hover {
-  color: #f56c6c;
-  background-color: #fef0f0;
+  color: #f97373;
+  background-color: #fef2f2;
 }
 </style>
