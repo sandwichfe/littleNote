@@ -135,7 +135,9 @@ watch(
 <style scoped>
 .todo-container {
   display: flex;
-  height: 100%;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
   background: linear-gradient(135deg, #f9fbff 0%, #e6f2ff 40%, #f5f7ff 100%);
 }
 
