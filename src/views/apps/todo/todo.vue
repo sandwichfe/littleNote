@@ -160,7 +160,6 @@ watch(
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(244, 247, 255, 0.94) 100%);
   backdrop-filter: blur(14px);
   border-radius: 24px;
-  padding: 24px 28px;
   box-shadow: 0 22px 60px rgba(79, 70, 229, 0.08);
   border: 1px solid rgba(191, 219, 254, 0.52);
   overflow: hidden;
