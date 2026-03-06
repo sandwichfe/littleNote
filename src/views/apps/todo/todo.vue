@@ -157,11 +157,6 @@ watch(
   max-width: 1120px;
   height: 100%;
   min-height: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(244, 247, 255, 0.94) 100%);
-  backdrop-filter: blur(14px);
-  border-radius: 24px;
-  box-shadow: 0 22px 60px rgba(79, 70, 229, 0.08);
-  border: 1px solid rgba(191, 219, 254, 0.52);
   overflow: hidden;
 }
 
@@ -176,9 +171,89 @@ watch(
   }
 
   .todo-main-inner {
-    border-radius: 18px;
-    padding: 18px 14px;
-    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.04);
+    padding: 0;
+  }
+}
+</style>
+<style scoped>
+.todo-container {
+  --todo-surface: rgba(255, 255, 255, 0.96);
+  --todo-surface-soft: #f7fbfb;
+  --todo-border: rgba(208, 220, 228, 0.92);
+  --todo-border-strong: rgba(183, 205, 214, 0.7);
+  --todo-text: #162033;
+  --todo-text-secondary: #607086;
+  --todo-text-tertiary: #94a3b8;
+  --todo-accent: #3dc7bc;
+  --todo-accent-strong: #1b9c94;
+  --todo-accent-soft: rgba(61, 199, 188, 0.12);
+  --todo-accent-faint: rgba(61, 199, 188, 0.06);
+  --todo-success: #2fb479;
+  --todo-warning: #efb343;
+  --todo-danger: #ef7f7f;
+  --todo-shadow: 0 22px 50px rgba(148, 163, 184, 0.18);
+  --todo-shadow-soft: 0 12px 32px rgba(148, 163, 184, 0.12);
+
+  position: relative;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(104, 221, 206, 0.2), transparent 32%),
+    radial-gradient(circle at 100% 8%, rgba(184, 232, 255, 0.28), transparent 28%),
+    linear-gradient(180deg, #f7fbfb 0%, #eef7f7 42%, #f8fbff 100%);
+}
+
+.todo-main {
+  min-width: 0;
+  padding: 20px 24px 20px 16px;
+}
+
+.todo-main-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  max-width: 1280px;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  border-radius: 0;
+  box-shadow: none;
+  border: 0;
+  overflow: hidden;
+}
+
+.todo-main-inner > * {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+@media (max-width: 1024px) {
+  .todo-main {
+    padding: 16px 18px 18px;
+  }
+
+  .todo-main-inner {
+    padding: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .todo-container {
+    flex-direction: column;
+    height: auto;
+    overflow: auto;
+  }
+
+  .todo-main {
+    padding: 0 14px 14px;
+  }
+
+  .todo-main-inner {
+    padding: 0;
   }
 }
 </style>
