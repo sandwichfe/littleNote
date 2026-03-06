@@ -169,11 +169,11 @@ const filteredTasks = computed(() => {
 
 <style scoped>
 .content-section {
-  background: linear-gradient(135deg, #fdfdff 0%, #f7f9ff 55%, #eef4ff 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 252, 252, 0.98) 100%);
   border-radius: 18px;
   padding: 24px 24px 20px;
-  border: 1px solid rgba(226, 232, 255, 0.9);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--todo-border, rgba(208, 220, 228, 0.92));
+  box-shadow: var(--todo-shadow, 0 22px 50px rgba(148, 163, 184, 0.18));
 }
 
 .todo-list-section {
@@ -181,9 +181,9 @@ const filteredTasks = computed(() => {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  background: linear-gradient(180deg, rgba(248, 250, 255, 0.98) 0%, rgba(238, 244, 255, 0.96) 100%);
-  border-color: rgba(199, 210, 254, 0.72);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 18px 40px rgba(79, 70, 229, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(247, 251, 251, 0.98) 100%);
+  border-color: var(--todo-border, rgba(208, 220, 228, 0.92));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), var(--todo-shadow-soft, 0 12px 32px rgba(148, 163, 184, 0.12));
 }
 
 .section-header {
@@ -196,7 +196,7 @@ const filteredTasks = computed(() => {
 .section-title {
   font-size: 22px;
   font-weight: 700;
-  color: #1f2933;
+  color: var(--todo-text, #162033);
   margin: 0;
   letter-spacing: 0.02em;
 }
@@ -205,26 +205,37 @@ const filteredTasks = computed(() => {
   margin-bottom: 20px;
 }
 
+.section-header :deep(.el-button--primary) {
+  border: none;
+  background: var(--todo-accent, #3dc7bc);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(61, 199, 188, 0.24);
+}
+
+.section-header :deep(.el-button--primary:hover) {
+  background: var(--todo-accent-strong, #1b9c94);
+}
+
 .task-filters :deep(.el-button-group) {
-  background: #f5f7ff;
+  background: var(--todo-surface-soft, #f7fbfb);
   padding: 4px;
   border-radius: 999px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .task-filters :deep(.el-button-group .el-button) {
   border: none;
   background-color: transparent;
-  color: #64748b;
-  font-weight: 500;
+  color: var(--todo-text-secondary, #607086);
+  font-weight: 600;
   border-radius: 999px;
   padding: 6px 18px;
 }
 
 .task-filters :deep(.el-button-group .el-button--primary) {
-  background-image: linear-gradient(135deg, #8e6ff7, #4f46e5);
+  background-image: linear-gradient(135deg, var(--todo-accent, #3dc7bc), var(--todo-accent-strong, #1b9c94));
   color: #ffffff;
-  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.35);
+  box-shadow: 0 10px 25px rgba(61, 199, 188, 0.28);
 }
 
 .all-tasks-list {
@@ -246,12 +257,12 @@ const filteredTasks = computed(() => {
 }
 
 .all-tasks-list::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, rgba(129, 140, 248, 0.55), rgba(96, 165, 250, 0.45));
+  background: linear-gradient(180deg, rgba(61, 199, 188, 0.5), rgba(125, 211, 252, 0.42));
   border-radius: 999px;
 }
 
 .all-tasks-list::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, rgba(99, 102, 241, 0.7), rgba(59, 130, 246, 0.6));
+  background: linear-gradient(180deg, rgba(27, 156, 148, 0.62), rgba(96, 165, 250, 0.52));
 }
 
 .task-item-full {
@@ -259,9 +270,9 @@ const filteredTasks = computed(() => {
   align-items: flex-start;
   padding: 18px 20px;
   margin-bottom: 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 255, 0.98) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 253, 253, 0.98) 100%);
   border-radius: 16px;
-  border: 1px solid rgba(226, 232, 255, 0.95);
+  border: 1px solid rgba(228, 235, 241, 0.96);
   transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
@@ -275,7 +286,7 @@ const filteredTasks = computed(() => {
   height: 3px;
   width: var(--progress, 0%);
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(142, 111, 247, 0.55), rgba(56, 189, 248, 0.35));
+  background: linear-gradient(90deg, rgba(61, 199, 188, 0.54), rgba(125, 211, 252, 0.38));
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
@@ -287,13 +298,13 @@ const filteredTasks = computed(() => {
 
 .task-item-full:hover {
   transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 16px 40px rgba(79, 70, 229, 0.12);
-  border-color: #c7d2fe;
+  box-shadow: 0 16px 40px rgba(148, 163, 184, 0.14);
+  border-color: rgba(137, 216, 208, 0.52);
 }
 
 .task-item-full.completed {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(243, 240, 255, 0.98));
-  border-color: #ddd6fe;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(241, 251, 249, 0.98));
+  border-color: rgba(137, 216, 208, 0.42);
 }
 
 .task-item-full.with-progress.completed::before {
@@ -319,7 +330,7 @@ const filteredTasks = computed(() => {
 
 .check-btn:not(.is-disabled):hover {
   transform: translateY(-1px) scale(1.06);
-  box-shadow: 0 8px 18px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 8px 18px rgba(61, 199, 188, 0.26);
 }
 
 .count-badge {
@@ -342,14 +353,14 @@ const filteredTasks = computed(() => {
 .task-title {
   font-size: 15px;
   font-weight: 600;
-  color: #111827;
+  color: var(--todo-text, #162033);
   margin-bottom: 8px;
   line-height: 1.5;
   transition: color 0.25s;
 }
 
 .task-title.is-completed {
-  color: #94a3b8;
+  color: var(--todo-text-tertiary, #94a3b8);
   text-decoration: none;
 }
 
@@ -357,7 +368,7 @@ const filteredTasks = computed(() => {
   display: flex;
   align-items: center;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--todo-text-tertiary, #94a3b8);
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -368,7 +379,7 @@ const filteredTasks = computed(() => {
 }
 
 .meta-divider {
-  color: #e5e7eb;
+  color: rgba(183, 205, 214, 0.65);
   margin: 0 4px;
   transform: scaleY(0.8);
 }
@@ -380,15 +391,15 @@ const filteredTasks = computed(() => {
 }
 
 .meta-item.points {
-  color: #7c3aed;
+  color: var(--todo-accent-strong, #1b9c94);
   font-weight: 600;
-  background: rgba(124, 58, 237, 0.06);
+  background: var(--todo-accent-soft, rgba(61, 199, 188, 0.12));
   padding: 2px 10px;
   border-radius: 999px;
 }
 
 .meta-item.date {
-  color: #9ca3af;
+  color: var(--todo-text-tertiary, #94a3b8);
 }
 
 .task-action-group {
@@ -400,7 +411,7 @@ const filteredTasks = computed(() => {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   margin-left: auto;
   padding-left: 14px;
-  border-left: 1px solid rgba(226, 232, 240, 0.9);
+  border-left: 1px solid rgba(228, 235, 241, 0.96);
 }
 
 .task-item-full:hover .task-action-group {
@@ -411,14 +422,14 @@ const filteredTasks = computed(() => {
 .action-btn {
   font-size: 18px;
   padding: 6px;
-  color: #9ca3af;
+  color: var(--todo-text-tertiary, #94a3b8);
   border-radius: 999px;
   transition: all 0.18s;
 }
 
 .action-btn:hover {
-  color: #4f46e5;
-  background-color: #eef2ff;
+  color: var(--todo-accent-strong, #1b9c94);
+  background-color: var(--todo-accent-soft, rgba(61, 199, 188, 0.12));
 }
 
 .action-btn.delete-btn:hover {
