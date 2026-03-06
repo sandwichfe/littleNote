@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <el-dialog
-    v-model="showAddTaskDialog"
-    title="添加新待办"
-    width="500px"
-    class="todo-dialog"
+      v-model="showAddTaskDialog"
+      title="添加新待办"
+      width="500px"
+      class="todo-dialog"
   >
     <el-form :model="newTask" label-width="88px" class="todo-dialog-form">
       <el-form-item label="任务名称">
@@ -16,21 +16,32 @@
           <el-option label="健康习惯" value="health" />
         </el-select>
       </el-form-item>
-      <el-form-item label="积分奖励">
-        <el-input-number v-model="newTask.points" :min="1" :max="100" />
+      <el-form-item label="截止时间">
+        <el-date-picker
+            v-model="newTask.deadline"
+            type="datetime"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            format="YYYY-MM-DD HH:mm"
+            placeholder="请选择截止时间"
+            clearable
+            class="full-width"
+        />
       </el-form-item>
       <el-form-item label="目标次数">
         <el-input-number
-          v-model="newTask.targetCount"
-          :min="1"
-          :max="50"
-          placeholder="需要完成的次数"
+            v-model="newTask.targetCount"
+            :min="1"
+            :max="50"
+            placeholder="需要完成的次数"
         />
         <div v-if="newTask.targetCount > 1" class="limit-toggle">
           <el-checkbox v-model="newTask.isDailyLimit" :true-label="1" :false-label="0">
             每日仅可完成一次
           </el-checkbox>
         </div>
+      </el-form-item>
+      <el-form-item label="积分奖励">
+        <el-input-number v-model="newTask.points" :min="1" :max="100" />
       </el-form-item>
     </el-form>
     <template #footer>
@@ -40,10 +51,10 @@
   </el-dialog>
 
   <el-dialog
-    v-model="showEditTaskDialog"
-    title="编辑任务"
-    width="500px"
-    class="todo-dialog"
+      v-model="showEditTaskDialog"
+      title="编辑任务"
+      width="500px"
+      class="todo-dialog"
   >
     <el-form :model="editTaskForm" label-width="88px" class="todo-dialog-form">
       <el-form-item label="任务名称">
@@ -59,21 +70,29 @@
       <el-form-item label="积分奖励">
         <el-input-number v-model="editTaskForm.points" :min="1" :max="100" />
       </el-form-item>
+      <el-form-item label="截止时间">
+        <el-date-picker
+            v-model="editTaskForm.deadline"
+            type="datetime"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            format="YYYY-MM-DD HH:mm"
+            placeholder="请选择截止时间"
+            clearable
+            class="full-width"
+        />
+      </el-form-item>
       <el-form-item label="目标次数">
         <el-input-number
-          v-model="editTaskForm.targetCount"
-          :min="1"
-          :max="50"
-          placeholder="需要完成的次数"
+            v-model="editTaskForm.targetCount"
+            :min="1"
+            :max="50"
+            placeholder="需要完成的次数"
         />
         <div v-if="editTaskForm.targetCount > 1" class="limit-toggle">
           <el-checkbox v-model="editTaskForm.isDailyLimit" :true-label="1" :false-label="0">
             每日仅可完成一次
           </el-checkbox>
         </div>
-      </el-form-item>
-      <el-form-item label="鼓励语">
-        <el-input v-model="editTaskForm.encouragement" placeholder="完成后的鼓励语" />
       </el-form-item>
     </el-form>
     <template #footer>
@@ -82,28 +101,6 @@
     </template>
   </el-dialog>
 
-  <el-dialog
-    v-model="showAddRewardDialog"
-    title="创建新奖励"
-    width="500px"
-    class="todo-dialog"
-  >
-    <el-form :model="newReward" label-width="88px" class="todo-dialog-form">
-      <el-form-item label="奖励名称">
-        <el-input v-model="newReward.name" placeholder="请输入奖励名称" />
-      </el-form-item>
-      <el-form-item label="奖励描述">
-        <el-input v-model="newReward.description" placeholder="请输入奖励描述" />
-      </el-form-item>
-      <el-form-item label="所需积分">
-        <el-input-number v-model="newReward.points" :min="1" />
-      </el-form-item>
-    </el-form>
-    <template #footer>
-      <el-button @click="handleCancelAddReward">取消</el-button>
-      <el-button type="primary" @click="handleConfirmAddReward">确定</el-button>
-    </template>
-  </el-dialog>
 </template>
 
 <script setup>
@@ -142,27 +139,27 @@ const showAddRewardDialog = ref(props.showAddRewardDialog)
 const showEditTaskDialog = ref(props.showEditTaskDialog)
 
 watch(
-  () => props.showAddTaskDialog,
-  (value) => {
-    showAddTaskDialog.value = value
-  }
-)
-
-watch(
-  () => props.showAddRewardDialog,
-  (value) => {
-    showAddRewardDialog.value = value
-  }
-)
-
-watch(
-  () => props.showEditTaskDialog,
-  (value) => {
-    showEditTaskDialog.value = value
-    if (value && props.editingTask) {
-      editTaskForm.value = { ...props.editingTask }
+    () => props.showAddTaskDialog,
+    (value) => {
+      showAddTaskDialog.value = value
     }
-  }
+)
+
+watch(
+    () => props.showAddRewardDialog,
+    (value) => {
+      showAddRewardDialog.value = value
+    }
+)
+
+watch(
+    () => props.showEditTaskDialog,
+    (value) => {
+      showEditTaskDialog.value = value
+      if (value && props.editingTask) {
+        editTaskForm.value = { ...props.editingTask }
+      }
+    }
 )
 
 watch(showAddTaskDialog, (value) => {
@@ -181,6 +178,7 @@ const newTask = ref({
   content: '',
   type: 'work',
   points: 10,
+  deadline: '',
   targetCount: 1,
   isDailyLimit: 0
 })
@@ -190,7 +188,7 @@ const editTaskForm = ref({
   content: '',
   type: '',
   points: 10,
-  encouragement: '',
+  deadline: '',
   targetCount: 1,
   isDailyLimit: 0
 })
@@ -216,6 +214,7 @@ const resetTaskForm = () => {
     content: '',
     type: '',
     points: 10,
+    deadline: '',
     encouragement: '',
     targetCount: 1,
     isDailyLimit: 0
@@ -231,15 +230,6 @@ const handleCancelEditTask = () => {
   showEditTaskDialog.value = false
 }
 
-const handleConfirmAddReward = () => {
-  emit('add-reward', { ...newReward })
-  resetRewardForm()
-}
-
-const handleCancelAddReward = () => {
-  showAddRewardDialog.value = false
-  resetRewardForm()
-}
 
 const resetRewardForm = () => {
   Object.assign(newReward, {
@@ -261,6 +251,10 @@ const resetRewardForm = () => {
   margin-bottom: 18px;
 }
 
+.full-width {
+  width: 100%;
+}
+
 .todo-dialog-form :deep(.el-form-item__label) {
   color: #475569;
   font-weight: 600;
@@ -272,16 +266,16 @@ const resetRewardForm = () => {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.9);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 0 0 1px rgba(226, 232, 255, 0.95);
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 0 0 1px rgba(226, 232, 255, 0.95);
 }
 
 .todo-dialog-form :deep(.el-input__wrapper:hover),
 .todo-dialog-form :deep(.el-select__wrapper:hover),
 .todo-dialog-form :deep(.el-input-number:hover) {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 0 0 1px rgba(165, 180, 252, 0.95);
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 0 0 1px rgba(165, 180, 252, 0.95);
 }
 
 .todo-dialog-form :deep(.el-input__wrapper.is-focus),
@@ -289,9 +283,9 @@ const resetRewardForm = () => {
 .todo-dialog-form :deep(.el-textarea__inner:focus),
 .todo-dialog-form :deep(.el-input-number.is-focus) {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 0 0 1px rgba(99, 102, 241, 0.9),
-    0 0 0 4px rgba(99, 102, 241, 0.08);
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 0 0 1px rgba(99, 102, 241, 0.9),
+      0 0 0 4px rgba(99, 102, 241, 0.08);
 }
 
 .todo-dialog-form :deep(.el-input__inner),
@@ -312,8 +306,8 @@ const resetRewardForm = () => {
   padding: 12px 14px;
   background: rgba(255, 255, 255, 0.9);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 0 0 1px rgba(226, 232, 255, 0.95);
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 0 0 1px rgba(226, 232, 255, 0.95);
 }
 
 .todo-dialog-form :deep(.el-input-number) {
@@ -321,8 +315,8 @@ const resetRewardForm = () => {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.9);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 0 0 1px rgba(226, 232, 255, 0.95);
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 0 0 1px rgba(226, 232, 255, 0.95);
 }
 
 .todo-dialog-form :deep(.el-input-number .el-input__wrapper) {
@@ -357,8 +351,8 @@ const resetRewardForm = () => {
   border: 1px solid rgba(199, 210, 254, 0.72);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 247, 255, 0.98));
   box-shadow:
-    0 28px 80px rgba(79, 70, 229, 0.18),
-    0 12px 36px rgba(15, 23, 42, 0.08);
+      0 28px 80px rgba(79, 70, 229, 0.18),
+      0 12px 36px rgba(15, 23, 42, 0.08);
   backdrop-filter: blur(18px);
 }
 
@@ -484,8 +478,8 @@ const resetRewardForm = () => {
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.98);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.96),
-    0 0 0 1px rgba(226, 232, 240, 0.95);
+      inset 0 1px 0 rgba(255, 255, 255, 0.96),
+      0 0 0 1px rgba(226, 232, 240, 0.95);
   transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
 }
 
@@ -504,8 +498,8 @@ const resetRewardForm = () => {
 .todo-dialog-form :deep(.el-textarea__inner:hover),
 .todo-dialog-form :deep(.el-input-number:hover) {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.96),
-    0 0 0 1px rgba(157, 224, 217, 0.98);
+      inset 0 1px 0 rgba(255, 255, 255, 0.96),
+      0 0 0 1px rgba(157, 224, 217, 0.98);
 }
 
 .todo-dialog-form :deep(.el-input__wrapper.is-focus),
@@ -513,9 +507,9 @@ const resetRewardForm = () => {
 .todo-dialog-form :deep(.el-textarea__inner:focus),
 .todo-dialog-form :deep(.el-input-number.is-focus) {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.96),
-    0 0 0 1px rgba(61, 199, 188, 0.95),
-    0 0 0 4px rgba(61, 199, 188, 0.1);
+      inset 0 1px 0 rgba(255, 255, 255, 0.96),
+      0 0 0 1px rgba(61, 199, 188, 0.95),
+      0 0 0 4px rgba(61, 199, 188, 0.1);
 }
 
 .todo-dialog-form :deep(.el-input__inner),

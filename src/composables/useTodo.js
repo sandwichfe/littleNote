@@ -33,6 +33,7 @@ export function useTodo() {
   const showEditTaskDialog = ref(false)
   const showAddRewardDialog = ref(false)
   const editingTask = ref(null)
+  const editTaskReadOnly = ref(false)
 
   // 任务视图数据
   const daySchedule = ref([
@@ -154,6 +155,7 @@ export function useTodo() {
       category: 'global',
       points: taskData.points,
       encouragement: taskData.encouragement || '任务完成，继续加油！',
+      deadline: taskData.deadline || undefined,
       targetCount: taskData.targetCount || 1,
       isDailyLimit: taskData.isDailyLimit || 0
     }
@@ -175,8 +177,20 @@ export function useTodo() {
   const handleEditTask = (task) => {
     editingTask.value = {
       ...task,
+      deadline: task.deadline || '',
       type: task.taskType || task.type
     }
+    editTaskReadOnly.value = false
+    showEditTaskDialog.value = true
+  }
+
+  const handleViewTask = (task) => {
+    editingTask.value = {
+      ...task,
+      deadline: task.deadline || '',
+      type: task.taskType || task.type
+    }
+    editTaskReadOnly.value = true
     showEditTaskDialog.value = true
   }
 
@@ -191,6 +205,7 @@ export function useTodo() {
       taskType: taskData.type,
       points: taskData.points,
       encouragement: taskData.encouragement,
+      deadline: taskData.deadline || undefined,
       targetCount: taskData.targetCount,
       isDailyLimit: taskData.isDailyLimit
     }
@@ -198,6 +213,7 @@ export function useTodo() {
     try {
       await updateTask(taskData.id, task)
       showEditTaskDialog.value = false
+      editTaskReadOnly.value = false
       ElMessage.success('任务更新成功！')
       await loadAllTasks()
     } catch (error) {
@@ -322,6 +338,7 @@ export function useTodo() {
     showEditTaskDialog,
     showAddRewardDialog,
     editingTask,
+    editTaskReadOnly,
     daySchedule,
     weekDays,
     monthDates,
@@ -348,6 +365,7 @@ export function useTodo() {
     incrementTaskCount,
     handleAddTask,
     handleEditTask,
+    handleViewTask,
     handleUpdateTask,
     handleDeleteTask,
     handleCopyToDaily,

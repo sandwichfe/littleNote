@@ -1,26 +1,26 @@
-<template>
+﻿<template>
   <div class="content-section todo-list-section">
     <div class="section-header">
       <h2 class="section-title">待办列表</h2>
-      <el-button 
-        type="primary" 
+      <el-button
+        type="primary"
         @click="$emit('show-add-task')"
       >
         <el-icon><Plus /></el-icon>
         创建任务
       </el-button>
     </div>
-    
+
     <!-- 任务筛选 -->
     <div class="task-filters">
       <el-button-group>
-        <el-button 
+        <el-button
           :type="taskFilter === 'pending' ? 'primary' : 'default'"
           @click="$emit('filter-change', 'pending')"
         >
-          待完成 ({{ pendingTasks.length }})
+          未完成 ({{ pendingTasks.length }})
         </el-button>
-        <el-button 
+        <el-button
           :type="taskFilter === 'completed' ? 'primary' : 'default'"
           @click="$emit('filter-change', 'completed')"
         >
@@ -28,12 +28,11 @@
         </el-button>
       </el-button-group>
     </div>
-    
+
     <!-- 任务列表 -->
     <div class="all-tasks-list">
-
-      <div 
-        v-for="task in filteredTasks" 
+      <div
+        v-for="task in filteredTasks"
         :key="task.id"
         class="task-item-full"
         :class="{
@@ -42,13 +41,12 @@
         }"
         :style="taskFilter === 'pending' ? { '--progress': (task.completedCount / task.targetCount * 100) + '%' } : null"
       >
-      
         <div class="task-check-section">
-          <el-tooltip 
-            :content="task.completedCount >= task.targetCount ? '已完成' : '完成一次'" 
+          <el-tooltip
+            :content="task.completedCount >= task.targetCount ? '已完成' : '完成一次'"
             placement="top"
           >
-            <el-button 
+            <el-button
               circle
               :type="task.completedCount >= task.targetCount ? 'success' : 'primary'"
               :plain="task.completedCount < task.targetCount"
@@ -70,8 +68,8 @@
             {{ task.content }}
           </div>
           <div class="task-meta-row">
-            <el-tag 
-              :type="getTaskTypeColor(task.type)" 
+            <el-tag
+              :type="getTaskTypeColor(task.type)"
               size="small"
               effect="light"
               round
@@ -79,16 +77,23 @@
             >
               {{ getTaskTypeLabel(task.type) }}
             </el-tag>
-            
+
             <span class="meta-item points">
-              +{{ task.points }}积分
+              +{{ task.points }} 积分
             </span>
-            
+
             <span class="meta-divider">|</span>
-            
+
             <span class="meta-item date">
               创建于 {{ formatDate(task.createTime || task.createdAt) }}
             </span>
+
+            <template v-if="taskFilter === 'pending' && task.deadline">
+              <span class="meta-divider">|</span>
+              <span class="meta-item deadline" :class="{ overdue: isTaskOverdue(task) }">
+                {{ isTaskOverdue(task) ? '已逾期' : '截止' }} {{ formatFriendlyDeadline(task.deadline) }}
+              </span>
+            </template>
 
             <template v-if="task.lastCompleteTime">
               <span class="meta-divider">|</span>
@@ -100,61 +105,98 @@
         </div>
 
         <div class="task-action-group">
-          <el-tooltip content="编辑" placement="top" :show-after="500">
-            <el-button link class="action-btn" @click.stop="$emit('edit-task', task)">
-              <el-icon><Edit /></el-icon>
-            </el-button>
-          </el-tooltip>
-          
-          <el-tooltip content="复制到每日待办" placement="top" :show-after="500">
-            <el-button link class="action-btn" @click.stop="$emit('copy-to-daily', task)">
-              <el-icon><CopyDocument /></el-icon>
-            </el-button>
-          </el-tooltip>
-          
-          <el-tooltip content="删除" placement="top" :show-after="500">
-            <el-button link type="danger" class="action-btn delete-btn" @click.stop="$emit('delete-task', task.id)">
-              <el-icon><Delete /></el-icon>
-            </el-button>
-          </el-tooltip>
-        </div>
+          <template v-if="isCompletedTask(task)">
+            <el-tooltip content="详情" placement="top" :show-after="500">
+              <el-button link class="action-btn" @click.stop="$emit('view-task', task)">
+                <el-icon><View /></el-icon>
+              </el-button>
+            </el-tooltip>
+          </template>
 
+          <template v-else>
+            <el-tooltip content="编辑" placement="top" :show-after="500">
+              <el-button link class="action-btn" @click.stop="$emit('edit-task', task)">
+                <el-icon><Edit /></el-icon>
+              </el-button>
+            </el-tooltip>
+
+            <el-tooltip content="复制到每日待办" placement="top" :show-after="500">
+              <el-button link class="action-btn" @click.stop="$emit('copy-to-daily', task)">
+                <el-icon><CopyDocument /></el-icon>
+              </el-button>
+            </el-tooltip>
+
+            <el-tooltip content="删除" placement="top" :show-after="500">
+              <el-button link type="danger" class="action-btn delete-btn" @click.stop="$emit('delete-task', task.id)">
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </el-tooltip>
+          </template>
+        </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Plus, Check, Edit, Delete, CopyDocument,Finished } from '@element-plus/icons-vue'
+import { Plus, Check, Edit, Delete, CopyDocument, Finished, View } from '@element-plus/icons-vue'
 import { useTaskStats } from '@/composables/useTaskStats'
 import { useTaskUtils } from '@/composables/useTaskUtils'
 import type { Task } from '@/network/todo'
 
-// Props
 const props = defineProps<{
   allTasks: Task[]
   taskFilter: 'pending' | 'completed'
 }>()
 
-// Emits
 defineEmits<{
   'show-add-task': []
   'filter-change': [filter: string]
   'increment-task': [task: Task]
   'edit-task': [task: Task]
+  'view-task': [task: Task]
   'copy-to-daily': [task: Task]
   'delete-task': [taskId: number]
 }>()
 
-// 使用任务统计组合式函数
 const { allTasksCount, pendingTasks, completedTasks } = useTaskStats(() => props.allTasks)
-
-// 使用任务工具函数
 const { getTaskTypeColor, getTaskTypeLabel, formatDate, formatDateTime } = useTaskUtils()
 
-// 筛选后的任务列表
+const formatFriendlyDeadline = (deadline: string) => {
+  const date = new Date(deadline)
+  if (Number.isNaN(date.getTime())) {
+    return formatDateTime(deadline)
+  }
+
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const tomorrowStart = new Date(todayStart)
+  tomorrowStart.setDate(todayStart.getDate() + 1)
+  const dayAfterTomorrowStart = new Date(todayStart)
+  dayAfterTomorrowStart.setDate(todayStart.getDate() + 2)
+  const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+
+  if (date >= todayStart && date < tomorrowStart) {
+    return `今天 ${time}`
+  }
+
+  if (date >= tomorrowStart && date < dayAfterTomorrowStart) {
+    return `明天 ${time}`
+  }
+
+  return formatDateTime(deadline)
+}
+
+const isTaskOverdue = (task: Task) => {
+  if (!task.deadline) {
+    return false
+  }
+  return new Date(task.deadline).getTime() < Date.now()
+}
+
+const isCompletedTask = (task: Task) => task.completedCount >= task.targetCount
+
 const filteredTasks = computed(() => {
   switch (props.taskFilter) {
     case 'pending':
@@ -162,7 +204,7 @@ const filteredTasks = computed(() => {
     case 'completed':
       return completedTasks.value
     default:
-      return pendingTasks.value // 默认显示待完成任务
+      return pendingTasks.value
   }
 })
 </script>
@@ -400,6 +442,15 @@ const filteredTasks = computed(() => {
 
 .meta-item.date {
   color: var(--todo-text-tertiary, #94a3b8);
+}
+
+.meta-item.deadline {
+  color: var(--todo-accent-strong, #1b9c94);
+  font-weight: 600;
+}
+
+.meta-item.deadline.overdue {
+  color: var(--todo-danger, #ef7f7f);
 }
 
 .task-action-group {

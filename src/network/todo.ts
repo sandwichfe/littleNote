@@ -12,6 +12,7 @@ export interface Task {
   encouragement?: string;
   category: 'global' | 'daily';
   todoDate?: string;
+  deadline?: string;
   createTime?: string;
   updateTime?: string;
   lastCompleteTime?: string;

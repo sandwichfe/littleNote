@@ -26,6 +26,7 @@
           @filter-change="setTaskFilter"
           @increment-task="incrementTaskCount"
           @edit-task="handleEditTask"
+          @view-task="handleViewTask"
           @copy-to-daily="handleCopyToDaily"
           @delete-task="handleDeleteTask"
         />
@@ -48,6 +49,7 @@
       v-model:show-edit-task-dialog="showEditTaskDialog"
       v-model:show-add-reward-dialog="showAddRewardDialog"
       :editing-task="editingTask"
+      :edit-task-read-only="editTaskReadOnly"
       @add-task="handleAddTask"
       @update-task="handleUpdateTask"
       @add-reward="handleAddReward"
@@ -85,6 +87,7 @@ const {
   showEditTaskDialog,
   showAddRewardDialog,
   editingTask,
+  editTaskReadOnly,
 
   // 方法
   setActiveNav,
@@ -92,6 +95,7 @@ const {
   incrementTaskCount,
   handleAddTask,
   handleEditTask,
+  handleViewTask,
   handleUpdateTask,
   setTaskFilter,
   handleDeleteTask,
