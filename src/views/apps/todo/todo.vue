@@ -151,16 +151,19 @@ watch(
 }
 
 .todo-main-inner {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 1120px;
   height: 100%;
-  background: #ffffff;
+  min-height: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(244, 247, 255, 0.94) 100%);
+  backdrop-filter: blur(14px);
   border-radius: 24px;
   padding: 24px 28px;
-  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.06);
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  overflow-y: auto;
-  overflow-x: hidden;
+  box-shadow: 0 22px 60px rgba(79, 70, 229, 0.08);
+  border: 1px solid rgba(191, 219, 254, 0.52);
+  overflow: hidden;
 }
 
 /* 响应式设计 */

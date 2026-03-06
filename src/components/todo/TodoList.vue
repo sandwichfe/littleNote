@@ -1,5 +1,5 @@
 <template>
-  <div class="content-section">
+  <div class="content-section todo-list-section">
     <div class="section-header">
       <h2 class="section-title">待办列表</h2>
       <el-button 
@@ -176,6 +176,16 @@ const filteredTasks = computed(() => {
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
 }
 
+.todo-list-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: linear-gradient(180deg, rgba(248, 250, 255, 0.98) 0%, rgba(238, 244, 255, 0.96) 100%);
+  border-color: rgba(199, 210, 254, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 18px 40px rgba(79, 70, 229, 0.08);
+}
+
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -218,9 +228,30 @@ const filteredTasks = computed(() => {
 }
 
 .all-tasks-list {
-  max-height: 600px;
+  flex: 1;
+  min-height: 0;
+  height: 0;
+  padding-right: 6px;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
+}
+
+.all-tasks-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.all-tasks-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.all-tasks-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(129, 140, 248, 0.55), rgba(96, 165, 250, 0.45));
+  border-radius: 999px;
+}
+
+.all-tasks-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.7), rgba(59, 130, 246, 0.6));
 }
 
 .task-item-full {
@@ -228,9 +259,9 @@ const filteredTasks = computed(() => {
   align-items: flex-start;
   padding: 18px 20px;
   margin-bottom: 14px;
-  background: #ffffff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 255, 0.98) 100%);
   border-radius: 16px;
-  border: 1px solid #edf1ff;
+  border: 1px solid rgba(226, 232, 255, 0.95);
   transition: all 0.25s ease;
   position: relative;
   overflow: hidden;
@@ -256,13 +287,13 @@ const filteredTasks = computed(() => {
 
 .task-item-full:hover {
   transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
-  border-color: #d4ddff;
+  box-shadow: 0 16px 40px rgba(79, 70, 229, 0.12);
+  border-color: #c7d2fe;
 }
 
 .task-item-full.completed {
-  background: linear-gradient(135deg, #ffffff, #f4f2ff);
-  border-color: #e0d9ff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(243, 240, 255, 0.98));
+  border-color: #ddd6fe;
 }
 
 .task-item-full.with-progress.completed::before {
@@ -393,5 +424,25 @@ const filteredTasks = computed(() => {
 .action-btn.delete-btn:hover {
   color: #f97373;
   background-color: #fef2f2;
+}
+
+@media (max-width: 768px) {
+  .todo-list-section {
+    padding: 18px 16px 16px;
+  }
+
+  .section-header {
+    gap: 12px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .all-tasks-list {
+    padding-right: 2px;
+  }
+
+  .task-item-full {
+    padding: 16px;
+  }
 }
 </style>
