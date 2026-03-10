@@ -120,3 +120,30 @@ export function getUserPoints(): Promise<any> {
     url: '/todo/points'
   });
 }
+
+// 日视图 - 按日期查询任务时间线
+export function getDayView(date: string): Promise<any> {
+  return LittleNoteRequest({
+    method: 'post',
+    url: '/todo/tasks/day-view',
+    data: { date }
+  });
+}
+
+// 周视图 - 按周查询任务统计
+export function getWeekView(year: number, week: number): Promise<any> {
+  return LittleNoteRequest({
+    method: 'post',
+    url: '/todo/tasks/week-view',
+    data: { year, week }
+  });
+}
+
+// 月视图 - 按月查询任务日历
+export function getMonthView(year: number, month: number): Promise<any> {
+  return LittleNoteRequest({
+    method: 'post',
+    url: '/todo/tasks/month-view',
+    data: { year, month }
+  });
+}

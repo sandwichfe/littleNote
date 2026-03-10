@@ -32,13 +32,23 @@
         />
 
         <!-- 任务视图 -->
-        <TaskViews 
+        <TaskViews
           v-if="activeNav === 'taskViews'"
           :active-view="activeView"
           :day-schedule="daySchedule"
           :week-days="weekDays"
           :month-dates="monthDates"
+          :selected-date="viewSelectedDate"
+          :selected-year="viewSelectedYear"
+          :selected-week="viewSelectedWeek"
+          :selected-month="viewSelectedMonth"
+          :view-summary="viewSummary"
+          :loading="viewLoading"
           @view-change="setActiveView"
+          @date-change="handleDateChange"
+          @year-change="handleYearChange"
+          @week-change="handleWeekChange"
+          @month-change="handleMonthChange"
         />
       </div>
     </main>
@@ -83,6 +93,12 @@ const {
   daySchedule,
   weekDays,
   monthDates,
+  viewSelectedDate,
+  viewSelectedYear,
+  viewSelectedWeek,
+  viewSelectedMonth,
+  viewSummary,
+  viewLoading,
   showAddTaskDialog,
   showEditTaskDialog,
   showAddRewardDialog,
@@ -101,8 +117,29 @@ const {
   handleDeleteTask,
   handleAddReward,
   handleCopyToDaily,
+  loadViewData,
   initData
 } = useTodo()
+
+// 视图选择器事件处理
+const handleDateChange = async (date) => {
+  viewSelectedDate.value = date
+  await loadViewData()
+}
+
+const handleYearChange = (year) => {
+  viewSelectedYear.value = year
+}
+
+const handleWeekChange = async (week) => {
+  viewSelectedWeek.value = week
+  await loadViewData()
+}
+
+const handleMonthChange = async (month) => {
+  viewSelectedMonth.value = month
+  await loadViewData()
+}
 
 const syncActiveNavWithRoute = async (section) => {
   const nav = typeof section === 'string' && section.length ? section : 'daily'

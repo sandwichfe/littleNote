@@ -1,19 +1,31 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { 
-  getTasks, 
-  getDailyTasks, 
-  addTask, 
-  updateTask, 
-  deleteTask, 
-  completeTask, 
-  copyToDaily, 
-  getUserPoints, 
+import {
+  getTasks,
+  getDailyTasks,
+  addTask,
+  updateTask,
+  deleteTask,
+  completeTask,
+  copyToDaily,
+  getUserPoints,
+  getDayView,
+  getWeekView,
+  getMonthView,
 } from '@/network/todo'
 import { useTaskStats } from './useTaskStats'
 import { useTaskUtils } from './useTaskUtils'
 
 export function useTodo() {
+  // ISO 周数计算
+  function getISOWeek(date) {
+    const d = new Date(date)
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7))
+    const week1 = new Date(d.getFullYear(), 0, 4)
+    return 1 + Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7)
+  }
+
   // 响应式状态
   const userInfo = ref({
     nickname: 'Sarah Wilson',
@@ -36,32 +48,26 @@ export function useTodo() {
   const editTaskReadOnly = ref(false)
 
   // 任务视图数据
-  const daySchedule = ref([
-    {
-      time: '09:00',
-      tasks: [{ id: 1, content: '产品设计', type: 'work' }]
-    },
-    {
-      time: '10:00',
-      tasks: [{ id: 2, content: '团队会议', type: 'work' }]
-    },
-    {
-      time: '11:00',
-      tasks: []
-    }
-  ])
-
-  const weekDays = ref([
-    { label: '周一 1/6', date: '2025-01-06', taskCount: 4 },
-    { label: '周二 1/7', date: '2025-01-07', taskCount: 3 },
-    { label: '周三 1/8', date: '2025-01-08', taskCount: 5 },
-    { label: '周四 1/9', date: '2025-01-09', taskCount: 2 },
-    { label: '周五 1/10', date: '2025-01-10', taskCount: 4 },
-    { label: '周六 1/11', date: '2025-01-11', taskCount: 1 },
-    { label: '周日 1/12', date: '2025-01-12', taskCount: 2 }
-  ])
-
+  const daySchedule = ref([])
+  const weekDays = ref([])
   const monthDates = ref([])
+
+  // 视图选择器状态
+  const viewSelectedDate = ref(new Date().toISOString().split('T')[0])
+  const viewSelectedYear = ref(new Date().getFullYear())
+  const viewSelectedWeek = ref(getISOWeek(new Date()))
+  const viewSelectedMonth = ref(new Date().getMonth() + 1)
+
+  // 视图汇总信息
+  const viewSummary = ref({
+    weekLabel: '',
+    dateRange: '',
+    monthLabel: '',
+    taskTotal: 0,
+    completedTotal: 0,
+  })
+
+  const viewLoading = ref(false)
 
   // 使用任务统计和工具函数
   const { 
@@ -107,11 +113,15 @@ export function useTodo() {
       case 'daily':
         await loadDailyTasks()
         break
+      case 'taskViews':
+        await loadViewData()
+        break
     }
   }
 
-  const setActiveView = (view) => {
+  const setActiveView = async (view) => {
     activeView.value = view
+    await loadViewData()
   }
 
   const setTaskFilter = (filter) => {
@@ -300,6 +310,90 @@ export function useTodo() {
   }
 
 
+  // 加载日视图数据
+  const loadDayView = async () => {
+    viewLoading.value = true
+    try {
+      const result = await getDayView(viewSelectedDate.value)
+      if (result && result.data) {
+        const data = result.data
+        daySchedule.value = data.schedule || []
+        viewSummary.value = {
+          ...viewSummary.value,
+          taskTotal: data.taskTotal || 0,
+          completedTotal: data.completedTotal || 0,
+        }
+      }
+    } catch (error) {
+      console.error('加载日视图失败:', error)
+      daySchedule.value = []
+    } finally {
+      viewLoading.value = false
+    }
+  }
+
+  // 加载周视图数据
+  const loadWeekView = async () => {
+    viewLoading.value = true
+    try {
+      const result = await getWeekView(viewSelectedYear.value, viewSelectedWeek.value)
+      if (result && result.data) {
+        const data = result.data
+        weekDays.value = data.days || []
+        viewSummary.value = {
+          ...viewSummary.value,
+          weekLabel: data.weekLabel || '',
+          dateRange: data.dateRange || '',
+          taskTotal: data.taskTotal || 0,
+          completedTotal: data.completedTotal || 0,
+        }
+      }
+    } catch (error) {
+      console.error('加载周视图失败:', error)
+      weekDays.value = []
+    } finally {
+      viewLoading.value = false
+    }
+  }
+
+  // 加载月视图数据
+  const loadMonthView = async () => {
+    viewLoading.value = true
+    try {
+      const result = await getMonthView(viewSelectedYear.value, viewSelectedMonth.value)
+      if (result && result.data) {
+        const data = result.data
+        monthDates.value = data.dates || []
+        viewSummary.value = {
+          ...viewSummary.value,
+          monthLabel: data.monthLabel || '',
+          taskTotal: data.taskTotal || 0,
+          completedTotal: data.completedTotal || 0,
+        }
+      }
+    } catch (error) {
+      console.error('加载月视图失败:', error)
+      monthDates.value = []
+    } finally {
+      viewLoading.value = false
+    }
+  }
+
+  // 根据当前视图类型加载数据
+  const loadViewData = async () => {
+    switch (activeView.value) {
+      case 'day':
+        await loadDayView()
+        break
+      case 'week':
+        await loadWeekView()
+        break
+      case 'month':
+        await loadMonthView()
+        break
+    }
+  }
+
   // 初始化所有数据
   const initData = async () => {
     await Promise.all([
@@ -307,20 +401,6 @@ export function useTodo() {
       loadDailyTasks(),
       loadUserPoints(),
     ])
-  }
-
-  // 初始化月份数据
-  const initMonthData = () => {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = now.getMonth()
-    const daysInMonth = new Date(year, month + 1, 0).getDate()
-    
-    monthDates.value = Array.from({ length: daysInMonth }, (_, i) => ({
-      date: `${year}-${String(month + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`,
-      day: i + 1,
-      taskCount: Math.floor(Math.random() * 4) // 随机任务数量
-    }))
   }
 
   return {
@@ -342,6 +422,12 @@ export function useTodo() {
     daySchedule,
     weekDays,
     monthDates,
+    viewSelectedDate,
+    viewSelectedYear,
+    viewSelectedWeek,
+    viewSelectedMonth,
+    viewSummary,
+    viewLoading,
     
     // 计算属性
     workTasks,
@@ -372,7 +458,7 @@ export function useTodo() {
     loadAllTasks,
     loadDailyTasks,
     loadUserPoints,
+    loadViewData,
     initData,
-    initMonthData
   }
 }
