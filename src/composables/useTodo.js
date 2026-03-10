@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   getTasks,
@@ -13,7 +13,6 @@ import {
   getWeekView,
   getMonthView,
 } from '@/network/todo'
-import { useTaskStats } from './useTaskStats'
 import { useTaskUtils } from './useTaskUtils'
 
 export function useTodo() {
@@ -46,6 +45,8 @@ export function useTodo() {
   const showAddRewardDialog = ref(false)
   const editingTask = ref(null)
   const editTaskReadOnly = ref(false)
+  const pendingCount = ref(0)
+  const completedCount = ref(0)
 
   // 任务视图数据
   const daySchedule = ref([])
@@ -69,30 +70,7 @@ export function useTodo() {
 
   const viewLoading = ref(false)
 
-  // 使用任务统计和工具函数
-  const { 
-    workTasks, 
-    studyTasks, 
-    healthTasks, 
-    totalProgress,
-    allTasksCount,
-    pendingTasks,
-    completedTasks
-  } = useTaskStats(allTasks)
-  
   const { getTaskTypeColor, getTaskTypeLabel, formatDate } = useTaskUtils()
-
-  // 筛选后的任务列表
-  const filteredTasks = computed(() => {
-    switch (taskFilter.value) {
-      case 'pending':
-        return pendingTasks.value
-      case 'completed':
-        return completedTasks.value
-      default:
-        return pendingTasks.value // 默认显示待完成任务
-    }
-  })
 
   // 方法
   const setActiveNav = async (nav) => {
@@ -108,7 +86,7 @@ export function useTodo() {
         break
       case 'todoList':
         // 每次切换到待办列表都重新加载，确保数据最新
-        await loadAllTasks()
+        await loadAllTasks(taskFilter.value === 'completed' ? 1 : 0)
         break
       case 'daily':
         await loadDailyTasks()
@@ -124,8 +102,10 @@ export function useTodo() {
     await loadViewData()
   }
 
-  const setTaskFilter = (filter) => {
+  const setTaskFilter = async (filter) => {
     taskFilter.value = filter
+    const status = filter === 'completed' ? 1 : 0
+    await loadAllTasks(status)
   }
 
   const incrementTaskCount = async (task) => {
@@ -135,16 +115,16 @@ export function useTodo() {
         task.completedCount++
         
         if (task.completedCount >= task.targetCount) {
-          task.completed = true
+          task.status = 1
           userPoints.value += task.points
           ElMessage.success(`任务已全部完成！获得 ${task.points} 积分！${task.encouragement}`)
         } else {
           ElMessage.success(`进度 +1！还需完成 ${task.targetCount - task.completedCount} 次`)
         }
-        
+
         // 刷新用户积分和任务列表
         await loadUserPoints()
-        await loadAllTasks() // 刷新任务列表以更新计数
+        await loadAllTasks(taskFilter.value === 'completed' ? 1 : 0)
       } catch (error) {
         // 优先使用后端返回的错误信息
         const msg = error.response?.data?.msg || '完成任务失败'
@@ -175,9 +155,9 @@ export function useTodo() {
       
       showAddTaskDialog.value = false
       ElMessage.success('任务添加成功！')
-      
+
       // 刷新任务列表以更新计数
-      await loadAllTasks()
+      await loadAllTasks(taskFilter.value === 'completed' ? 1 : 0)
     } catch (error) {
       console.error('添加任务失败:', error)
       ElMessage.error('添加任务失败')
@@ -225,7 +205,7 @@ export function useTodo() {
       showEditTaskDialog.value = false
       editTaskReadOnly.value = false
       ElMessage.success('任务更新成功！')
-      await loadAllTasks()
+      await loadAllTasks(taskFilter.value === 'completed' ? 1 : 0)
     } catch (error) {
       console.error('更新任务失败:', error)
       ElMessage.error('更新任务失败')
@@ -236,9 +216,9 @@ export function useTodo() {
     try {
       await deleteTask(taskId)
       ElMessage.success('任务删除成功！')
-      
+
       // 刷新任务列表以更新计数
-      await loadAllTasks()
+      await loadAllTasks(taskFilter.value === 'completed' ? 1 : 0)
     } catch (error) {
       ElMessage.error('删除任务失败')
     }
@@ -265,14 +245,24 @@ export function useTodo() {
 
 
   // 数据加载方法
-  const loadAllTasks = async () => {
+  const loadAllTasks = async (status) => {
     try {
-      const result = await getTasks()
+      const params = {}
+      if (status !== undefined) {
+        params.status = status
+      }
+      const result = await getTasks(params)
       // 处理API响应格式 {code, msg, data, time}
       if (result && result.data) {
         allTasks.value = Array.isArray(result.data) ? result.data : result.data.records || []
       } else {
         allTasks.value = result.records || result || []
+      }
+      // 更新对应状态的计数
+      if (status === 0) {
+        pendingCount.value = allTasks.value.length
+      } else if (status === 1) {
+        completedCount.value = allTasks.value.length
       }
     } catch (error) {
       console.error('加载任务列表失败:', error)
@@ -397,7 +387,7 @@ export function useTodo() {
   // 初始化所有数据
   const initData = async () => {
     await Promise.all([
-      loadAllTasks(),
+      loadAllTasks(0),
       loadDailyTasks(),
       loadUserPoints(),
     ])
@@ -419,6 +409,8 @@ export function useTodo() {
     showAddRewardDialog,
     editingTask,
     editTaskReadOnly,
+    pendingCount,
+    completedCount,
     daySchedule,
     weekDays,
     monthDates,
@@ -428,16 +420,6 @@ export function useTodo() {
     viewSelectedMonth,
     viewSummary,
     viewLoading,
-    
-    // 计算属性
-    workTasks,
-    studyTasks,
-    healthTasks,
-    totalProgress,
-    allTasksCount,
-    pendingTasks,
-    completedTasks,
-    filteredTasks,
     
     // 工具函数
     getTaskTypeColor,

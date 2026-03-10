@@ -17,6 +17,7 @@ export interface Task {
   updateTime?: string;
   lastCompleteTime?: string;
   isDailyLimit?: number;
+  status?: 0 | 1; // 0-未完成, 1-已完成
 }
 
 export interface Reward {

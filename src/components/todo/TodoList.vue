@@ -18,13 +18,13 @@
           :type="taskFilter === 'pending' ? 'primary' : 'default'"
           @click="$emit('filter-change', 'pending')"
         >
-          未完成 ({{ pendingTasks.length }})
+          未完成 ({{ pendingCount }})
         </el-button>
         <el-button
           :type="taskFilter === 'completed' ? 'primary' : 'default'"
           @click="$emit('filter-change', 'completed')"
         >
-          已完成 ({{ completedTasks.length }})
+          已完成 ({{ completedCount }})
         </el-button>
       </el-button-group>
     </div>
@@ -32,29 +32,29 @@
     <!-- 任务列表 -->
     <div class="all-tasks-list">
       <div
-        v-for="task in filteredTasks"
+        v-for="task in allTasks"
         :key="task.id"
         class="task-item-full"
         :class="{
-          completed: task.completedCount >= task.targetCount,
+          completed: task.status === 1,
           'with-progress': taskFilter === 'pending'
         }"
         :style="taskFilter === 'pending' ? { '--progress': (task.completedCount / task.targetCount * 100) + '%' } : null"
       >
         <div class="task-check-section">
           <el-tooltip
-            :content="task.completedCount >= task.targetCount ? '已完成' : '完成一次'"
+            :content="task.status === 1 ? '已完成' : '完成一次'"
             placement="top"
           >
             <el-button
               circle
-              :type="task.completedCount >= task.targetCount ? 'success' : 'primary'"
-              :plain="task.completedCount < task.targetCount"
-              :disabled="task.completedCount >= task.targetCount"
+              :type="task.status === 1 ? 'success' : 'primary'"
+              :plain="task.status !== 1"
+              :disabled="task.status === 1"
               class="check-btn"
               @click.stop="$emit('increment-task', task)"
             >
-              <el-icon v-if="task.completedCount >= task.targetCount"><Check /></el-icon>
+              <el-icon v-if="task.status === 1"><Check /></el-icon>
               <el-icon v-else><Finished /></el-icon>
             </el-button>
           </el-tooltip>
@@ -64,7 +64,7 @@
         </div>
 
         <div class="task-main-content">
-          <div class="task-title" :class="{ 'is-completed': task.completedCount >= task.targetCount }">
+          <div class="task-title" :class="{ 'is-completed': task.status === 1 }">
             {{ task.content }}
           </div>
           <div class="task-meta-row">
@@ -98,7 +98,7 @@
             <template v-if="task.lastCompleteTime">
               <span class="meta-divider">|</span>
               <span class="meta-item date">
-                {{ task.completedCount >= task.targetCount ? '完成于' : '上次完成' }} {{ formatDateTime(task.lastCompleteTime) }}
+                {{ task.status === 1 ? '完成于' : '上次完成' }} {{ formatDateTime(task.lastCompleteTime) }}
               </span>
             </template>
           </div>
@@ -139,15 +139,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { Plus, Check, Edit, Delete, CopyDocument, Finished, View } from '@element-plus/icons-vue'
-import { useTaskStats } from '@/composables/useTaskStats'
 import { useTaskUtils } from '@/composables/useTaskUtils'
 import type { Task } from '@/network/todo'
 
 const props = defineProps<{
   allTasks: Task[]
   taskFilter: 'pending' | 'completed'
+  pendingCount: number
+  completedCount: number
 }>()
 
 defineEmits<{
@@ -160,7 +160,6 @@ defineEmits<{
   'delete-task': [taskId: number]
 }>()
 
-const { allTasksCount, pendingTasks, completedTasks } = useTaskStats(() => props.allTasks)
 const { getTaskTypeColor, getTaskTypeLabel, formatDate, formatDateTime } = useTaskUtils()
 
 const formatFriendlyDeadline = (deadline: string) => {
@@ -195,18 +194,7 @@ const isTaskOverdue = (task: Task) => {
   return new Date(task.deadline).getTime() < Date.now()
 }
 
-const isCompletedTask = (task: Task) => task.completedCount >= task.targetCount
-
-const filteredTasks = computed(() => {
-  switch (props.taskFilter) {
-    case 'pending':
-      return pendingTasks.value
-    case 'completed':
-      return completedTasks.value
-    default:
-      return pendingTasks.value
-  }
-})
+const isCompletedTask = (task: Task) => task.status === 1
 </script>
 
 <style scoped>

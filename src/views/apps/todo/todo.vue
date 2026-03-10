@@ -18,10 +18,12 @@
         />
 
         <!-- 待办列表 -->
-        <TodoList 
+        <TodoList
           v-if="activeNav === 'todoList'"
           :all-tasks="allTasks"
           :task-filter="taskFilter"
+          :pending-count="pendingCount"
+          :completed-count="completedCount"
           @show-add-task="showAddTaskDialog = true"
           @filter-change="setTaskFilter"
           @increment-task="incrementTaskCount"
@@ -104,6 +106,8 @@ const {
   showAddRewardDialog,
   editingTask,
   editTaskReadOnly,
+  pendingCount,
+  completedCount,
 
   // 方法
   setActiveNav,

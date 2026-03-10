@@ -56,7 +56,7 @@
                 v-for="task in hour.tasks"
                 :key="task.id"
                 class="scheduled-task"
-                :class="task.type || task.taskType"
+                :class="[task.type || task.taskType, { 'is-completed': task.status === 1 }]"
               >
                 <span class="task-text">{{ task.content }}</span>
                 <el-tag
@@ -586,6 +586,21 @@ const firstDayOffset = computed(() => {
 .scheduled-task.other {
   background: rgba(148, 163, 184, 0.12);
   color: #607086;
+}
+
+.scheduled-task.is-completed {
+  background: rgba(148, 163, 184, 0.08);
+  color: #b0b8c8;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.scheduled-task.is-completed .task-type-tag {
+  opacity: 0.5;
+}
+
+.scheduled-task.is-completed .task-progress {
+  opacity: 0.5;
 }
 
 .task-type-tag {
