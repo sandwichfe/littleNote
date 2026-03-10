@@ -10,12 +10,6 @@
     <!-- 主内容区域 -->
     <main class="todo-main">
       <div class="todo-main-inner">
-        <!-- 每日待办 -->
-        <DailyTasks 
-          v-if="activeNav === 'daily'"
-          :daily-tasks="dailyTasks"
-          @increment-task="incrementTaskCount"
-        />
 
         <!-- 待办列表 -->
         <TodoList
@@ -29,7 +23,6 @@
           @increment-task="incrementTaskCount"
           @edit-task="handleEditTask"
           @view-task="handleViewTask"
-          @copy-to-daily="handleCopyToDaily"
           @delete-task="handleDeleteTask"
         />
 
@@ -73,7 +66,6 @@
 import { onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TodoSidebar from '@/components/todo/TodoSidebar.vue'
-import DailyTasks from '@/components/todo/DailyTasks.vue'
 import TodoList from '@/components/todo/TodoList.vue'
 import TaskViews from '@/components/todo/TaskViews.vue'
 import TodoDialogs from '@/components/todo/TodoDialogs.vue'
@@ -85,11 +77,9 @@ const router = useRouter()
 // 使用组合式函数
 const {
   // 状态
-  userInfo,
   userPoints,
   activeNav,
   allTasks,
-  dailyTasks,
   taskFilter,
   activeView,
   daySchedule,
@@ -120,7 +110,6 @@ const {
   setTaskFilter,
   handleDeleteTask,
   handleAddReward,
-  handleCopyToDaily,
   loadViewData,
   initData
 } = useTodo()
@@ -146,8 +135,8 @@ const handleMonthChange = async (month) => {
 }
 
 const syncActiveNavWithRoute = async (section) => {
-  const nav = typeof section === 'string' && section.length ? section : 'daily'
-  if (nav === activeNav.value && nav !== 'daily') {
+  const nav = typeof section === 'string' && section.length ? section : 'todoList'
+  if (nav === activeNav.value ) {
     return
   }
   await setActiveNav(nav)

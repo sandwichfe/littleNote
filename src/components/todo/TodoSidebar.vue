@@ -31,28 +31,16 @@
       </div>
     </div>
     
-    <div class="points-display">
-      <el-icon class="points-icon"><Star /></el-icon>
-      <span class="points-text">积分: {{ userPoints }}</span>
-    </div>
   </nav>
 </template>
 
 <script setup>
 import { 
-  Calendar, 
-  Trophy, 
-  Present, 
-  Star, 
   Clock,
   List
 } from '@element-plus/icons-vue'
 
 defineProps({
-  userPoints: {
-    type: Number,
-    default: 0
-  },
   activeNav: {
     type: String,
     required: true
@@ -62,7 +50,6 @@ defineProps({
 defineEmits(['nav-change'])
 
 const navItems = [
-  { key: 'daily', label: '每日待办', icon: Calendar },
   { key: 'todoList', label: '待办列表', icon: List },
   { key: 'taskViews', label: '任务视图', icon: Clock }
 ]
@@ -191,28 +178,6 @@ const weekdayLabel = `周${weekdayMap[today.getDay()]}`
 
 .nav-label {
   font-weight: 500;
-}
-
-.points-display {
-  padding: 16px 20px 18px;
-  margin: 6px 16px 20px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 14px 40px rgba(148, 163, 184, 0.3);
-  border: 1px solid rgba(248, 250, 252, 0.9);
-}
-
-.points-icon {
-  color: #fbbf24;
-  font-size: 18px;
-}
-
-.points-text {
-  font-weight: 600;
-  color: #111827;
 }
 
 @media (max-width: 768px) {
@@ -383,32 +348,6 @@ const weekdayLabel = `周${weekdayMap[today.getDay()]}`
   letter-spacing: 0.01em;
 }
 
-.points-display {
-  margin: auto 4px 0;
-  padding: 16px 18px;
-  border-radius: 22px;
-  background: linear-gradient(180deg, #ffffff 0%, #f7fbfb 100%);
-  box-shadow: var(--todo-shadow-soft, 0 12px 32px rgba(148, 163, 184, 0.12));
-  border: 1px solid var(--todo-border, rgba(208, 220, 228, 0.92));
-}
-
-.points-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 14px;
-  background: rgba(255, 245, 214, 0.78);
-  color: #f0b13f;
-}
-
-.points-text {
-  font-weight: 700;
-  color: var(--todo-text, #162033);
-  letter-spacing: 0.01em;
-}
-
 @media (max-width: 1024px) {
   .todo-sidebar {
     width: 260px;
@@ -442,8 +381,5 @@ const weekdayLabel = `周${weekdayMap[today.getDay()]}`
     text-align: left;
   }
 
-  .points-display {
-    margin: 0 2px 14px;
-  }
 }
 </style>

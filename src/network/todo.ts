@@ -8,9 +8,6 @@ export interface Task {
   type: 'work' | 'study' | 'health' | 'other';
   targetCount: number;
   completedCount: number;
-  points: number;
-  encouragement?: string;
-  category: 'global' | 'daily';
   todoDate?: string;
   deadline?: string;
   createTime?: string;
@@ -18,28 +15,6 @@ export interface Task {
   lastCompleteTime?: string;
   isDailyLimit?: number;
   status?: 0 | 1; // 0-未完成, 1-已完成
-}
-
-export interface Reward {
-  id?: number;
-  name: string;
-  description?: string;
-  points: number;
-  status: 1 | 0;
-  createTime?: string;
-  updateTime?: string;
-}
-
-export interface UserReward {
-  id?: number;
-  rewardId: number;
-  rewardName: string;
-  pointsCost: number;
-  status: 0 | 1;
-  obtainedDate?: string;
-  usedDate?: string;
-  obtainTime?: string;
-  useTime?: string;
 }
 
 // 获取任务列表
@@ -54,21 +29,6 @@ export function getTasks(params: any = {}): Promise<any> {
     method: 'post',
     url: '/todo/tasks/list',
     data: defaultParams
-  });
-}
-
-// 获取每日任务列表
-export function getDailyTasks(): Promise<any> {
-  const today = new Date().toISOString().split('T')[0];
-  return LittleNoteRequest({
-    method: 'post',
-    url: '/todo/tasks/list',
-    data: {
-      pageNum: 1,
-      pageSize: 100,
-      category: 'daily',
-      todoDate: today
-    }
   });
 }
 
@@ -103,22 +63,6 @@ export function completeTask(id: number): Promise<any> {
   return LittleNoteRequest({
     method: 'post',
     url: `/todo/tasks/${id}/complete`
-  });
-}
-
-// 复制任务到每日待办
-export function copyToDaily(id: number): Promise<any> {
-  return LittleNoteRequest({
-    method: 'post',
-    url: `/todo/tasks/${id}/copy-to-daily`
-  });
-}
-
-// 获取用户积分
-export function getUserPoints(): Promise<any> {
-  return LittleNoteRequest({
-    method: 'get',
-    url: '/todo/points'
   });
 }
 

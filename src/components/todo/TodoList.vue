@@ -120,12 +120,6 @@
               </el-button>
             </el-tooltip>
 
-            <el-tooltip content="复制到每日待办" placement="top" :show-after="500">
-              <el-button link class="action-btn" @click.stop="$emit('copy-to-daily', task)">
-                <el-icon><CopyDocument /></el-icon>
-              </el-button>
-            </el-tooltip>
-
             <el-tooltip content="删除" placement="top" :show-after="500">
               <el-button link type="danger" class="action-btn delete-btn" @click.stop="$emit('delete-task', task.id)">
                 <el-icon><Delete /></el-icon>
@@ -156,7 +150,6 @@ defineEmits<{
   'increment-task': [task: Task]
   'edit-task': [task: Task]
   'view-task': [task: Task]
-  'copy-to-daily': [task: Task]
   'delete-task': [taskId: number]
 }>()
 

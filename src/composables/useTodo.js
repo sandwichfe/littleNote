@@ -2,13 +2,10 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   getTasks,
-  getDailyTasks,
   addTask,
   updateTask,
   deleteTask,
   completeTask,
-  copyToDaily,
-  getUserPoints,
   getDayView,
   getWeekView,
   getMonthView,
@@ -25,24 +22,13 @@ export function useTodo() {
     return 1 + Math.round(((d - week1) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7)
   }
 
-  // 响应式状态
-  const userInfo = ref({
-    nickname: 'Sarah Wilson',
-    role: '设计师',
-    avatar: 'https://49.235.149.110/favicon.ico'
-  })
-
-  const userPoints = ref(0)
-  const activeNav = ref('daily')
+  const activeNav = ref('todoList')
   const allTasks = ref([])
-  const dailyTasks = ref([])
   const taskFilter = ref('pending')
   const rewardsList = ref([])
-  const myRewards = ref([])
   const activeView = ref('day')
   const showAddTaskDialog = ref(false)
   const showEditTaskDialog = ref(false)
-  const showAddRewardDialog = ref(false)
   const editingTask = ref(null)
   const editTaskReadOnly = ref(false)
   const pendingCount = ref(0)
@@ -78,18 +64,9 @@ export function useTodo() {
     
     // 根据导航切换加载对应数据
     switch (nav) {
-      case 'myRewards':
-        await loadMyRewards()
-        break
-      case 'rewards':
-        await loadRewards()
-        break
       case 'todoList':
         // 每次切换到待办列表都重新加载，确保数据最新
         await loadAllTasks(taskFilter.value === 'completed' ? 1 : 0)
-        break
-      case 'daily':
-        await loadDailyTasks()
         break
       case 'taskViews':
         await loadViewData()
@@ -123,7 +100,6 @@ export function useTodo() {
         }
 
         // 刷新用户积分和任务列表
-        await loadUserPoints()
         await loadAllTasks(taskFilter.value === 'completed' ? 1 : 0)
       } catch (error) {
         // 优先使用后端返回的错误信息
@@ -224,26 +200,6 @@ export function useTodo() {
     }
   }
 
-  const handleCopyToDaily = async (task) => {
-    // 检查是否已经存在相同的任务
-    const tasks = Array.isArray(dailyTasks.value) ? dailyTasks.value : []
-    const exists = tasks.some(dailyTask => dailyTask.originalTaskId === task.id)
-    if (exists) {
-      ElMessage.warning('该任务已存在于每日待办中！')
-      return
-    }
-    
-    try {
-      const result = await copyToDaily(task.id)
-      // 重新加载每日任务列表
-      await loadDailyTasks()
-      ElMessage.success('任务已复制到每日待办！')
-    } catch (error) {
-      ElMessage.error('复制任务失败')
-    }
-  }
-
-
   // 数据加载方法
   const loadAllTasks = async (status) => {
     try {
@@ -269,36 +225,6 @@ export function useTodo() {
       allTasks.value = []
     }
   }
-
-  const loadDailyTasks = async () => {
-    try {
-      const result = await getDailyTasks()
-      // 处理API响应格式 {code, msg, data, time}
-      if (result && result.data) {
-        dailyTasks.value = Array.isArray(result.data) ? result.data : result.data.records || []
-      } else {
-        dailyTasks.value = result.records || result || []
-      }
-    } catch (error) {
-      console.error('加载每日任务失败:', error)
-      dailyTasks.value = []
-    }
-  }
-
-  const loadUserPoints = async () => {
-    try {
-      const result = await getUserPoints()
-      // 处理API响应格式
-      if (result && result.data) {
-        userPoints.value = result.data.totalPoints || 0
-      } else {
-        userPoints.value =  0
-      }
-    } catch (error) {
-      console.error('加载用户积分失败:', error)
-    }
-  }
-
 
   // 加载日视图数据
   const loadDayView = async () => {
@@ -388,25 +314,17 @@ export function useTodo() {
   const initData = async () => {
     await Promise.all([
       loadAllTasks(0),
-      loadDailyTasks(),
-      loadUserPoints(),
     ])
   }
 
   return {
-    // 状态
-    userInfo,
-    userPoints,
     activeNav,
     allTasks,
-    dailyTasks,
     taskFilter,
     rewardsList,
-    myRewards,
     activeView,
     showAddTaskDialog,
     showEditTaskDialog,
-    showAddRewardDialog,
     editingTask,
     editTaskReadOnly,
     pendingCount,
@@ -436,10 +354,7 @@ export function useTodo() {
     handleViewTask,
     handleUpdateTask,
     handleDeleteTask,
-    handleCopyToDaily,
     loadAllTasks,
-    loadDailyTasks,
-    loadUserPoints,
     loadViewData,
     initData,
   }

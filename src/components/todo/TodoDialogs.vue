@@ -40,9 +40,6 @@
           </el-checkbox>
         </div>
       </el-form-item>
-      <el-form-item label="积分奖励">
-        <el-input-number v-model="newTask.points" :min="1" :max="100" />
-      </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="handleCancelAddTask">取消</el-button>
@@ -66,9 +63,6 @@
           <el-option label="学习计划" value="study" />
           <el-option label="健康习惯" value="health" />
         </el-select>
-      </el-form-item>
-      <el-form-item label="积分奖励">
-        <el-input-number v-model="editTaskForm.points" :min="1" :max="100" />
       </el-form-item>
       <el-form-item label="截止时间">
         <el-date-picker
@@ -177,7 +171,6 @@ watch(showEditTaskDialog, (value) => {
 const newTask = ref({
   content: '',
   type: 'work',
-  points: 10,
   deadline: '',
   targetCount: 1,
   isDailyLimit: 0
@@ -187,7 +180,6 @@ const editTaskForm = ref({
   id: null,
   content: '',
   type: '',
-  points: 10,
   deadline: '',
   targetCount: 1,
   isDailyLimit: 0
