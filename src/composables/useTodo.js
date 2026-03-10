@@ -93,8 +93,7 @@ export function useTodo() {
         
         if (task.completedCount >= task.targetCount) {
           task.status = 1
-          userPoints.value += task.points
-          ElMessage.success(`任务已全部完成！获得 ${task.points} 积分！${task.encouragement}`)
+          ElMessage.success("任务已全部完成！")
         } else {
           ElMessage.success(`进度 +1！还需完成 ${task.targetCount - task.completedCount} 次`)
         }

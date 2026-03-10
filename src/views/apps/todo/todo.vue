@@ -2,7 +2,6 @@
   <div class="todo-container">
     <!-- 侧边栏导航 -->
     <TodoSidebar 
-      :user-points="userPoints"
       :active-nav="activeNav"
       @nav-change="handleNavChange"
     />
@@ -77,7 +76,6 @@ const router = useRouter()
 // 使用组合式函数
 const {
   // 状态
-  userPoints,
   activeNav,
   allTasks,
   taskFilter,
