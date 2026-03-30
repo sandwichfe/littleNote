@@ -1,6 +1,5 @@
 import { LittleNoteRequest } from "./request";
 
-// 定义Todo相关接口
 export interface Task {
   id?: number;
   title: string;
@@ -14,10 +13,14 @@ export interface Task {
   updateTime?: string;
   lastCompleteTime?: string;
   isDailyLimit?: number;
-  status?: 0 | 1; // 0-未完成, 1-已完成
+  status?: 0 | 1;
 }
 
-// 获取任务列表
+export interface TaskCounts {
+  pendingCount: number;
+  completedCount: number;
+}
+
 export function getTasks(params: any = {}): Promise<any> {
   const defaultParams = {
     pageNum: 1,
@@ -32,7 +35,13 @@ export function getTasks(params: any = {}): Promise<any> {
   });
 }
 
-// 添加任务
+export function getTaskCounts(): Promise<any> {
+  return LittleNoteRequest({
+    method: 'get',
+    url: '/todo/tasks/counts'
+  });
+}
+
 export function addTask(task: Partial<Task>): Promise<any> {
   return LittleNoteRequest({
     method: 'post',
@@ -41,7 +50,6 @@ export function addTask(task: Partial<Task>): Promise<any> {
   });
 }
 
-// 更新任务
 export function updateTask(id: number, task: Partial<Task>): Promise<any> {
   return LittleNoteRequest({
     method: 'put',
@@ -50,7 +58,6 @@ export function updateTask(id: number, task: Partial<Task>): Promise<any> {
   });
 }
 
-// 删除任务
 export function deleteTask(id: number): Promise<any> {
   return LittleNoteRequest({
     method: 'delete',
@@ -58,7 +65,6 @@ export function deleteTask(id: number): Promise<any> {
   });
 }
 
-// 完成任务一次
 export function completeTask(id: number): Promise<any> {
   return LittleNoteRequest({
     method: 'post',
@@ -66,7 +72,6 @@ export function completeTask(id: number): Promise<any> {
   });
 }
 
-// 日视图 - 按日期查询任务时间线
 export function getDayView(date: string): Promise<any> {
   return LittleNoteRequest({
     method: 'post',
@@ -75,7 +80,6 @@ export function getDayView(date: string): Promise<any> {
   });
 }
 
-// 周视图 - 按周查询任务统计
 export function getWeekView(year: number, week: number): Promise<any> {
   return LittleNoteRequest({
     method: 'post',
@@ -84,7 +88,6 @@ export function getWeekView(year: number, week: number): Promise<any> {
   });
 }
 
-// 月视图 - 按月查询任务日历
 export function getMonthView(year: number, month: number): Promise<any> {
   return LittleNoteRequest({
     method: 'post',
