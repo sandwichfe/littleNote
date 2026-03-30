@@ -15,7 +15,6 @@
       </div>
     </div>
 
-    <!-- 日视图 -->
     <div v-if="activeView === 'day'" class="day-view">
       <div class="view-toolbar">
         <el-button circle size="small" @click="shiftDay(-1)">
@@ -68,14 +67,11 @@
                 >
                   {{ getTaskTypeLabel(task.type || task.taskType) }}
                 </el-tag>
-                <span
-                  v-if="task.targetCount > 1"
-                  class="task-progress"
-                >
+                <span v-if="task.targetCount > 1" class="task-progress">
                   {{ task.completedCount }}/{{ task.targetCount }}
                 </span>
               </div>
-              <div v-if="!hour.tasks || hour.tasks.length === 0" class="empty-slot">—</div>
+              <div v-if="!hour.tasks || hour.tasks.length === 0" class="empty-slot">-</div>
             </div>
           </div>
         </template>
@@ -83,7 +79,6 @@
       </div>
     </div>
 
-    <!-- 周视图 -->
     <div v-if="activeView === 'week'" class="week-view">
       <div class="view-toolbar">
         <el-button circle size="small" @click="shiftWeek(-1)">
@@ -99,7 +94,7 @@
             class="year-picker"
             @update:model-value="handleYearChange"
           />
-          <span class="picker-label">年 第</span>
+          <span class="picker-label">年</span>
           <el-input-number
             :model-value="selectedWeek"
             :min="1"
@@ -124,28 +119,93 @@
         </div>
       </div>
 
-      <div v-loading="loading" class="week-grid">
-        <div
-          v-for="day in weekDays"
-          :key="day.date"
-          class="week-day"
-          :class="{ 'is-today': day.date === today }"
-          @click="$emit('view-change', 'day'); $emit('date-change', day.date)"
-        >
-          <div class="day-header">{{ day.label }}</div>
-          <div class="day-date">{{ day.date ? day.date.slice(5) : '' }}</div>
-          <div class="day-tasks-count">
-            <span class="count-num">{{ day.taskCount }}</span>
-            <span class="count-label">个任务</span>
+      <div v-loading="loading" class="week-board">
+        <div class="week-grid-header">
+          <div class="week-corner">
+            <span class="week-title">{{ viewSummary.weekLabel || `${selectedYear} 年第 ${selectedWeek} 周` }}</span>
+            <span class="week-subtitle">按时间查看本周任务</span>
           </div>
-          <div v-if="day.completedCount > 0" class="day-completed">
-            已完成 {{ day.completedCount }}
+          <button
+            v-for="day in weekDays"
+            :key="day.date"
+            type="button"
+            class="week-day-header"
+            :class="{ 'is-today': day.date === today }"
+            @click="openDayDetail(day.date)"
+          >
+            <span class="week-day-label">{{ day.label }}</span>
+            <span class="week-day-date">{{ formatHeaderDate(day.date) }}</span>
+            <span class="week-day-meta">{{ day.taskCount }} 项</span>
+          </button>
+        </div>
+
+        <div v-if="weekDays.length > 0" class="week-grid-body">
+          <div class="time-column">
+            <div class="all-day-label">全天</div>
+            <div
+              v-for="hour in weekHours"
+              :key="hour"
+              class="time-axis-label"
+            >
+              {{ formatHourLabel(hour) }}
+            </div>
+          </div>
+
+          <div class="week-day-columns">
+            <div
+              v-for="day in weekDays"
+              :key="day.date"
+              class="week-day-column"
+              :class="{ 'is-today': day.date === today }"
+            >
+              <div class="all-day-cell" @click="openDayDetail(day.date)">
+                <template v-if="getAllDayTasks(day).length">
+                  <div
+                    v-for="task in getAllDayTasks(day)"
+                    :key="task.id"
+                    class="week-task-chip all-day-chip"
+                    :class="[task.type || task.taskType, { 'is-completed': task.status === 1 }]"
+                  >
+                    <span class="task-chip-title">{{ task.content }}</span>
+                    <span class="task-chip-meta">全天</span>
+                  </div>
+                </template>
+                <div v-else class="all-day-placeholder">无全天任务</div>
+              </div>
+
+              <div
+                v-for="hour in weekHours"
+                :key="`${day.date}-${hour}`"
+                class="time-cell"
+                @click="openDayDetail(day.date)"
+              >
+                <div class="time-cell-track" />
+                <template v-if="getTasksForHour(day, hour).length">
+                  <div
+                    v-for="task in getTasksForHour(day, hour)"
+                    :key="task.id"
+                    class="week-task-chip"
+                    :class="[task.type || task.taskType, { 'is-completed': task.status === 1 }]"
+                  >
+                    <div class="task-chip-top">
+                      <span class="task-chip-title">{{ task.content }}</span>
+                      <span class="task-chip-time">{{ getTaskTimeLabel(task) }}</span>
+                    </div>
+                    <div class="task-chip-bottom">
+                      <span>{{ getTaskTypeLabel(task.type || task.taskType) }}</span>
+                      <span v-if="task.targetCount > 1">{{ task.completedCount }}/{{ task.targetCount }}</span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
           </div>
         </div>
+
+        <el-empty v-else description="本周暂无任务" :image-size="80" />
       </div>
     </div>
 
-    <!-- 月视图 -->
     <div v-if="activeView === 'month'" class="month-view">
       <div class="view-toolbar">
         <el-button circle size="small" @click="shiftMonth(-1)">
@@ -178,6 +238,8 @@
         </el-button>
         <el-button size="small" @click="goCurrentMonth">本月</el-button>
         <div class="view-stats">
+          <span v-if="viewSummary.monthLabel" class="stat-item range">{{ viewSummary.monthLabel }}</span>
+          <span class="stat-divider">|</span>
           <span class="stat-item">共 {{ viewSummary.taskTotal }} 个任务</span>
           <span class="stat-divider">|</span>
           <span class="stat-item completed">已完成 {{ viewSummary.completedTotal }}</span>
@@ -186,34 +248,48 @@
 
       <div v-loading="loading" class="month-calendar">
         <div class="calendar-header">
-          <div v-for="day in ['一', '二', '三', '四', '五', '六', '日']" :key="day" class="day-name">
+          <div v-for="day in monthWeekLabels" :key="day" class="day-name">
             {{ day }}
           </div>
         </div>
+
         <div class="calendar-body">
-          <!-- 月初偏移占位 -->
           <div
-            v-for="n in firstDayOffset"
-            :key="'offset-' + n"
-            class="calendar-date empty"
-          />
-          <div
-            v-for="date in monthDates"
-            :key="date.date"
+            v-for="cell in monthCalendarCells"
+            :key="cell.key"
             class="calendar-date"
             :class="{
-              'has-tasks': date.taskCount > 0,
-              'is-today': date.date === today
+              empty: cell.empty,
+              'has-tasks': !cell.empty && (cell.taskCount || 0) > 0,
+              'is-today': !cell.empty && cell.date === today
             }"
-            @click="$emit('view-change', 'day'); $emit('date-change', date.date)"
+            @click="!cell.empty && openDayDetail(cell.date)"
           >
-            <div class="date-number">{{ date.day }}</div>
-            <div v-if="date.taskCount > 0" class="date-tasks">
-              {{ date.taskCount }} 个任务
-            </div>
-            <div v-if="date.completedCount > 0" class="date-completed">
-              ✓ {{ date.completedCount }}
-            </div>
+            <template v-if="!cell.empty">
+              <div class="calendar-date-head">
+                <span class="date-number">{{ cell.day }}</span>
+                <span v-if="cell.completedCount" class="date-completed">已完成 {{ cell.completedCount }}</span>
+              </div>
+
+              <div v-if="cell.tasks && cell.tasks.length" class="month-task-list">
+                <div
+                  v-for="task in getMonthPreviewTasks(cell)"
+                  :key="task.id"
+                  class="month-task-pill"
+                  :class="[task.type || task.taskType, { 'is-completed': task.status === 1 }]"
+                >
+                  <span class="month-task-time">{{ getTaskTimeLabel(task, true) }}</span>
+                  <span class="month-task-title">{{ task.content }}</span>
+                </div>
+                <div v-if="cell.tasks.length > monthPreviewLimit" class="month-more">
+                  +{{ cell.tasks.length - monthPreviewLimit }} 项
+                </div>
+              </div>
+
+              <div v-else class="month-empty-state">
+                <span>暂无任务</span>
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -234,9 +310,20 @@ interface ViewSummary {
   completedTotal: number
 }
 
+interface TaskItem {
+  id: number | string
+  content: string
+  deadline?: string
+  status?: number
+  taskType?: string
+  type?: string
+  targetCount?: number
+  completedCount?: number
+}
+
 interface HourSlot {
   time: string
-  tasks: any[]
+  tasks: TaskItem[]
 }
 
 interface WeekDay {
@@ -244,7 +331,7 @@ interface WeekDay {
   label: string
   taskCount: number
   completedCount?: number
-  tasks?: any[]
+  tasks?: TaskItem[]
 }
 
 interface MonthDate {
@@ -253,7 +340,15 @@ interface MonthDate {
   taskCount: number
   completedCount?: number
   weekDay?: string
+  tasks?: TaskItem[]
 }
+
+interface EmptyMonthCell {
+  key: string
+  empty: true
+}
+
+type MonthCalendarCell = (MonthDate & { key: string; empty?: false }) | EmptyMonthCell
 
 const props = defineProps<{
   activeView: 'day' | 'week' | 'month'
@@ -284,24 +379,70 @@ const viewTypes = [
   { key: 'month', label: '月视图' }
 ]
 
-const today = new Date().toISOString().split('T')[0]
+const monthWeekLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+const monthPreviewLimit = 3
+const weekStartHour = 6
+const weekEndHour = 22
 
-// 日视图切换天
-const shiftDay = (offset: number) => {
-  const d = new Date(props.selectedDate)
-  d.setDate(d.getDate() + offset)
-  emit('date-change', d.toISOString().split('T')[0])
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
-// 周视图切换周
+const parseLocalDate = (dateString: string) => {
+  const [year, month, day] = dateString.split('-').map(Number)
+  return new Date(year, (month || 1) - 1, day || 1)
+}
+
+const today = formatLocalDate(new Date())
+
+const weekHours = computed(() =>
+  Array.from({ length: weekEndHour - weekStartHour + 1 }, (_, index) => weekStartHour + index)
+)
+
+const firstDayOffset = computed(() => {
+  const firstDay = new Date(props.selectedYear, props.selectedMonth - 1, 1).getDay()
+  return firstDay === 0 ? 6 : firstDay - 1
+})
+
+const monthCalendarCells = computed<MonthCalendarCell[]>(() => {
+  const leading: EmptyMonthCell[] = Array.from({ length: firstDayOffset.value }, (_, index) => ({
+    key: `leading-${index}`,
+    empty: true
+  }))
+
+  const dates = props.monthDates.map((date) => ({
+    ...date,
+    key: date.date,
+    empty: false as const
+  }))
+
+  const totalCells = leading.length + dates.length
+  const trailingCount = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7)
+  const trailing: EmptyMonthCell[] = Array.from({ length: trailingCount }, (_, index) => ({
+    key: `trailing-${index}`,
+    empty: true
+  }))
+
+  return [...leading, ...dates, ...trailing]
+})
+
+const shiftDay = (offset: number) => {
+  const d = parseLocalDate(props.selectedDate)
+  d.setDate(d.getDate() + offset)
+  emit('date-change', formatLocalDate(d))
+}
+
 const shiftWeek = (offset: number) => {
   let week = props.selectedWeek + offset
   let year = props.selectedYear
   if (week < 1) {
-    year--
+    year -= 1
     week = 52
   } else if (week > 52) {
-    year++
+    year += 1
     week = 1
   }
   emit('year-change', year)
@@ -328,15 +469,14 @@ const goCurrentWeek = () => {
   emit('week-change', week)
 }
 
-// 月视图切换月
 const shiftMonth = (offset: number) => {
   let month = props.selectedMonth + offset
   let year = props.selectedYear
   if (month < 1) {
-    year--
+    year -= 1
     month = 12
   } else if (month > 12) {
-    year++
+    year += 1
     month = 1
   }
   emit('year-change', year)
@@ -358,11 +498,74 @@ const goCurrentMonth = () => {
   emit('month-change', now.getMonth() + 1)
 }
 
-// 月视图 - 计算月初偏移（周一起始）
-const firstDayOffset = computed(() => {
-  const firstDay = new Date(props.selectedYear, props.selectedMonth - 1, 1).getDay()
-  return firstDay === 0 ? 6 : firstDay - 1
-})
+const openDayDetail = (date: string) => {
+  emit('view-change', 'day')
+  emit('date-change', date)
+}
+
+const parseTaskDate = (task: TaskItem) => {
+  if (!task.deadline) {
+    return null
+  }
+
+  const normalized = task.deadline.replace(' ', 'T')
+  const date = new Date(normalized)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+const sortTasksByTime = (tasks?: TaskItem[]) => {
+  return [...(tasks || [])].sort((a, b) => {
+    const aDate = parseTaskDate(a)
+    const bDate = parseTaskDate(b)
+
+    if (!aDate && !bDate) {
+      return String(a.content || '').localeCompare(String(b.content || ''))
+    }
+    if (!aDate) {
+      return -1
+    }
+    if (!bDate) {
+      return 1
+    }
+    return aDate.getTime() - bDate.getTime()
+  })
+}
+
+const getAllDayTasks = (day: WeekDay) => {
+  return sortTasksByTime(day.tasks).filter((task) => !parseTaskDate(task)).slice(0, 2)
+}
+
+const getTasksForHour = (day: WeekDay, hour: number) => {
+  return sortTasksByTime(day.tasks).filter((task) => {
+    const date = parseTaskDate(task)
+    return date ? date.getHours() === hour : false
+  })
+}
+
+const formatHourLabel = (hour: number) => `${String(hour).padStart(2, '0')}:00`
+
+const formatHeaderDate = (dateString: string) => {
+  const date = parseLocalDate(dateString)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+  return `${month}/${day}`
+}
+
+const getTaskTimeLabel = (task: TaskItem, compact = false) => {
+  const date = parseTaskDate(task)
+  if (!date) {
+    return compact ? '全天' : '未设时间'
+  }
+
+  const hh = String(date.getHours()).padStart(2, '0')
+  const mm = String(date.getMinutes()).padStart(2, '0')
+  if (compact && mm === '00') {
+    return `${hh}:00`
+  }
+  return `${hh}:${mm}`
+}
+
+const getMonthPreviewTasks = (date: MonthDate) => sortTasksByTime(date.tasks).slice(0, monthPreviewLimit)
 </script>
 
 <style scoped>
@@ -403,10 +606,10 @@ const firstDayOffset = computed(() => {
 }
 
 .section-title {
+  margin: 0;
   font-size: 28px;
   font-weight: 700;
   color: var(--todo-text, #162033);
-  margin: 0;
 }
 
 .view-buttons {
@@ -435,7 +638,6 @@ const firstDayOffset = computed(() => {
   box-shadow: 0 10px 24px rgba(148, 163, 184, 0.14);
 }
 
-/* 工具栏 */
 .view-toolbar {
   display: flex;
   align-items: center;
@@ -498,15 +700,13 @@ const firstDayOffset = computed(() => {
   color: rgba(183, 205, 214, 0.65);
 }
 
-/* 日视图 */
 .day-view,
 .week-view,
 .month-view {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  min-height: 0;
   flex: 1;
+  min-height: 0;
 }
 
 .day-schedule {
@@ -555,52 +755,64 @@ const firstDayOffset = computed(() => {
   align-items: flex-start;
 }
 
+.scheduled-task,
+.week-task-chip,
+.month-task-pill {
+  color: #607086;
+  background: rgba(244, 248, 251, 0.9);
+}
+
+.scheduled-task,
+.week-task-chip {
+  border-radius: 12px;
+}
+
 .scheduled-task {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  border-radius: 12px;
   font-size: 13px;
   line-height: 1.4;
   font-weight: 600;
-  background: rgba(244, 248, 251, 0.9);
-  color: var(--todo-text-secondary, #607086);
 }
 
-.scheduled-task.work {
-  background: rgba(96, 165, 250, 0.12);
-  color: #2563eb;
+.scheduled-task.work,
+.week-task-chip.work,
+.month-task-pill.work {
+  background: rgba(96, 165, 250, 0.18);
+  color: #1d4ed8;
 }
 
-.scheduled-task.study {
-  background: rgba(47, 180, 121, 0.12);
-  color: #20895b;
+.scheduled-task.study,
+.week-task-chip.study,
+.month-task-pill.study {
+  background: rgba(47, 180, 121, 0.18);
+  color: #1f7a53;
 }
 
-.scheduled-task.health {
-  background: rgba(245, 158, 11, 0.14);
-  color: #b7791f;
+.scheduled-task.health,
+.week-task-chip.health,
+.month-task-pill.health {
+  background: rgba(245, 158, 11, 0.2);
+  color: #a16207;
 }
 
-.scheduled-task.other {
-  background: rgba(148, 163, 184, 0.12);
-  color: #607086;
+.scheduled-task.other,
+.week-task-chip.other,
+.month-task-pill.other {
+  background: rgba(148, 163, 184, 0.16);
+  color: #475569;
+}
+
+.scheduled-task.is-completed,
+.week-task-chip.is-completed,
+.month-task-pill.is-completed {
+  opacity: 0.62;
 }
 
 .scheduled-task.is-completed {
-  background: rgba(148, 163, 184, 0.08);
-  color: #b0b8c8;
   text-decoration: line-through;
-  opacity: 0.7;
-}
-
-.scheduled-task.is-completed .task-type-tag {
-  opacity: 0.5;
-}
-
-.scheduled-task.is-completed .task-progress {
-  opacity: 0.5;
 }
 
 .task-type-tag {
@@ -620,91 +832,229 @@ const firstDayOffset = computed(() => {
   align-self: center;
 }
 
-/* 周视图 */
-.week-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 14px;
-  flex: 1;
-}
-
-.week-day {
-  padding: 18px 14px;
-  background: linear-gradient(180deg, #ffffff 0%, #fafdfd 100%);
-  border: 1px solid rgba(228, 235, 241, 0.96);
-  border-radius: 20px;
-  box-shadow: 0 10px 24px rgba(148, 163, 184, 0.12);
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.22s;
-}
-
-.week-day:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 32px rgba(148, 163, 184, 0.18);
-  border-color: rgba(137, 216, 208, 0.48);
-}
-
-.week-day.is-today {
-  border-color: var(--todo-accent, #3dc7bc);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 251, 249, 0.98));
-}
-
-.day-header {
-  font-weight: 600;
-  color: var(--todo-text, #162033);
-  margin-bottom: 4px;
-}
-
-.day-date {
-  font-size: 12px;
-  color: var(--todo-text-tertiary, #94a3b8);
-  margin-bottom: 10px;
-}
-
-.day-tasks-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--todo-accent-soft, rgba(61, 199, 188, 0.12));
-  color: var(--todo-accent-strong, #1b9c94);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.count-num {
-  font-size: 16px;
-}
-
-.count-label {
-  font-size: 12px;
-}
-
-.day-completed {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--todo-accent-strong, #1b9c94);
-}
-
-/* 月视图 */
+.week-board,
 .month-calendar {
-  padding: 10px;
-  background: linear-gradient(180deg, rgba(247, 251, 251, 0.86), rgba(255, 255, 255, 0.92));
+  padding: 14px;
   border-radius: 24px;
+  background: linear-gradient(180deg, rgba(247, 251, 251, 0.86), rgba(255, 255, 255, 0.92));
   border: 1px solid var(--todo-border, rgba(208, 220, 228, 0.92));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
   flex: 1;
   min-height: 0;
+  overflow: auto;
+}
+
+.week-grid-header {
+  display: grid;
+  grid-template-columns: 90px repeat(7, minmax(150px, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+  min-width: 1180px;
+}
+
+.week-corner,
+.week-day-header {
+  min-height: 84px;
+  padding: 14px 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(228, 235, 241, 0.96);
+}
+
+.week-corner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.week-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--todo-text, #162033);
+}
+
+.week-subtitle {
+  font-size: 12px;
+  color: var(--todo-text-tertiary, #94a3b8);
+}
+
+.week-day-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.week-day-header:hover {
+  border-color: rgba(137, 216, 208, 0.54);
+  box-shadow: 0 12px 28px rgba(148, 163, 184, 0.14);
+  transform: translateY(-1px);
+}
+
+.week-day-header.is-today {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 251, 249, 0.98));
+  border-color: var(--todo-accent, #3dc7bc);
+}
+
+.week-day-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--todo-text, #162033);
+}
+
+.week-day-date {
+  font-size: 22px;
+  font-weight: 700;
+  color: #243042;
+}
+
+.week-day-meta {
+  font-size: 12px;
+  color: var(--todo-accent-strong, #1b9c94);
+  font-weight: 600;
+}
+
+.week-grid-body {
+  display: grid;
+  grid-template-columns: 90px minmax(1090px, 1fr);
+  gap: 10px;
+  min-width: 1180px;
+}
+
+.time-column {
+  display: grid;
+  grid-template-rows: 72px repeat(17, 88px);
+  gap: 10px;
+}
+
+.all-day-label,
+.time-axis-label {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--todo-text-tertiary, #94a3b8);
+}
+
+.week-day-columns {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.week-day-column {
+  display: grid;
+  grid-template-rows: 72px repeat(17, 88px);
+  gap: 10px;
+}
+
+.all-day-cell,
+.time-cell {
+  position: relative;
+  border-radius: 18px;
+  border: 1px solid rgba(228, 235, 241, 0.96);
+  background: rgba(255, 255, 255, 0.94);
+  padding: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.all-day-cell:hover,
+.time-cell:hover {
+  border-color: rgba(137, 216, 208, 0.54);
+  box-shadow: 0 10px 24px rgba(148, 163, 184, 0.12);
+}
+
+.week-day-column.is-today .all-day-cell,
+.week-day-column.is-today .time-cell {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 252, 250, 0.96));
+}
+
+.all-day-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.all-day-placeholder {
+  margin: auto 0;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.time-cell {
   overflow-y: auto;
+}
+
+.time-cell-track {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 18px;
+  height: 1px;
+  background: rgba(226, 232, 240, 0.8);
+}
+
+.week-task-chip {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 8px 18px rgba(148, 163, 184, 0.1);
+}
+
+.week-task-chip:last-child {
+  margin-bottom: 0;
+}
+
+.all-day-chip {
+  min-height: auto;
+}
+
+.task-chip-top,
+.task-chip-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.task-chip-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.task-chip-time,
+.task-chip-meta,
+.task-chip-bottom {
+  font-size: 11px;
+  color: inherit;
+}
+
+.task-chip-bottom {
+  opacity: 0.78;
 }
 
 .calendar-header {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
+  margin-bottom: 10px;
+  min-width: 980px;
 }
 
 .day-name {
@@ -712,7 +1062,7 @@ const firstDayOffset = computed(() => {
   text-align: center;
   font-weight: 700;
   color: var(--todo-text-secondary, #607086);
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(228, 235, 241, 0.96);
   border-radius: 14px;
 }
@@ -720,21 +1070,21 @@ const firstDayOffset = computed(() => {
 .calendar-body {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 8px;
+  gap: 10px;
+  min-width: 980px;
 }
 
 .calendar-date {
-  min-height: 90px;
+  min-height: 148px;
   padding: 10px;
   border: 1px solid rgba(228, 235, 241, 0.96);
-  border-radius: 16px;
-  background: #ffffff;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 6px 16px rgba(148, 163, 184, 0.08);
   display: flex;
   flex-direction: column;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
 .calendar-date.empty {
@@ -746,13 +1096,12 @@ const firstDayOffset = computed(() => {
 
 .calendar-date:not(.empty):hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(148, 163, 184, 0.14);
+  box-shadow: 0 12px 26px rgba(148, 163, 184, 0.14);
   border-color: rgba(137, 216, 208, 0.42);
 }
 
 .calendar-date.has-tasks {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 251, 249, 0.98));
-  border-color: rgba(137, 216, 208, 0.48);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 252, 250, 0.96));
 }
 
 .calendar-date.is-today {
@@ -760,41 +1109,85 @@ const firstDayOffset = computed(() => {
   border-width: 2px;
 }
 
-.date-number {
-  font-weight: 600;
-  color: var(--todo-text, #162033);
-  font-size: 14px;
+.calendar-date-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
-.date-tasks {
-  margin-top: auto;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--todo-accent-strong, #1b9c94);
-  font-weight: 600;
+.date-number {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--todo-text, #162033);
 }
 
 .date-completed {
   font-size: 11px;
-  color: var(--todo-accent, #3dc7bc);
+  color: var(--todo-accent-strong, #1b9c94);
+  font-weight: 600;
 }
 
-/* 响应式 */
+.month-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+
+.month-task-pill {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.month-task-time {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+.month-task-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-more {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--todo-text-tertiary, #94a3b8);
+  font-weight: 600;
+}
+
+.month-empty-state {
+  margin-top: auto;
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.8);
+}
+
 @media (max-width: 1024px) {
-  .week-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .content-section {
+    padding: 22px 20px;
+    border-radius: 24px;
   }
 }
 
 @media (max-width: 768px) {
   .content-section {
-    padding: 22px 18px;
-    border-radius: 24px;
+    padding: 20px 16px;
   }
 
   .section-header {
-    align-items: flex-start;
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .view-buttons {
@@ -805,27 +1198,23 @@ const firstDayOffset = computed(() => {
     flex: 1;
   }
 
-  .view-toolbar {
-    flex-wrap: wrap;
-  }
-
   .view-stats {
     width: 100%;
     margin-left: 0;
     margin-top: 8px;
+    flex-wrap: wrap;
   }
 
-  .week-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
+  .week-board,
   .month-calendar {
-    overflow-x: auto;
+    padding: 10px;
   }
 
+  .week-grid-header,
+  .week-grid-body,
   .calendar-header,
   .calendar-body {
-    min-width: 620px;
+    min-width: 980px;
   }
 }
 </style>
