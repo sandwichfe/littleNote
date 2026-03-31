@@ -10,6 +10,7 @@ import {
   getDayView,
   getWeekView,
   getMonthView,
+  getTaskCompletionRecords,
 } from '@/network/todo'
 import { useTaskUtils } from './useTaskUtils'
 
@@ -34,6 +35,9 @@ export function useTodo() {
   const editTaskReadOnly = ref(false)
   const pendingCount = ref(0)
   const completedCount = ref(0)
+  const selectedTask = ref(null)
+  const selectedTaskHistory = ref([])
+  const taskHistoryLoading = ref(false)
 
   const daySchedule = ref([])
   const weekDays = ref([])
@@ -69,7 +73,41 @@ export function useTodo() {
     }
   }
 
-  const loadAllTasks = async (status) => {
+  const loadTaskHistory = async (task) => {
+    if (!task?.id || Number(task.targetCount || 0) <= 1) {
+      selectedTaskHistory.value = []
+      taskHistoryLoading.value = false
+      return
+    }
+
+    taskHistoryLoading.value = true
+    try {
+      const result = await getTaskCompletionRecords(task.id)
+      const data = result?.data || result || []
+      selectedTaskHistory.value = Array.isArray(data) ? data : []
+    } catch (error) {
+      console.error('Failed to load task history:', error)
+      selectedTaskHistory.value = []
+      ElMessage.error('加载任务完成记录失败')
+    } finally {
+      taskHistoryLoading.value = false
+    }
+  }
+
+  const selectTask = async (task) => {
+    selectedTask.value = task || null
+    await loadTaskHistory(selectedTask.value)
+  }
+
+  const syncSelectedTask = async (preferredTaskId) => {
+    const preferredId = preferredTaskId ?? selectedTask.value?.id
+    const nextSelectedTask = preferredId
+      ? allTasks.value.find(task => task.id === preferredId) || null
+      : allTasks.value[0] || null
+    await selectTask(nextSelectedTask)
+  }
+
+  const loadAllTasks = async (status, preferredTaskId) => {
     try {
       const params = {}
       if (status !== undefined) {
@@ -81,17 +119,19 @@ export function useTodo() {
       } else {
         allTasks.value = result.records || result || []
       }
+      await syncSelectedTask(preferredTaskId)
     } catch (error) {
       console.error('Failed to load tasks:', error)
       allTasks.value = []
+      await selectTask(null)
     }
   }
 
-  const refreshListAndCounts = async () => {
+  const refreshListAndCounts = async (preferredTaskId) => {
     const status = taskFilter.value === 'completed' ? 1 : 0
     await Promise.all([
       loadTaskCounts(),
-      loadAllTasks(status),
+      loadAllTasks(status, preferredTaskId),
     ])
   }
 
@@ -126,25 +166,24 @@ export function useTodo() {
 
     try {
       await completeTask(task.id)
-      task.completedCount += 1
+      const nextCompletedCount = Number(task.completedCount || 0) + 1
 
-      if (task.completedCount >= task.targetCount) {
-        task.status = 1
-        ElMessage.success('Task completed')
+      if (nextCompletedCount >= task.targetCount) {
+        ElMessage.success('任务已完成')
       } else {
-        ElMessage.success(`Progress +1, remaining ${task.targetCount - task.completedCount}`)
+        ElMessage.success(`已完成 1 次，还差 ${task.targetCount - nextCompletedCount} 次`)
       }
 
-      await refreshListAndCounts()
+      await refreshListAndCounts(task.id)
     } catch (error) {
-      const msg = error.response?.data?.msg || 'Complete task failed'
+      const msg = error.response?.data?.msg || '完成任务失败'
       ElMessage.error(msg)
     }
   }
 
   const handleAddTask = async (taskData) => {
     if (!taskData.content || !taskData.type) {
-      ElMessage.warning('Please complete the task form')
+      ElMessage.warning('请完善任务内容')
       return
     }
 
@@ -160,13 +199,14 @@ export function useTodo() {
     }
 
     try {
-      await addTask(task)
+      const result = await addTask(task)
+      const createdTaskId = result?.data?.id
       showAddTaskDialog.value = false
-      ElMessage.success('Task added')
-      await refreshListAndCounts()
+      ElMessage.success('任务已添加')
+      await refreshListAndCounts(createdTaskId)
     } catch (error) {
       console.error('Failed to add task:', error)
-      ElMessage.error('Add task failed')
+      ElMessage.error('添加任务失败')
     }
   }
 
@@ -192,7 +232,7 @@ export function useTodo() {
 
   const handleUpdateTask = async (taskData) => {
     if (!taskData.content || !taskData.type) {
-      ElMessage.warning('Please complete the task form')
+      ElMessage.warning('请完善任务内容')
       return
     }
 
@@ -210,21 +250,21 @@ export function useTodo() {
       await updateTask(taskData.id, task)
       showEditTaskDialog.value = false
       editTaskReadOnly.value = false
-      ElMessage.success('Task updated')
-      await refreshListAndCounts()
+      ElMessage.success('任务已更新')
+      await refreshListAndCounts(taskData.id)
     } catch (error) {
       console.error('Failed to update task:', error)
-      ElMessage.error('Update task failed')
+      ElMessage.error('更新任务失败')
     }
   }
 
   const handleDeleteTask = async (taskId) => {
     try {
       await deleteTask(taskId)
-      ElMessage.success('Task deleted')
+      ElMessage.success('任务已删除')
       await refreshListAndCounts()
     } catch (error) {
-      ElMessage.error('Delete task failed')
+      ElMessage.error('删除任务失败')
     }
   }
 
@@ -332,6 +372,9 @@ export function useTodo() {
     editTaskReadOnly,
     pendingCount,
     completedCount,
+    selectedTask,
+    selectedTaskHistory,
+    taskHistoryLoading,
     daySchedule,
     weekDays,
     monthDates,
@@ -349,6 +392,7 @@ export function useTodo() {
     setActiveNav,
     setActiveView,
     setTaskFilter,
+    selectTask,
     incrementTaskCount,
     handleAddTask,
     handleEditTask,

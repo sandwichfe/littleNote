@@ -1,31 +1,31 @@
 <template>
   <div class="todo-container">
-    <!-- 侧边栏导航 -->
-    <TodoSidebar 
+    <TodoSidebar
       :active-nav="activeNav"
       @nav-change="handleNavChange"
     />
 
-    <!-- 主内容区域 -->
     <main class="todo-main">
       <div class="todo-main-inner">
-
-        <!-- 待办列表 -->
         <TodoList
           v-if="activeNav === 'todoList'"
           :all-tasks="allTasks"
           :task-filter="taskFilter"
           :pending-count="pendingCount"
           :completed-count="completedCount"
+          :selected-task="selectedTask"
+          :selected-task-id="selectedTask?.id"
+          :completion-records="selectedTaskHistory"
+          :history-loading="taskHistoryLoading"
           @show-add-task="showAddTaskDialog = true"
           @filter-change="setTaskFilter"
+          @select-task="selectTask"
           @increment-task="incrementTaskCount"
           @edit-task="handleEditTask"
           @view-task="handleViewTask"
           @delete-task="handleDeleteTask"
         />
 
-        <!-- 任务视图 -->
         <TaskViews
           v-if="activeNav === 'taskViews'"
           :active-view="activeView"
@@ -47,8 +47,7 @@
       </div>
     </main>
 
-    <!-- 对话框组件 -->
-    <TodoDialogs 
+    <TodoDialogs
       v-model:show-add-task-dialog="showAddTaskDialog"
       v-model:show-edit-task-dialog="showEditTaskDialog"
       v-model:show-add-reward-dialog="showAddRewardDialog"
@@ -73,9 +72,7 @@ import { useTodo } from '@/composables/useTodo.js'
 const route = useRoute()
 const router = useRouter()
 
-// 使用组合式函数
 const {
-  // 状态
   activeNav,
   allTasks,
   taskFilter,
@@ -96,23 +93,24 @@ const {
   editTaskReadOnly,
   pendingCount,
   completedCount,
-
-  // 方法
+  selectedTask,
+  selectedTaskHistory,
+  taskHistoryLoading,
   setActiveNav,
   setActiveView,
+  setTaskFilter,
+  selectTask,
   incrementTaskCount,
   handleAddTask,
   handleEditTask,
   handleViewTask,
   handleUpdateTask,
-  setTaskFilter,
   handleDeleteTask,
   handleAddReward,
   loadViewData,
   initData
 } = useTodo()
 
-// 视图选择器事件处理
 const handleDateChange = async (date) => {
   viewSelectedDate.value = date
   await loadViewData()
@@ -134,7 +132,7 @@ const handleMonthChange = async (month) => {
 
 const syncActiveNavWithRoute = async (section) => {
   const nav = typeof section === 'string' && section.length ? section : 'todoList'
-  if (nav === activeNav.value ) {
+  if (nav === activeNav.value) {
     return
   }
   await setActiveNav(nav)
@@ -192,12 +190,11 @@ watch(
   overflow: hidden;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .todo-container {
     flex-direction: column;
   }
-  
+
   .todo-main {
     padding: 16px;
   }

@@ -16,6 +16,13 @@ export interface Task {
   status?: 0 | 1;
 }
 
+export interface TaskCompletionRecord {
+  id: number;
+  taskId: number;
+  completedSequence: number;
+  completedAt: string;
+}
+
 export interface TaskCounts {
   pendingCount: number;
   completedCount: number;
@@ -69,6 +76,13 @@ export function completeTask(id: number): Promise<any> {
   return LittleNoteRequest({
     method: 'post',
     url: `/todo/tasks/${id}/complete`
+  });
+}
+
+export function getTaskCompletionRecords(id: number): Promise<any> {
+  return LittleNoteRequest({
+    method: 'get',
+    url: `/todo/tasks/${id}/completion-records`
   });
 }
 

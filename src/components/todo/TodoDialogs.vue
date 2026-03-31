@@ -31,7 +31,6 @@
         <el-input-number
             v-model="newTask.targetCount"
             :min="1"
-            :max="50"
             placeholder="需要完成的次数"
         />
         <div v-if="newTask.targetCount > 1" class="limit-toggle">
@@ -79,7 +78,7 @@
         <el-input-number
             v-model="editTaskForm.targetCount"
             :min="1"
-            :max="50"
+            :max="9999"
             placeholder="需要完成的次数"
         />
         <div v-if="editTaskForm.targetCount > 1" class="limit-toggle">
