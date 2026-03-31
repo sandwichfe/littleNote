@@ -13,13 +13,8 @@
           :task-filter="taskFilter"
           :pending-count="pendingCount"
           :completed-count="completedCount"
-          :selected-task="selectedTask"
-          :selected-task-id="selectedTask?.id"
-          :completion-records="selectedTaskHistory"
-          :history-loading="taskHistoryLoading"
           @show-add-task="showAddTaskDialog = true"
           @filter-change="setTaskFilter"
-          @select-task="selectTask"
           @increment-task="incrementTaskCount"
           @edit-task="handleEditTask"
           @view-task="handleViewTask"
@@ -50,9 +45,12 @@
     <TodoDialogs
       v-model:show-add-task-dialog="showAddTaskDialog"
       v-model:show-edit-task-dialog="showEditTaskDialog"
+      v-model:show-view-task-dialog="showViewTaskDialog"
       v-model:show-add-reward-dialog="showAddRewardDialog"
       :editing-task="editingTask"
-      :edit-task-read-only="editTaskReadOnly"
+      :viewing-task="viewingTask"
+      :completion-records="selectedTaskHistory"
+      :history-loading="taskHistoryLoading"
       @add-task="handleAddTask"
       @update-task="handleUpdateTask"
       @add-reward="handleAddReward"
@@ -88,18 +86,17 @@ const {
   viewLoading,
   showAddTaskDialog,
   showEditTaskDialog,
+  showViewTaskDialog,
   showAddRewardDialog,
   editingTask,
-  editTaskReadOnly,
+  viewingTask,
   pendingCount,
   completedCount,
-  selectedTask,
   selectedTaskHistory,
   taskHistoryLoading,
   setActiveNav,
   setActiveView,
   setTaskFilter,
-  selectTask,
   incrementTaskCount,
   handleAddTask,
   handleEditTask,

@@ -30,12 +30,13 @@ export function useTodo() {
   const activeView = ref('day')
   const showAddTaskDialog = ref(false)
   const showEditTaskDialog = ref(false)
+  const showViewTaskDialog = ref(false)
   const showAddRewardDialog = ref(false)
   const editingTask = ref(null)
+  const viewingTask = ref(null)
   const editTaskReadOnly = ref(false)
   const pendingCount = ref(0)
   const completedCount = ref(0)
-  const selectedTask = ref(null)
   const selectedTaskHistory = ref([])
   const taskHistoryLoading = ref(false)
 
@@ -59,6 +60,14 @@ export function useTodo() {
   const viewLoading = ref(false)
 
   const { getTaskTypeColor, getTaskTypeLabel, formatDate } = useTaskUtils()
+
+  const normalizeTask = (task) => task
+    ? {
+        ...task,
+        deadline: task.deadline || '',
+        type: task.taskType || task.type,
+      }
+    : null
 
   const loadTaskCounts = async () => {
     try {
@@ -94,20 +103,7 @@ export function useTodo() {
     }
   }
 
-  const selectTask = async (task) => {
-    selectedTask.value = task || null
-    await loadTaskHistory(selectedTask.value)
-  }
-
-  const syncSelectedTask = async (preferredTaskId) => {
-    const preferredId = preferredTaskId ?? selectedTask.value?.id
-    const nextSelectedTask = preferredId
-      ? allTasks.value.find(task => task.id === preferredId) || null
-      : allTasks.value[0] || null
-    await selectTask(nextSelectedTask)
-  }
-
-  const loadAllTasks = async (status, preferredTaskId) => {
+  const loadAllTasks = async (status) => {
     try {
       const params = {}
       if (status !== undefined) {
@@ -119,19 +115,17 @@ export function useTodo() {
       } else {
         allTasks.value = result.records || result || []
       }
-      await syncSelectedTask(preferredTaskId)
     } catch (error) {
       console.error('Failed to load tasks:', error)
       allTasks.value = []
-      await selectTask(null)
     }
   }
 
-  const refreshListAndCounts = async (preferredTaskId) => {
+  const refreshListAndCounts = async () => {
     const status = taskFilter.value === 'completed' ? 1 : 0
     await Promise.all([
       loadTaskCounts(),
-      loadAllTasks(status, preferredTaskId),
+      loadAllTasks(status),
     ])
   }
 
@@ -174,7 +168,12 @@ export function useTodo() {
         ElMessage.success(`已完成 1 次，还差 ${task.targetCount - nextCompletedCount} 次`)
       }
 
-      await refreshListAndCounts(task.id)
+      await refreshListAndCounts()
+      if (showViewTaskDialog.value && viewingTask.value?.id === task.id) {
+        const latestTask = allTasks.value.find(item => item.id === task.id)
+        viewingTask.value = normalizeTask(latestTask || { ...task, completedCount: nextCompletedCount })
+        await loadTaskHistory(viewingTask.value)
+      }
     } catch (error) {
       const msg = error.response?.data?.msg || '完成任务失败'
       ElMessage.error(msg)
@@ -199,11 +198,10 @@ export function useTodo() {
     }
 
     try {
-      const result = await addTask(task)
-      const createdTaskId = result?.data?.id
+      await addTask(task)
       showAddTaskDialog.value = false
       ElMessage.success('任务已添加')
-      await refreshListAndCounts(createdTaskId)
+      await refreshListAndCounts()
     } catch (error) {
       console.error('Failed to add task:', error)
       ElMessage.error('添加任务失败')
@@ -211,23 +209,15 @@ export function useTodo() {
   }
 
   const handleEditTask = (task) => {
-    editingTask.value = {
-      ...task,
-      deadline: task.deadline || '',
-      type: task.taskType || task.type,
-    }
+    editingTask.value = normalizeTask(task)
     editTaskReadOnly.value = false
     showEditTaskDialog.value = true
   }
 
-  const handleViewTask = (task) => {
-    editingTask.value = {
-      ...task,
-      deadline: task.deadline || '',
-      type: task.taskType || task.type,
-    }
-    editTaskReadOnly.value = true
-    showEditTaskDialog.value = true
+  const handleViewTask = async (task) => {
+    viewingTask.value = normalizeTask(task)
+    showViewTaskDialog.value = true
+    await loadTaskHistory(viewingTask.value)
   }
 
   const handleUpdateTask = async (taskData) => {
@@ -251,7 +241,12 @@ export function useTodo() {
       showEditTaskDialog.value = false
       editTaskReadOnly.value = false
       ElMessage.success('任务已更新')
-      await refreshListAndCounts(taskData.id)
+      await refreshListAndCounts()
+      if (showViewTaskDialog.value && viewingTask.value?.id === taskData.id) {
+        const latestTask = allTasks.value.find(item => item.id === taskData.id)
+        viewingTask.value = normalizeTask(latestTask || { ...viewingTask.value, ...taskData })
+        await loadTaskHistory(viewingTask.value)
+      }
     } catch (error) {
       console.error('Failed to update task:', error)
       ElMessage.error('更新任务失败')
@@ -261,6 +256,11 @@ export function useTodo() {
   const handleDeleteTask = async (taskId) => {
     try {
       await deleteTask(taskId)
+      if (viewingTask.value?.id === taskId) {
+        showViewTaskDialog.value = false
+        viewingTask.value = null
+        selectedTaskHistory.value = []
+      }
       ElMessage.success('任务已删除')
       await refreshListAndCounts()
     } catch (error) {
@@ -367,12 +367,13 @@ export function useTodo() {
     activeView,
     showAddTaskDialog,
     showEditTaskDialog,
+    showViewTaskDialog,
     showAddRewardDialog,
     editingTask,
+    viewingTask,
     editTaskReadOnly,
     pendingCount,
     completedCount,
-    selectedTask,
     selectedTaskHistory,
     taskHistoryLoading,
     daySchedule,
@@ -392,7 +393,6 @@ export function useTodo() {
     setActiveNav,
     setActiveView,
     setTaskFilter,
-    selectTask,
     incrementTaskCount,
     handleAddTask,
     handleEditTask,
