@@ -86,6 +86,18 @@ export function getTaskCompletionRecords(id: number): Promise<any> {
   });
 }
 
+export function updateTaskCompletionRecord(taskId: number, recordId: number, completedAt: string): Promise<any> {
+  return LittleNoteRequest({
+    method: 'post',
+    url: '/todo/tasks/completion-record/update',
+    data: {
+      taskId,
+      id: recordId,
+      completedAt
+    }
+  });
+}
+
 export function getDayView(date: string): Promise<any> {
   return LittleNoteRequest({
     method: 'post',

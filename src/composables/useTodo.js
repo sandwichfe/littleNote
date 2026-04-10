@@ -11,6 +11,7 @@ import {
   getWeekView,
   getMonthView,
   getTaskCompletionRecords,
+  updateTaskCompletionRecord,
 } from '@/network/todo'
 import { useTaskUtils } from './useTaskUtils'
 
@@ -268,6 +269,27 @@ export function useTodo() {
     }
   }
 
+  const handleUpdateCompletionRecord = async ({ taskId, recordId, completedAt }) => {
+    if (!taskId || !recordId || !completedAt) {
+      ElMessage.warning('请先选择有效的完成时间')
+      return
+    }
+
+    try {
+      await updateTaskCompletionRecord(taskId, recordId, completedAt)
+      ElMessage.success('完成记录已更新')
+      await refreshListAndCounts()
+      if (showViewTaskDialog.value && viewingTask.value?.id === taskId) {
+        const latestTask = allTasks.value.find(item => item.id === taskId)
+        viewingTask.value = normalizeTask(latestTask || viewingTask.value)
+        await loadTaskHistory(viewingTask.value)
+      }
+    } catch (error) {
+      const msg = error.response?.data?.msg || '更新完成记录失败'
+      ElMessage.error(msg)
+    }
+  }
+
   const handleAddReward = () => {
     showAddRewardDialog.value = false
   }
@@ -398,6 +420,7 @@ export function useTodo() {
     handleEditTask,
     handleViewTask,
     handleUpdateTask,
+    handleUpdateCompletionRecord,
     handleDeleteTask,
     handleAddReward,
     loadTaskCounts,

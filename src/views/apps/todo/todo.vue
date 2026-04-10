@@ -53,6 +53,7 @@
       :history-loading="taskHistoryLoading"
       @add-task="handleAddTask"
       @update-task="handleUpdateTask"
+      @update-completion-record="handleUpdateCompletionRecord"
       @add-reward="handleAddReward"
     />
   </div>
@@ -102,6 +103,7 @@ const {
   handleEditTask,
   handleViewTask,
   handleUpdateTask,
+  handleUpdateCompletionRecord,
   handleDeleteTask,
   handleAddReward,
   loadViewData,

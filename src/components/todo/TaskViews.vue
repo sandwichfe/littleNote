@@ -88,7 +88,7 @@
           <el-input-number
             :model-value="selectedYear"
             :min="2020"
-            :max="2099"
+            :max="9999"
             size="small"
             controls-position="right"
             class="year-picker"
@@ -98,7 +98,7 @@
           <el-input-number
             :model-value="selectedWeek"
             :min="1"
-            :max="53"
+            :max="999"
             size="small"
             controls-position="right"
             class="week-num-picker"
@@ -215,7 +215,7 @@
           <el-input-number
             :model-value="selectedYear"
             :min="2020"
-            :max="2099"
+            :max="9999"
             size="small"
             controls-position="right"
             class="year-picker"

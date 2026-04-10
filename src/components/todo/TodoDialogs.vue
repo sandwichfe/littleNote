@@ -179,7 +179,17 @@
               >
                 <div class="timeline-item-card">
                   <strong>第 {{ record.completedSequence }} 次完成</strong>
-                  <span>{{ formatFriendlyRecordTime(record.completedAt) }}</span>
+                  <div class="timeline-item-main">
+                    <span>{{ formatFriendlyRecordTime(record.completedAt) }}</span>
+                    <el-button
+                      link
+                      type="primary"
+                      class="timeline-edit-btn"
+                      @click="handleOpenEditCompletionDialog(record)"
+                    >
+                      编辑
+                    </el-button>
+                  </div>
                 </div>
               </el-timeline-item>
             </el-timeline>
@@ -192,10 +202,36 @@
       <el-button @click="showViewTaskDialog = false">关闭</el-button>
     </template>
   </el-dialog>
+
+  <el-dialog
+    v-model="showEditCompletionDialog"
+    title="编辑完成时间"
+    width="480px"
+    class="todo-dialog"
+  >
+    <el-form :model="editCompletionForm" label-width="88px" class="todo-dialog-form">
+      <el-form-item label="完成时间">
+        <el-date-picker
+          v-model="editCompletionForm.completedAt"
+          type="datetime"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          format="YYYY-MM-DD HH:mm"
+          placeholder="请选择完成时间"
+          clearable
+          class="full-width"
+        />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="handleCancelEditCompletion">取消</el-button>
+      <el-button type="primary" @click="handleConfirmEditCompletion">确定</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script setup>
 import { computed, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useTaskUtils } from '@/composables/useTaskUtils'
 
 const props = defineProps({
@@ -240,7 +276,8 @@ const emit = defineEmits([
   'update:showViewTaskDialog',
   'add-task',
   'add-reward',
-  'update-task'
+  'update-task',
+  'update-completion-record'
 ])
 
 const { getTaskTypeColor, getTaskTypeLabel, formatDateTime } = useTaskUtils()
@@ -249,6 +286,7 @@ const showAddTaskDialog = ref(props.showAddTaskDialog)
 const showAddRewardDialog = ref(props.showAddRewardDialog)
 const showEditTaskDialog = ref(props.showEditTaskDialog)
 const showViewTaskDialog = ref(props.showViewTaskDialog)
+const showEditCompletionDialog = ref(false)
 
 const viewTask = computed(() => props.viewingTask || null)
 
@@ -280,6 +318,10 @@ watch(() => props.showEditTaskDialog, (value) => {
 
 watch(() => props.showViewTaskDialog, (value) => {
   showViewTaskDialog.value = value
+  if (!value) {
+    showEditCompletionDialog.value = false
+    resetEditCompletionForm()
+  }
 })
 
 watch(showAddTaskDialog, (value) => {
@@ -309,6 +351,12 @@ const editTaskForm = ref({
   isDailyLimit: 0
 })
 
+const editCompletionForm = ref({
+  recordId: null,
+  taskId: null,
+  completedAt: ''
+})
+
 const handleConfirmAddTask = () => {
   emit('add-task', { ...newTask.value })
   resetTaskForm()
@@ -330,6 +378,41 @@ const handleConfirmEditTask = () => {
 
 const handleCancelEditTask = () => {
   showEditTaskDialog.value = false
+}
+
+const handleOpenEditCompletionDialog = (record) => {
+  if (!viewTask.value?.id || !record?.id) {
+    return
+  }
+  editCompletionForm.value = {
+    recordId: record.id,
+    taskId: viewTask.value.id,
+    completedAt: record.completedAt || ''
+  }
+  showEditCompletionDialog.value = true
+}
+
+const handleCancelEditCompletion = () => {
+  showEditCompletionDialog.value = false
+  resetEditCompletionForm()
+}
+
+const handleConfirmEditCompletion = () => {
+  if (!editCompletionForm.value.completedAt) {
+    ElMessage.warning('请选择完成时间')
+    return
+  }
+  emit('update-completion-record', { ...editCompletionForm.value })
+  showEditCompletionDialog.value = false
+  resetEditCompletionForm()
+}
+
+const resetEditCompletionForm = () => {
+  editCompletionForm.value = {
+    recordId: null,
+    taskId: null,
+    completedAt: ''
+  }
 }
 
 const formatFriendlyRecordTime = (time) => {
@@ -700,6 +783,18 @@ const formatFriendlyRecordTime = (time) => {
 .timeline-item-card span {
   color: #607086;
   font-size: 13px;
+}
+
+.timeline-item-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.timeline-edit-btn {
+  font-size: 13px;
+  padding: 0;
 }
 
 .detail-empty {
