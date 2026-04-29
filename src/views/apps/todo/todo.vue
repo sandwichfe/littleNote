@@ -164,7 +164,7 @@ watch(
 <style scoped>
 .todo-container {
   display: flex;
-  height: 100vh;
+  height: 100%;
   width: 100%;
   overflow: hidden;
   background: linear-gradient(135deg, #f9fbff 0%, #e6f2ff 40%, #f5f7ff 100%);
@@ -223,7 +223,7 @@ watch(
   --todo-shadow-soft: 0 12px 32px rgba(148, 163, 184, 0.12);
 
   position: relative;
-  min-height: 100vh;
+  min-height: 0;
   background:
     radial-gradient(circle at 0% 0%, rgba(104, 221, 206, 0.2), transparent 32%),
     radial-gradient(circle at 100% 8%, rgba(184, 232, 255, 0.28), transparent 28%),
@@ -272,7 +272,7 @@ watch(
 @media (max-width: 768px) {
   .todo-container {
     flex-direction: column;
-    height: auto;
+    height: 100%;
     overflow: auto;
   }
 

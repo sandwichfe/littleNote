@@ -1,22 +1,15 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import ManageLayout from '../views/manage/ManageLayout.vue'
-import AppLayout from '../views/apps/AppLayout.vue'
 import Cookies from 'js-cookie'
+import { useMenuStore } from '@/store/menu'
+import AppLayout from '../views/apps/AppLayout.vue'
+import ManageLayout from '../views/manage/ManageLayout.vue'
 
-// 基础路由
 const constantRoutes: RouteRecordRaw[] = [
   {
     path: '/login',
     component: () => import('../views/login/login.vue'),
     name: 'Login',
   },
-  {
-    path: '/todo/:section?',
-    component: () => import('../views/apps/todo/todo.vue'),
-    name: 'Todo',
-  },
-
-  // 前端应用布局 - 包含 note 相关页面
   {
     path: '/',
     component: AppLayout,
@@ -36,13 +29,18 @@ const constantRoutes: RouteRecordRaw[] = [
         component: () => import('../views/apps/note/noteDetail.vue'),
         name: 'NoteDetail',
       },
+      {
+        path: 'todo/:section?',
+        component: () => import('../views/apps/todo/todo.vue'),
+        name: 'Todo',
+      },
     ],
   },
-  // 管理端布局
   {
     path: '/manage',
     component: ManageLayout,
     name: 'ManageLayout',
+    redirect: '/manage/user',
     children: [
       {
         path: 'qrcode',
@@ -78,8 +76,6 @@ const constantRoutes: RouteRecordRaw[] = [
   },
 ]
 
-
-// 动态路由映射表
 const componentMap: Record<string, () => Promise<any>> = {
   '/user': () => import('../views/manage/user.vue'),
   '/role': () => import('../views/manage/role.vue'),
@@ -98,10 +94,10 @@ const router = createRouter({
 
 export function generateRoutes(menuData) {
   const routes = []
-  
+
   function generateRoute(menu) {
     return {
-      path: menu.path.replace('/', ''), // 移除开头的斜杠
+      path: menu.path.replace('/', ''),
       name: menu.name,
       component: componentMap[menu.path],
       meta: {
@@ -112,13 +108,12 @@ export function generateRoutes(menuData) {
     }
   }
 
-  // 修改路由生成逻辑
   menuData.forEach(menu => {
     if (menu.children && menu.children.length > 0) {
       menu.children.forEach(child => {
         routes.push(generateRoute(child))
       })
-    } else if (menu.type === 1) { // 只添加类型为1的菜单
+    } else if (menu.type === 1) {
       routes.push(generateRoute(menu))
     }
   })
@@ -126,49 +121,39 @@ export function generateRoutes(menuData) {
   return routes
 }
 
-import { useMenuStore } from '@/store/menu'
-
-// 处理未登录用户的路由导航
 function handleUnauthenticatedUser(to, next, menuStore) {
-    menuStore.resetMenuState() // 清理状态
-    next('/login')
+  menuStore.resetMenuState()
+  next('/login')
 }
 
-// 处理菜单和路由加载
 async function handleMenuAndRoutes(to, next, menuStore) {
-    try {
-      if (menuStore.areRoutesAdded) {
-        next()
+  try {
+    if (menuStore.areRoutesAdded) {
+      next()
+    } else {
+      const { success } = await menuStore.fetchAndSetMenus()
+      if (success) {
+        next({ ...to, replace: true })
       } else {
-        // 异步获取菜单和路由
-        const { success } = await menuStore.fetchAndSetMenus()
-        if (success) {
-          // 使用 replace: true, 以免用户回退到之前的状态
-          next({ ...to, replace: true })
-        } else {
-          console.error('获取用户菜单失败:')
-          // 获取菜单失败，清除 token 并重定向到登录页
-          menuStore.resetMenuState()
-        }
+        console.error('获取用户菜单失败')
+        menuStore.resetMenuState()
       }
-    } catch (error) {
-      console.error('获取用户菜单失败:', error)
-      menuStore.resetMenuState()
     }
+  } catch (error) {
+    console.error('获取用户菜单失败:', error)
+    menuStore.resetMenuState()
+  }
 }
 
-// 路由守卫
 router.beforeEach(async (to, from, next) => {
   const token = Cookies.get('loginToken')
   const menuStore = useMenuStore()
 
-  // 登录页面直接放行
   if (to.path === '/login') {
     next()
     return
   }
 
-  // 前端应用路由（note 相关）不需要权限验证
   const publicRoutes = ['/note', '/noteDetail', '/todo', '/converter']
   const isPublicRoute = publicRoutes.some(route => to.path.startsWith(route)) || to.path === '/'
 
@@ -177,7 +162,6 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  // 管理端路由需要权限验证
   if (to.path.startsWith('/manage')) {
     if (!token) {
       handleUnauthenticatedUser(to, next, menuStore)
@@ -187,14 +171,7 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  // 其他情况
   next()
 })
 
 export default router
-
-
-// const router = createRouter({
-//   history: createWebHistory(import.meta.env.BASE_URL),
-//   routes
-// })
