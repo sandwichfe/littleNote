@@ -4,9 +4,6 @@
       <div class="manage-page__hero-copy">
         <p class="manage-page__eyebrow">Organization Structure</p>
         <h1 class="manage-page__hero-title">部门架构</h1>
-        <p class="manage-page__hero-description">
-          维护组织树、负责人和联系方式，让成员归属、协作路径和管理权限都更清晰。
-        </p>
       </div>
 
       <div class="manage-page__actions">
@@ -35,7 +32,7 @@
         <div class="manage-stat-card__body">
           <span class="manage-stat-card__label">全部部门</span>
           <span class="manage-stat-card__value">{{ totalDeptCount }}</span>
-          <span class="manage-stat-card__note">包含所有层级的组织节点。</span>
+
         </div>
       </article>
 
@@ -46,7 +43,7 @@
         <div class="manage-stat-card__body">
           <span class="manage-stat-card__label">正常状态</span>
           <span class="manage-stat-card__value">{{ activeDeptCount }}</span>
-          <span class="manage-stat-card__note">当前可正常使用的部门节点。</span>
+
         </div>
       </article>
 
@@ -57,7 +54,7 @@
         <div class="manage-stat-card__body">
           <span class="manage-stat-card__label">停用部门</span>
           <span class="manage-stat-card__value">{{ disabledDeptCount }}</span>
-          <span class="manage-stat-card__note">建议定期核对停用组织是否仍保留必要。</span>
+
         </div>
       </article>
 
@@ -68,7 +65,6 @@
         <div class="manage-stat-card__body">
           <span class="manage-stat-card__label">已配负责人</span>
           <span class="manage-stat-card__value">{{ assignedLeaderCount }}</span>
-          <span class="manage-stat-card__note">部门负责人已填写的节点数量。</span>
         </div>
       </article>
     </section>
@@ -77,7 +73,6 @@
       <div class="manage-surface__header">
         <div class="manage-surface__header-title">
           <h2>部门列表</h2>
-          <p>树形视图展示组织层级，支持直接维护负责人、联系方式和启停状态。</p>
         </div>
 
         <div class="manage-surface__header-side">
@@ -93,7 +88,7 @@
           row-key="id"
           :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         >
-          <el-table-column label="部门信息" min-width="260">
+          <el-table-column label="部门信息" min-width="260" class-name="manage-tree-column">
             <template #default="{ row }">
               <div class="manage-entity">
                 <span class="manage-entity__avatar">
@@ -112,7 +107,6 @@
             <template #default="{ row }">
               <div class="manage-subtle-stack">
                 <span>{{ row.leader || '--' }}</span>
-                <span class="manage-muted-text">组织对接人</span>
               </div>
             </template>
           </el-table-column>
@@ -121,7 +115,6 @@
             <template #default="{ row }">
               <div class="manage-subtle-stack">
                 <span>{{ row.phone || '--' }}</span>
-                <span class="manage-muted-text">部门沟通入口</span>
               </div>
             </template>
           </el-table-column>
@@ -130,7 +123,6 @@
             <template #default="{ row }">
               <div class="manage-subtle-stack">
                 <span>{{ row.email || '--' }}</span>
-                <span class="manage-muted-text">业务通知与归档</span>
               </div>
             </template>
           </el-table-column>

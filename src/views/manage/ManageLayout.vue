@@ -29,28 +29,28 @@ const pageCatalog = [
     path: '/manage/user',
     title: '用户管理',
     eyebrow: 'Accounts',
-    description: '集中维护成员账号、所属部门与角色分配，让账号体系清晰可控。',
+    description: '',
     icon: UserFilled
   },
   {
     path: '/manage/role',
     title: '角色权限',
     eyebrow: 'Permissions',
-    description: '配置角色职责与可访问菜单，建立更清晰的权限边界。',
+    description: '',
     icon: Connection
   },
   {
     path: '/manage/menu',
     title: '菜单结构',
     eyebrow: 'Navigation',
-    description: '梳理后台菜单层级与入口路径，让系统导航更稳定、更易扩展。',
+    description: '',
     icon: MenuIcon
   },
   {
     path: '/manage/dept',
     title: '部门组织',
     eyebrow: 'Organization',
-    description: '维护组织架构、负责人和联系方式，支撑更明确的成员归属。',
+    description: '',
     icon: OfficeBuilding
   }
 ]
@@ -284,9 +284,6 @@ watch(activeTab, (newTab) => {
             <div>
               <p class="manage-sidebar__eyebrow">Control Center</p>
               <h2 class="manage-sidebar__title">后台管理</h2>
-              <p class="manage-sidebar__description">
-                统一维护账号、权限、菜单和组织结构，让后台体验更稳定、更清爽。
-              </p>
             </div>
           </div>
 
@@ -325,58 +322,20 @@ watch(activeTab, (newTab) => {
 
                   <span class="manage-nav-item__copy">
                     <span class="manage-nav-item__title">{{ item.title }}</span>
-                    <span class="manage-nav-item__description">{{ item.description }}</span>
                   </span>
                 </button>
               </div>
             </section>
           </nav>
 
-          <div class="manage-sidebar__footer">
-            <div class="manage-sidebar__footer-card">
-              <span class="manage-sidebar__footer-label">Open Tabs</span>
-              <span class="manage-sidebar__footer-value">{{ tabs.length }}</span>
-            </div>
-
-            <div class="manage-sidebar__footer-card">
-              <span class="manage-sidebar__footer-label">Nav Entries</span>
-              <span class="manage-sidebar__footer-value">{{ navigationEntryCount }}</span>
-            </div>
-          </div>
         </div>
       </aside>
 
       <main class="manage-content">
-        <section class="manage-content__topbar">
-          <button v-if="isMobile" class="manage-mobile-toggle" type="button" @click="toggleMobileMenu">
-            <el-icon><Grid /></el-icon>
-            <span>{{ isMobileMenuVisible ? '收起菜单' : '展开菜单' }}</span>
-          </button>
-
-          <div class="manage-content__heading">
-            <p class="manage-content__eyebrow">{{ currentPageMeta.eyebrow }}</p>
-            <h1 class="manage-content__title">{{ currentPageMeta.title }}</h1>
-            <p class="manage-content__description">{{ currentPageMeta.description }}</p>
-          </div>
-
-          <div class="manage-content__meta">
-            <div class="manage-meta-card">
-              <span class="manage-meta-card__label">Active Tabs</span>
-              <span class="manage-meta-card__value">{{ tabs.length }}</span>
-              <span class="manage-meta-card__note">保留最近访问页面，切换更顺手。</span>
-            </div>
-
-            <div class="manage-meta-card">
-              <span class="manage-meta-card__label">Current Module</span>
-              <span class="manage-meta-card__value">Manage</span>
-              <span class="manage-meta-card__note">围绕系统管理做统一操作与配置。</span>
-            </div>
-          </div>
-        </section>
 
         <section class="manage-tabs-card">
           <div class="manage-tabs-shell">
-            <el-tabs v-model="activeTab" type="card" closable @tab-remove="handleTabRemove">
+            <el-tabs class="manage-tabs" v-model="activeTab" type="card" closable @tab-remove="handleTabRemove">
               <el-tab-pane v-for="tab in tabs" :key="tab.name" :label="tab.label" :name="tab.name" />
             </el-tabs>
 

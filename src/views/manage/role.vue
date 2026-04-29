@@ -4,9 +4,6 @@
       <div class="manage-page__hero-copy">
         <p class="manage-page__eyebrow">Permissions Matrix</p>
         <h1 class="manage-page__hero-title">角色权限</h1>
-        <p class="manage-page__hero-description">
-          统一维护角色职责与菜单访问范围，让权限配置更直观，也更方便后续扩展和审阅。
-        </p>
       </div>
 
       <div class="manage-page__actions">
@@ -35,7 +32,6 @@
         <div class="manage-stat-card__body">
           <span class="manage-stat-card__label">全部角色</span>
           <span class="manage-stat-card__value">{{ total }}</span>
-          <span class="manage-stat-card__note">系统中已建立的全部权限角色数量。</span>
         </div>
       </article>
 
@@ -46,7 +42,6 @@
         <div class="manage-stat-card__body">
           <span class="manage-stat-card__label">当前页展示</span>
           <span class="manage-stat-card__value">{{ roleList.length }}</span>
-          <span class="manage-stat-card__note">便于快速校对当前分页中的角色信息。</span>
         </div>
       </article>
 
@@ -57,7 +52,6 @@
         <div class="manage-stat-card__body">
           <span class="manage-stat-card__label">可分配菜单</span>
           <span class="manage-stat-card__value">{{ menuNodeCount }}</span>
-          <span class="manage-stat-card__note">当前已加载的可授权菜单节点数。</span>
         </div>
       </article>
 
@@ -68,7 +62,6 @@
         <div class="manage-stat-card__body">
           <span class="manage-stat-card__label">已写描述</span>
           <span class="manage-stat-card__value">{{ describedRoleCount }}</span>
-          <span class="manage-stat-card__note">帮助团队快速理解角色边界与职责。</span>
         </div>
       </article>
     </section>
@@ -77,7 +70,6 @@
       <div class="manage-surface__header">
         <div class="manage-surface__header-title">
           <h2>角色列表</h2>
-          <p>建议为角色补充清晰描述，并定期整理角色权限，避免职责重复或权限膨胀。</p>
         </div>
 
         <div class="manage-surface__header-side">
@@ -107,7 +99,6 @@
             <template #default="{ row }">
               <div class="manage-subtle-stack">
                 <span>{{ row.description || '暂未补充角色说明' }}</span>
-                <span class="manage-muted-text">用于帮助团队快速理解该角色职责</span>
               </div>
             </template>
           </el-table-column>

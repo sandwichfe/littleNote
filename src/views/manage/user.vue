@@ -5,9 +5,6 @@
         <div class="manage-tree-panel__header">
           <div>
             <h2 class="manage-tree-panel__title">部门筛选</h2>
-            <p class="manage-tree-panel__description">
-              通过组织树快速切换用户视图，适合按部门检视账号归属与人员分布。
-            </p>
           </div>
 
           <div class="manage-tree-panel__actions">
@@ -59,11 +56,7 @@
       <div class="manage-page">
         <header class="manage-page__hero">
           <div class="manage-page__hero-copy">
-            <p class="manage-page__eyebrow">Account Directory</p>
             <h1 class="manage-page__hero-title">用户管理</h1>
-            <p class="manage-page__hero-description">
-              集中维护成员账号、邮箱、手机和角色归属，让后台用户信息始终清晰可查。
-            </p>
           </div>
 
           <div class="manage-page__actions">
@@ -84,57 +77,10 @@
           </div>
         </header>
 
-        <section class="manage-page__stats">
-          <article class="manage-stat-card">
-            <div class="manage-stat-card__icon is-accent">
-              <el-icon><UserFilled /></el-icon>
-            </div>
-            <div class="manage-stat-card__body">
-              <span class="manage-stat-card__label">全部用户</span>
-              <span class="manage-stat-card__value">{{ total }}</span>
-              <span class="manage-stat-card__note">匹配当前部门筛选条件的全部成员数量。</span>
-            </div>
-          </article>
-
-          <article class="manage-stat-card">
-            <div class="manage-stat-card__icon is-success">
-              <el-icon><Grid /></el-icon>
-            </div>
-            <div class="manage-stat-card__body">
-              <span class="manage-stat-card__label">当前页展示</span>
-              <span class="manage-stat-card__value">{{ userList.length }}</span>
-              <span class="manage-stat-card__note">便于核对分页视图中的账号信息完整度。</span>
-            </div>
-          </article>
-
-          <article class="manage-stat-card">
-            <div class="manage-stat-card__icon is-warm">
-              <el-icon><Message /></el-icon>
-            </div>
-            <div class="manage-stat-card__body">
-              <span class="manage-stat-card__label">已填邮箱</span>
-              <span class="manage-stat-card__value">{{ emailReadyCount }}</span>
-              <span class="manage-stat-card__note">适合校验通知触达与账号找回信息。</span>
-            </div>
-          </article>
-
-          <article class="manage-stat-card">
-            <div class="manage-stat-card__icon is-slate">
-              <el-icon><Cellphone /></el-icon>
-            </div>
-            <div class="manage-stat-card__body">
-              <span class="manage-stat-card__label">已填手机</span>
-              <span class="manage-stat-card__value">{{ mobileReadyCount }}</span>
-              <span class="manage-stat-card__note">帮助补齐成员联系方式与验证渠道。</span>
-            </div>
-          </article>
-        </section>
-
         <section class="manage-surface manage-table">
           <div class="manage-surface__header">
             <div class="manage-surface__header-title">
               <h2>用户列表</h2>
-              <p>支持账号维护、角色分配和按部门浏览，适合在后台快速完成成员信息管理。</p>
             </div>
 
             <div class="manage-surface__header-side">
@@ -164,7 +110,6 @@
                 <template #default="{ row }">
                   <div class="manage-subtle-stack">
                     <span>{{ row.email || '--' }}</span>
-                    <span class="manage-muted-text">通知与登录找回</span>
                   </div>
                 </template>
               </el-table-column>
@@ -173,7 +118,6 @@
                 <template #default="{ row }">
                   <div class="manage-subtle-stack">
                     <span>{{ row.mobile || '--' }}</span>
-                    <span class="manage-muted-text">成员联系方式</span>
                   </div>
                 </template>
               </el-table-column>

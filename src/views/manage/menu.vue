@@ -4,9 +4,6 @@
       <div class="manage-page__hero-copy">
         <p class="manage-page__eyebrow">Navigation Structure</p>
         <h1 class="manage-page__hero-title">菜单结构</h1>
-        <p class="manage-page__hero-description">
-          梳理后台导航层级、访问路径和菜单类型，让系统入口更直观，也更容易维护扩展。
-        </p>
       </div>
 
       <div class="manage-page__actions">
@@ -29,24 +26,12 @@
 
     <section class="manage-page__stats">
       <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-accent">
-          <el-icon><MenuIcon /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">全部节点</span>
-          <span class="manage-stat-card__value">{{ totalMenuCount }}</span>
-          <span class="manage-stat-card__note">当前树形结构中的全部菜单与目录节点。</span>
-        </div>
-      </article>
-
-      <article class="manage-stat-card">
         <div class="manage-stat-card__icon is-success">
           <el-icon><Collection /></el-icon>
         </div>
         <div class="manage-stat-card__body">
           <span class="manage-stat-card__label">目录分组</span>
           <span class="manage-stat-card__value">{{ folderCount }}</span>
-          <span class="manage-stat-card__note">用于组织页面入口的父级导航。</span>
         </div>
       </article>
 
@@ -57,27 +42,15 @@
         <div class="manage-stat-card__body">
           <span class="manage-stat-card__label">页面菜单</span>
           <span class="manage-stat-card__value">{{ pageMenuCount }}</span>
-          <span class="manage-stat-card__note">具备实际访问路径的页面入口数量。</span>
         </div>
       </article>
 
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-slate">
-          <el-icon><Operation /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">按钮动作</span>
-          <span class="manage-stat-card__value">{{ actionCount }}</span>
-          <span class="manage-stat-card__note">可用于区分页面操作级别的动作节点。</span>
-        </div>
-      </article>
     </section>
 
     <section class="manage-surface manage-table">
       <div class="manage-surface__header">
         <div class="manage-surface__header-title">
           <h2>菜单树</h2>
-          <p>通过路径、类型和层级结构一起查看后台导航体系，避免菜单不断增长后失去秩序。</p>
         </div>
 
         <div class="manage-surface__header-side">
@@ -93,7 +66,7 @@
           row-key="id"
           :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         >
-          <el-table-column label="菜单信息" min-width="260">
+          <el-table-column label="菜单信息" min-width="260" class-name="manage-tree-column">
             <template #default="{ row }">
               <div class="manage-entity">
                 <span class="manage-entity__avatar">
@@ -114,7 +87,6 @@
             <template #default="{ row }">
               <div class="manage-subtle-stack">
                 <span>{{ row.path || '--' }}</span>
-                <span class="manage-muted-text">路由或菜单访问入口</span>
               </div>
             </template>
           </el-table-column>
@@ -212,7 +184,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Collection,
   Grid,
-  Menu as MenuIcon,
   Operation,
   Plus,
   Refresh
@@ -262,7 +233,6 @@ const isActionNode = (node) => Number(node.type) === 2
 const totalMenuCount = computed(() => countTreeNodes(menuList.value))
 const folderCount = computed(() => countMatchingNodes(menuList.value, isFolderNode))
 const pageMenuCount = computed(() => countMatchingNodes(menuList.value, isPageNode))
-const actionCount = computed(() => countMatchingNodes(menuList.value, isActionNode))
 
 const resetForm = () => {
   Object.assign(form, createDefaultForm())
@@ -405,7 +375,7 @@ const getMenuTypeMeta = (row) => {
     return {
       label: '目录',
       tag: 'info',
-      note: '承载下级菜单分组',
+      note: '',
       icon: Collection
     }
   }
@@ -414,7 +384,7 @@ const getMenuTypeMeta = (row) => {
     return {
       label: '按钮',
       tag: 'warning',
-      note: '页面级动作或权限点',
+      note: '',
       icon: Operation
     }
   }
@@ -422,7 +392,7 @@ const getMenuTypeMeta = (row) => {
   return {
     label: '菜单',
     tag: 'success',
-    note: '实际可访问页面入口',
+    note: '',
     icon: Grid
   }
 }
