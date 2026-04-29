@@ -1,15 +1,34 @@
 <template>
-  <div class="user-container">
-    <el-container style="height: 100%">
-      <!-- 左侧部门树 -->
-      <el-aside width="220px" class="dept-sidebar">
-        <div class="sidebar-header">
-          <span>部门列表</span>
-          <el-button link type="primary" @click="fetchDepts">
-            <el-icon><Refresh /></el-icon>
-          </el-button>
+  <section class="manage-page">
+    <div class="manage-tree-layout">
+      <aside class="manage-tree-panel">
+        <div class="manage-tree-panel__header">
+          <div>
+            <h2 class="manage-tree-panel__title">部门筛选</h2>
+            <p class="manage-tree-panel__description">
+              通过组织树快速切换用户视图，适合按部门检视账号归属与人员分布。
+            </p>
+          </div>
+
+          <div class="manage-tree-panel__actions">
+            <el-button circle @click="fetchDepts">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+          </div>
         </div>
-        <div class="sidebar-content">
+
+        <div class="manage-tree-panel__footer">
+          <el-button
+            :type="currentDeptId ? 'default' : 'primary'"
+            :plain="Boolean(currentDeptId)"
+            @click="clearDeptFilter"
+          >
+            全部用户
+          </el-button>
+          <span class="manage-pill">当前筛选 <strong>{{ selectedDeptName }}</strong></span>
+        </div>
+
+        <div class="manage-tree-panel__body">
           <el-tree
             ref="deptTreeRef"
             :data="allDepts"
@@ -21,150 +40,276 @@
             @node-click="handleNodeClick"
           >
             <template #default="{ node, data }">
-              <span class="custom-tree-node">
-                <el-icon v-if="data.children && data.children.length"><Folder /></el-icon>
-                <el-icon v-else><Document /></el-icon>
-                <span class="node-label">{{ node.label }}</span>
+              <span class="manage-entity" style="gap: 10px;">
+                <span class="manage-entity__avatar is-slate" style="width: 32px; height: 32px; border-radius: 12px; font-size: 14px;">
+                  <el-icon>
+                    <component :is="data.children && data.children.length ? OfficeBuilding : User" />
+                  </el-icon>
+                </span>
+                <span class="manage-entity__text">
+                  <span class="manage-entity__title" style="font-size: 14px;">{{ node.label }}</span>
+                  <span class="manage-entity__meta">{{ data.children?.length ? '组织分组' : '叶子节点' }}</span>
+                </span>
               </span>
             </template>
           </el-tree>
         </div>
-      </el-aside>
+      </aside>
 
-      <!-- 右侧用户列表 -->
-      <el-main class="user-main">
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <el-button type="primary" @click="handleCreate" class="toolbar-btn">
+      <div class="manage-page">
+        <header class="manage-page__hero">
+          <div class="manage-page__hero-copy">
+            <p class="manage-page__eyebrow">Account Directory</p>
+            <h1 class="manage-page__hero-title">用户管理</h1>
+            <p class="manage-page__hero-description">
+              集中维护成员账号、邮箱、手机和角色归属，让后台用户信息始终清晰可查。
+            </p>
+          </div>
+
+          <div class="manage-page__actions">
+            <div class="manage-page__hint">
+              <span class="manage-page__hint-label">当前部门</span>
+              <span class="manage-page__hint-value">{{ selectedDeptShortLabel }}</span>
+            </div>
+
+            <el-button class="manage-secondary-button" @click="fetchUsers">
+              <el-icon><Refresh /></el-icon>
+              刷新用户
+            </el-button>
+
+            <el-button type="primary" class="manage-primary-button" @click="handleCreate">
               <el-icon><Plus /></el-icon>
-              <span>新增用户</span>
+              新建用户
             </el-button>
           </div>
-        </div>
-        
-        <el-table :data="userList" style="width: 100%" v-loading="loading">
-          <el-table-column prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column prop="nickname" label="昵称"></el-table-column>
-          <el-table-column prop="username" label="账号"></el-table-column>
-          <el-table-column prop="email" label="邮箱"></el-table-column>
-          <el-table-column prop="mobile" label="手机号"></el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="180"></el-table-column>
-          <el-table-column label="操作" width="240">
-            <template #default="scope">
-              <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
-              <el-button size="small" type="warning" @click="handleAssignRole(scope.row)">分配角色</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        </header>
 
-        <!-- 分页组件 -->
-        <el-pagination
-          :page-size="pageSize"
-          :current-page="currentPage"
-          layout="prev, pager, next"
-          :total="total"
-          @current-change="handlePageChange"
-        />
-      </el-main>
-    </el-container>
+        <section class="manage-page__stats">
+          <article class="manage-stat-card">
+            <div class="manage-stat-card__icon is-accent">
+              <el-icon><UserFilled /></el-icon>
+            </div>
+            <div class="manage-stat-card__body">
+              <span class="manage-stat-card__label">全部用户</span>
+              <span class="manage-stat-card__value">{{ total }}</span>
+              <span class="manage-stat-card__note">匹配当前部门筛选条件的全部成员数量。</span>
+            </div>
+          </article>
 
-    <!-- 用户表单对话框 -->
-    <el-dialog v-model="dialogVisible" :title="formTitle">
-      <el-form :model="form" label-width="100px" :rules="rules" ref="formRef">
-        <el-form-item label="所属部门" prop="deptIds">
+          <article class="manage-stat-card">
+            <div class="manage-stat-card__icon is-success">
+              <el-icon><Grid /></el-icon>
+            </div>
+            <div class="manage-stat-card__body">
+              <span class="manage-stat-card__label">当前页展示</span>
+              <span class="manage-stat-card__value">{{ userList.length }}</span>
+              <span class="manage-stat-card__note">便于核对分页视图中的账号信息完整度。</span>
+            </div>
+          </article>
+
+          <article class="manage-stat-card">
+            <div class="manage-stat-card__icon is-warm">
+              <el-icon><Message /></el-icon>
+            </div>
+            <div class="manage-stat-card__body">
+              <span class="manage-stat-card__label">已填邮箱</span>
+              <span class="manage-stat-card__value">{{ emailReadyCount }}</span>
+              <span class="manage-stat-card__note">适合校验通知触达与账号找回信息。</span>
+            </div>
+          </article>
+
+          <article class="manage-stat-card">
+            <div class="manage-stat-card__icon is-slate">
+              <el-icon><Cellphone /></el-icon>
+            </div>
+            <div class="manage-stat-card__body">
+              <span class="manage-stat-card__label">已填手机</span>
+              <span class="manage-stat-card__value">{{ mobileReadyCount }}</span>
+              <span class="manage-stat-card__note">帮助补齐成员联系方式与验证渠道。</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="manage-surface manage-table">
+          <div class="manage-surface__header">
+            <div class="manage-surface__header-title">
+              <h2>用户列表</h2>
+              <p>支持账号维护、角色分配和按部门浏览，适合在后台快速完成成员信息管理。</p>
+            </div>
+
+            <div class="manage-surface__header-side">
+              <span class="manage-pill">筛选部门 <strong>{{ selectedDeptName }}</strong></span>
+              <span class="manage-pill">页码 <strong>{{ currentPage }}</strong></span>
+            </div>
+          </div>
+
+          <div class="manage-surface__body">
+            <el-table :data="userList" v-loading="loading">
+              <el-table-column label="用户" min-width="260">
+                <template #default="{ row }">
+                  <div class="manage-entity">
+                    <span class="manage-entity__avatar">
+                      {{ getInitial(row.nickname || row.username) }}
+                    </span>
+
+                    <span class="manage-entity__text">
+                      <span class="manage-entity__title">{{ row.nickname || '--' }}</span>
+                      <span class="manage-entity__meta">@{{ row.username || '--' }}</span>
+                    </span>
+                  </div>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="邮箱" min-width="220">
+                <template #default="{ row }">
+                  <div class="manage-subtle-stack">
+                    <span>{{ row.email || '--' }}</span>
+                    <span class="manage-muted-text">通知与登录找回</span>
+                  </div>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="手机号" min-width="160">
+                <template #default="{ row }">
+                  <div class="manage-subtle-stack">
+                    <span>{{ row.mobile || '--' }}</span>
+                    <span class="manage-muted-text">成员联系方式</span>
+                  </div>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="创建时间" width="180">
+                <template #default="{ row }">
+                  {{ formatDateTime(row.createTime) }}
+                </template>
+              </el-table-column>
+
+              <el-table-column label="操作" width="280" align="right">
+                <template #default="{ row }">
+                  <div class="manage-row-actions">
+                    <el-button text type="primary" @click="handleEdit(row)">编辑</el-button>
+                    <el-button text type="warning" @click="handleAssignRole(row)">分配角色</el-button>
+                    <el-button text type="danger" @click="handleDelete(row)">删除</el-button>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <div class="manage-pagination">
+            <el-pagination
+              :page-size="pageSize"
+              :current-page="currentPage"
+              layout="prev, pager, next"
+              :total="total"
+              @current-change="handlePageChange"
+            />
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <el-dialog
+      v-model="dialogVisible"
+      :title="formTitle"
+      width="760px"
+      class="manage-dialog"
+      destroy-on-close
+      @closed="handleDialogClosed"
+    >
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="manage-form-grid">
+        <el-form-item class="manage-form-grid__full" label="所属部门" prop="deptIds">
           <el-cascader
             v-model="form.deptIds"
             :options="allDepts"
-            :props="{ checkStrictly: true, value: 'id', label: 'name', children: 'children', emitPath: false, multiple: true }"
-            placeholder="请选择部门"
+            :props="{
+              checkStrictly: true,
+              value: 'id',
+              label: 'name',
+              children: 'children',
+              emitPath: false,
+              multiple: true
+            }"
+            placeholder="请选择所属部门"
             clearable
-            style="width: 100%"
           />
         </el-form-item>
+
         <el-form-item label="昵称" prop="nickname">
-          <el-input v-model="form.nickname" placeholder="请输入昵称"></el-input>
+          <el-input v-model="form.nickname" placeholder="请输入昵称" />
         </el-form-item>
+
         <el-form-item label="账号" prop="username">
-          <el-input v-model="form.username" placeholder="请输入账号"></el-input>
+          <el-input v-model="form.username" placeholder="请输入账号" />
         </el-form-item>
-        <el-form-item label="密码" prop="password" v-if="isCreate">
-          <el-input v-model="form.password" type="password" placeholder="请输入密码"></el-input>
+
+        <el-form-item v-if="isCreate" label="密码" prop="password">
+          <el-input v-model="form.password" type="password" show-password placeholder="请输入登录密码" />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="form.email" placeholder="请输入邮箱"></el-input>
+
+        <el-form-item :class="{ 'manage-form-grid__full': !isCreate }" label="邮箱" prop="email">
+          <el-input v-model="form.email" placeholder="请输入邮箱地址" />
         </el-form-item>
+
         <el-form-item label="手机号" prop="mobile">
-          <el-input v-model="form.mobile" placeholder="请输入手机号"></el-input>
+          <el-input v-model="form.mobile" placeholder="请输入手机号" />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitForm">保存</el-button>
+        <el-button type="primary" class="manage-primary-button" @click="submitForm">保存用户</el-button>
       </template>
     </el-dialog>
 
-    <!-- 分配角色对话框 -->
-    <el-dialog v-model="roleDialogVisible" title="分配角色" @opened="setTreeKeys" @close="handleClose">
-      <el-tree
-        :data="allRoles"
-        show-checkbox
-        node-key="id"
-        :props="{ label: 'roleName', children: 'children' }"
-        ref="roleTree"
-      />
+    <el-dialog
+      v-model="roleDialogVisible"
+      title="分配角色"
+      width="720px"
+      class="manage-dialog"
+      destroy-on-close
+      @closed="handleRoleDialogClosed"
+    >
+      <div class="manage-tree-card">
+        <el-tree
+          ref="roleTree"
+          :data="allRoles"
+          show-checkbox
+          node-key="id"
+          default-expand-all
+          :expand-on-click-node="false"
+          :props="{ label: 'roleName', children: 'children' }"
+        />
+      </div>
+
       <template #footer>
         <el-button @click="roleDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitAssignRole">保存</el-button>
+        <el-button type="primary" class="manage-primary-button" @click="submitAssignRole">保存分配</el-button>
       </template>
     </el-dialog>
-  </div>
+  </section>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  createUser, 
-  getUserById, 
-  getAllUsers, 
-  updateUser, 
-  deleteUser 
-} from '@/network/user'
+import {
+  Cellphone,
+  Grid,
+  Message,
+  OfficeBuilding,
+  Plus,
+  Refresh,
+  User,
+  UserFilled
+} from '@element-plus/icons-vue'
+import { createUser, deleteUser, getAllUsers, getUserById, updateUser } from '@/network/user'
 import { getAllRoles } from '@/network/role'
 import { getTreeDepts } from '@/network/dept'
-import { getRolesByUserId, assignRolesToUser } from '@/network/userRole'
-import { Plus, Folder, Document, Refresh } from '@element-plus/icons-vue'
+import { assignRolesToUser, getRolesByUserId } from '@/network/userRole'
+import { findTreeNodeById, formatDateTime, getInitial } from './manage-utils'
 
-// 用户列表和加载状态
-const userList = ref([])
-const loading = ref(false)
-
-// 部门相关状态
-const allDepts = ref([])
-const currentDeptId = ref(null)
-const deptTreeRef = ref(null)
-
-// 分页相关状态
-const pageSize = ref(10)
-const currentPage = ref(1)
-const total = ref(0)
-
-// 对话框相关状态
-const dialogVisible = ref(false)
-const formTitle = ref('')
-const isCreate = ref(true)
-
-// 角色分配对话框
-const roleDialogVisible = ref(false)
-const allRoles = ref([])
-const currentUserRoles = ref([])
-const currentUserId = ref(null)
-const roleTree = ref(null)
-
-// 表单数据和校验规则
-const form = reactive({
+const createDefaultForm = () => ({
   id: null,
   deptIds: [],
   nickname: '',
@@ -173,6 +318,25 @@ const form = reactive({
   email: '',
   mobile: ''
 })
+
+const userList = ref([])
+const loading = ref(false)
+const allDepts = ref([])
+const currentDeptId = ref(null)
+const deptTreeRef = ref(null)
+const pageSize = ref(10)
+const currentPage = ref(1)
+const total = ref(0)
+const dialogVisible = ref(false)
+const formTitle = ref('')
+const isCreate = ref(true)
+const roleDialogVisible = ref(false)
+const allRoles = ref([])
+const currentUserRoles = ref([])
+const currentUserId = ref(null)
+const roleTree = ref(null)
+const formRef = ref()
+const form = reactive(createDefaultForm())
 
 const rules = reactive({
   nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
@@ -184,43 +348,69 @@ const rules = reactive({
   ]
 })
 
-// 生命周期钩子
+const selectedDeptNode = computed(() => findTreeNodeById(allDepts.value, currentDeptId.value))
+const selectedDeptName = computed(() => selectedDeptNode.value?.name || '全部用户')
+const selectedDeptShortLabel = computed(() => {
+  const label = selectedDeptName.value
+  return label.length > 4 ? `${label.slice(0, 4)}...` : label
+})
+const emailReadyCount = computed(() => userList.value.filter(item => item.email).length)
+const mobileReadyCount = computed(() => userList.value.filter(item => item.mobile).length)
+
+const resetForm = () => {
+  Object.assign(form, createDefaultForm())
+}
+
+const handleDialogClosed = () => {
+  formRef.value?.clearValidate?.()
+  resetForm()
+}
+
+const handleRoleDialogClosed = () => {
+  currentUserRoles.value = []
+  currentUserId.value = null
+  roleTree.value?.setCheckedKeys?.([])
+}
+
+const validateForm = async () => {
+  if (!formRef.value) {
+    return true
+  }
+
+  try {
+    await formRef.value.validate()
+    return true
+  } catch {
+    return false
+  }
+}
+
 onMounted(() => {
   fetchDepts()
   fetchUsers()
   fetchAllRoles()
 })
 
-// 获取部门树
 const fetchDepts = async () => {
   try {
     const response = await getTreeDepts()
-    allDepts.value = response.data
+    allDepts.value = response.data || []
   } catch (error) {
     console.error('获取部门列表失败:', error)
     ElMessage.error('获取部门列表失败')
   }
 }
 
-// 部门节点点击
-const handleNodeClick = (data) => {
-  currentDeptId.value = data.id
-  currentPage.value = 1 // 重置页码
-  fetchUsers()
-}
-
-// 获取用户列表
 const fetchUsers = async () => {
   try {
     loading.value = true
-    const params = { 
-      pageNum: currentPage.value, 
+    const response = await getAllUsers({
+      pageNum: currentPage.value,
       pageSize: pageSize.value,
-      deptId: currentDeptId.value 
-    }
-    const response = await getAllUsers(params)
-    userList.value = response.data.records
-    total.value = response.data.total
+      deptId: currentDeptId.value
+    })
+    userList.value = response.data?.records || []
+    total.value = response.data?.total || 0
   } catch (error) {
     console.error('获取用户列表失败:', error)
     ElMessage.error('获取用户列表失败')
@@ -229,60 +419,93 @@ const fetchUsers = async () => {
   }
 }
 
-// 分页改变事件
+const fetchAllRoles = async () => {
+  try {
+    const response = await getAllRoles({ pageNum: 1, pageSize: 1000 })
+    allRoles.value = response.data?.records || []
+  } catch (error) {
+    console.error('获取角色列表失败:', error)
+  }
+}
+
+const handleNodeClick = (data) => {
+  currentDeptId.value = data.id
+  currentPage.value = 1
+  fetchUsers()
+}
+
+const clearDeptFilter = () => {
+  currentDeptId.value = null
+  currentPage.value = 1
+  deptTreeRef.value?.setCurrentKey?.(null)
+  fetchUsers()
+}
+
 const handlePageChange = (newPage) => {
   currentPage.value = newPage
   fetchUsers()
 }
 
-// 新建用户
 const handleCreate = () => {
+  resetForm()
   isCreate.value = true
   formTitle.value = '新建用户'
-  Object.keys(form).forEach(key => form[key] = key === 'id' ? null : (key === 'deptIds' ? [] : ''))
-  // 如果当前选中了部门，自动填充
+
   if (currentDeptId.value) {
     form.deptIds = [currentDeptId.value]
   }
+
   dialogVisible.value = true
 }
 
-// 编辑用户
 const handleEdit = async (row) => {
   try {
     const response = await getUserById(row.id)
-    Object.assign(form, response.data)
+    resetForm()
+    Object.assign(form, {
+      ...createDefaultForm(),
+      ...response.data,
+      password: ''
+    })
     isCreate.value = false
     formTitle.value = '编辑用户'
     dialogVisible.value = true
   } catch (error) {
-    console.error('获取用户信息失败:', error)  // 打印错误详情
+    console.error('获取用户信息失败:', error)
     ElMessage.error('获取用户信息失败')
   }
 }
 
-// 提交表单
 const submitForm = async () => {
+  const valid = await validateForm()
+
+  if (!valid) {
+    return
+  }
+
   try {
+    const payload = { ...form }
+
     if (isCreate.value) {
-      await createUser(form)
+      await createUser(payload)
       ElMessage.success('创建用户成功')
     } else {
-      await updateUser(form)
+      delete payload.password
+      await updateUser(payload)
       ElMessage.success('更新用户成功')
     }
+
     dialogVisible.value = false
     fetchUsers()
   } catch (error) {
-    console.error('操作失败:', error)  // 打印错误详情
+    console.error('操作失败:', error)
     ElMessage.error('操作失败')
   }
 }
 
-// 删除用户
 const handleDelete = (row) => {
-  ElMessageBox.confirm('确认删除该用户？', '警告', {
-    confirmButtonText: '确认',
+  ElMessageBox.confirm('确认删除该用户吗？', '删除确认', {
+    confirmButtonText: '确认删除',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
@@ -291,49 +514,31 @@ const handleDelete = (row) => {
       ElMessage.success('删除成功')
       fetchUsers()
     } catch (error) {
-      console.error('删除失败:', error)  // 打印错误详情
+      console.error('删除失败:', error)
       ElMessage.error('删除失败')
     }
   })
 }
 
-// 获取所有角色
-const fetchAllRoles = async () => {
-  try {
-    const response = await getAllRoles({ pageNum: 1, pageSize: 1000 })
-    allRoles.value = response.data.records
-  } catch (error) {
-    console.error('获取所有角色失败:', error)
-  }
-}
-
-// 打开分配角色对话框
 const handleAssignRole = async (row) => {
   currentUserId.value = row.id
+
   try {
     const response = await getRolesByUserId(row.id)
-    currentUserRoles.value = response.data
+    currentUserRoles.value = response.data || []
     roleDialogVisible.value = true
+
+    await nextTick()
+    roleTree.value?.setCheckedKeys?.(currentUserRoles.value)
   } catch (error) {
     console.error('获取用户角色失败:', error)
     ElMessage.error('获取用户角色失败')
   }
 }
 
-const setTreeKeys = () => {
-  if (roleTree.value) {
-    roleTree.value.setCheckedKeys(currentUserRoles.value)
-  }
-}
-
-const handleClose = () => {
-  currentUserRoles.value = []
-}
-
-// 提交角色分配
 const submitAssignRole = async () => {
   try {
-    const checkedKeys = roleTree.value.getCheckedKeys()
+    const checkedKeys = roleTree.value?.getCheckedKeys?.() || []
     await assignRolesToUser(currentUserId.value, checkedKeys)
     ElMessage.success('分配角色成功')
     roleDialogVisible.value = false
@@ -343,100 +548,3 @@ const submitAssignRole = async () => {
   }
 }
 </script>
-
-<style scoped>
-.user-container {
-  padding: 16px;
-  background-color: #fff;
-  border-radius: 8px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.dept-sidebar {
-  border-right: 1px solid #e6e6e6;
-  margin-right: 16px;
-  padding-right: 16px;
-  background-color: #fafafa;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  font-weight: bold;
-  color: #333;
-  border-bottom: 1px solid #e6e6e6;
-  margin-bottom: 8px;
-}
-
-.sidebar-content {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.user-main {
-  padding: 0 !important; /* Remove default padding to align with layout */
-  display: flex;
-  flex-direction: column;
-}
-
-.custom-tree-node {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-}
-
-.node-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 顶部工具栏 */
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  gap: 16px;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.toolbar-btn {
-  height: 32px;
-  padding: 0 14px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  background-color: #5f6368;
-  color: #fff;
-  cursor: pointer;
-}
-
-/* Element Plus 样式覆盖 */
-:deep(.el-tree) {
-  background: transparent;
-}
-
-:deep(.el-tree-node__content) {
-  height: 32px;
-}
-
-:deep(.el-tree-node.is-current > .el-tree-node__content) {
-  background-color: #e6f7ff;
-  color: #409eff;
-}
-</style>

@@ -1,101 +1,226 @@
 <template>
-  <div class="menu-container">
-    <!-- 顶部工具栏 -->
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <el-button type="primary" @click="handleCreate" class="toolbar-btn">
+  <section class="manage-page">
+    <header class="manage-page__hero">
+      <div class="manage-page__hero-copy">
+        <p class="manage-page__eyebrow">Navigation Structure</p>
+        <h1 class="manage-page__hero-title">菜单结构</h1>
+        <p class="manage-page__hero-description">
+          梳理后台导航层级、访问路径和菜单类型，让系统入口更直观，也更容易维护扩展。
+        </p>
+      </div>
+
+      <div class="manage-page__actions">
+        <div class="manage-page__hint">
+          <span class="manage-page__hint-label">当前节点</span>
+          <span class="manage-page__hint-value">{{ totalMenuCount }}</span>
+        </div>
+
+        <el-button class="manage-secondary-button" @click="handleRefresh">
+          <el-icon><Refresh /></el-icon>
+          刷新结构
+        </el-button>
+
+        <el-button type="primary" class="manage-primary-button" @click="handleCreate">
           <el-icon><Plus /></el-icon>
-          <span>新增菜单</span>
+          新建菜单
         </el-button>
       </div>
-    </div>
-    
-    <el-table 
-      :data="menuList" 
-      style="width: 100%" 
-      v-loading="loading"
-      row-key="id"
-      :tree-props="{children: 'children', hasChildren: 'hasChildren'}"
+    </header>
+
+    <section class="manage-page__stats">
+      <article class="manage-stat-card">
+        <div class="manage-stat-card__icon is-accent">
+          <el-icon><MenuIcon /></el-icon>
+        </div>
+        <div class="manage-stat-card__body">
+          <span class="manage-stat-card__label">全部节点</span>
+          <span class="manage-stat-card__value">{{ totalMenuCount }}</span>
+          <span class="manage-stat-card__note">当前树形结构中的全部菜单与目录节点。</span>
+        </div>
+      </article>
+
+      <article class="manage-stat-card">
+        <div class="manage-stat-card__icon is-success">
+          <el-icon><Collection /></el-icon>
+        </div>
+        <div class="manage-stat-card__body">
+          <span class="manage-stat-card__label">目录分组</span>
+          <span class="manage-stat-card__value">{{ folderCount }}</span>
+          <span class="manage-stat-card__note">用于组织页面入口的父级导航。</span>
+        </div>
+      </article>
+
+      <article class="manage-stat-card">
+        <div class="manage-stat-card__icon is-warm">
+          <el-icon><Grid /></el-icon>
+        </div>
+        <div class="manage-stat-card__body">
+          <span class="manage-stat-card__label">页面菜单</span>
+          <span class="manage-stat-card__value">{{ pageMenuCount }}</span>
+          <span class="manage-stat-card__note">具备实际访问路径的页面入口数量。</span>
+        </div>
+      </article>
+
+      <article class="manage-stat-card">
+        <div class="manage-stat-card__icon is-slate">
+          <el-icon><Operation /></el-icon>
+        </div>
+        <div class="manage-stat-card__body">
+          <span class="manage-stat-card__label">按钮动作</span>
+          <span class="manage-stat-card__value">{{ actionCount }}</span>
+          <span class="manage-stat-card__note">可用于区分页面操作级别的动作节点。</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="manage-surface manage-table">
+      <div class="manage-surface__header">
+        <div class="manage-surface__header-title">
+          <h2>菜单树</h2>
+          <p>通过路径、类型和层级结构一起查看后台导航体系，避免菜单不断增长后失去秩序。</p>
+        </div>
+
+        <div class="manage-surface__header-side">
+          <span class="manage-pill">首层入口 <strong>{{ menuList.length }}</strong></span>
+          <span class="manage-pill">当前页码 <strong>{{ currentPage }}</strong></span>
+        </div>
+      </div>
+
+      <div class="manage-surface__body">
+        <el-table
+          :data="menuList"
+          v-loading="loading"
+          row-key="id"
+          :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        >
+          <el-table-column label="菜单信息" min-width="260">
+            <template #default="{ row }">
+              <div class="manage-entity">
+                <span class="manage-entity__avatar">
+                  <el-icon>
+                    <component :is="getMenuTypeMeta(row).icon" />
+                  </el-icon>
+                </span>
+
+                <span class="manage-entity__text">
+                  <span class="manage-entity__title">{{ row.name }}</span>
+                  <span class="manage-entity__meta">{{ getMenuTypeMeta(row).note }}</span>
+                </span>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="访问路径" min-width="220">
+            <template #default="{ row }">
+              <div class="manage-subtle-stack">
+                <span>{{ row.path || '--' }}</span>
+                <span class="manage-muted-text">路由或菜单访问入口</span>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="类型" width="120">
+            <template #default="{ row }">
+              <el-tag :type="getMenuTypeMeta(row).tag" effect="light" round>
+                {{ getMenuTypeMeta(row).label }}
+              </el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="排序" width="100">
+            <template #default="{ row }">
+              {{ row.sort ?? 0 }}
+            </template>
+          </el-table-column>
+
+          <el-table-column label="操作" width="220" align="right">
+            <template #default="{ row }">
+              <div class="manage-row-actions">
+                <el-button text type="primary" @click="handleEdit(row)">编辑</el-button>
+                <el-button text type="danger" @click="handleDelete(row)">删除</el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+
+      <div class="manage-pagination">
+        <el-pagination
+          :page-size="pageSize"
+          :current-page="currentPage"
+          layout="prev, pager, next"
+          :total="total"
+          @current-change="handlePageChange"
+        />
+      </div>
+    </section>
+
+    <el-dialog
+      v-model="dialogVisible"
+      :title="formTitle"
+      width="720px"
+      class="manage-dialog"
+      destroy-on-close
+      @closed="handleDialogClosed"
     >
-      <el-table-column prop="name" label="菜单名称"></el-table-column>
-      <el-table-column prop="path" label="路径"></el-table-column>
-      <el-table-column prop="type" label="类型"></el-table-column>
-      <el-table-column prop="sort" label="排序" width="80"></el-table-column>
-      <el-table-column label="操作" width="200">
-        <template #default="scope">
-          <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="handleDelete(scope.row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <!-- 分页组件 -->
-    <el-pagination
-      :page-size="pageSize"
-      :current-page="currentPage"
-      layout="prev, pager, next"
-      :total="total"
-      @current-change="handlePageChange"
-    />
-
-    <!-- 菜单表单对话框 -->
-    <el-dialog v-model="dialogVisible" :title="formTitle">
-      <el-form :model="form" label-width="100px" :rules="rules" ref="formRef">
-        <el-form-item label="父级菜单" prop="menuPid">
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="manage-form-grid">
+        <el-form-item class="manage-form-grid__full" label="父级菜单" prop="menuPid">
           <el-cascader
             v-model="form.menuPid"
             :options="allMenus"
-            :props="{ checkStrictly: true, value: 'id', label: 'title', children: 'children' }"
+            :props="{
+              checkStrictly: true,
+              value: 'id',
+              label: 'name',
+              children: 'children',
+              emitPath: false
+            }"
             placeholder="请选择父级菜单"
             clearable
             @visible-change="handleCascaderVisibleChange"
-            @change="handleCascaderChange"
           />
         </el-form-item>
+
         <el-form-item label="菜单名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入菜单名称"></el-input>
+          <el-input v-model="form.name" placeholder="请输入菜单名称" />
         </el-form-item>
-        <el-form-item label="路径" prop="path">
-          <el-input v-model="form.path" placeholder="请输入路径"></el-input>
+
+        <el-form-item label="访问路径" prop="path">
+          <el-input v-model="form.path" placeholder="例如 /manage/user" />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="form.sort" :min="0" controls-position="right"></el-input-number>
+
+        <el-form-item label="显示排序" prop="sort">
+          <el-input-number v-model="form.sort" :min="0" controls-position="right" />
         </el-form-item>
-        <el-form-item label="类型" prop="type">
-          <el-input v-model="form.type" placeholder="请输入类型"></el-input>
+
+        <el-form-item label="菜单类型" prop="type">
+          <el-input v-model="form.type" placeholder="例如 0 目录 / 1 菜单 / 2 按钮" />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitForm">保存</el-button>
+        <el-button type="primary" class="manage-primary-button" @click="submitForm">保存菜单</el-button>
       </template>
     </el-dialog>
-  </div>
+  </section>
 </template>
 
 <script setup>
-import {onMounted, reactive, ref} from 'vue'
-import {ElMessage, ElMessageBox} from 'element-plus'
-import {createMenu, deleteMenu, getMenuById, getTreeMenus, updateMenu} from '@/network/menu'
-import { Plus } from '@element-plus/icons-vue'
+import { computed, onMounted, reactive, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  Collection,
+  Grid,
+  Menu as MenuIcon,
+  Operation,
+  Plus,
+  Refresh
+} from '@element-plus/icons-vue'
+import { createMenu, deleteMenu, getMenuById, getTreeMenus, updateMenu } from '@/network/menu'
+import { countTreeNodes } from './manage-utils'
 
-// 菜单列表和加载状态
-const menuList = ref([])
-const loading = ref(false)
-
-// 分页相关状态
-const pageSize = ref(10)
-const currentPage = ref(1)
-const total = ref(0)
-
-// 对话框相关状态
-const dialogVisible = ref(false)
-const formTitle = ref('')
-const isCreate = ref(true)
-
-// 表单数据和校验规则
-const form = reactive({
+const createDefaultForm = () => ({
   id: null,
   name: '',
   path: '',
@@ -104,30 +229,81 @@ const form = reactive({
   menuPid: null
 })
 
+const menuList = ref([])
+const loading = ref(false)
+const pageSize = ref(10)
+const currentPage = ref(1)
+const total = ref(0)
+const dialogVisible = ref(false)
+const formTitle = ref('')
+const isCreate = ref(true)
+const allMenus = ref([])
+const formRef = ref()
+const form = reactive(createDefaultForm())
+
 const rules = reactive({
   name: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
-  path: [{ required: true, message: '请输入路径', trigger: 'blur' }],
-  sort: [{ required: true, message: '请输入排序', trigger: 'change' }],
-  type: [{ required: true, message: '请输入类型', trigger: 'blur' }]
+  path: [{ required: true, message: '请输入访问路径', trigger: 'blur' }],
+  sort: [{ required: true, message: '请输入显示排序', trigger: 'change' }],
+  type: [{ required: true, message: '请输入菜单类型', trigger: 'blur' }]
 })
 
-// 获取菜单列表时，需要获取所有菜单用于选择父级菜单
-const allMenus = ref([])
+const countMatchingNodes = (nodes, predicate) => (
+  nodes.reduce(
+    (totalValue, node) => totalValue + (predicate(node) ? 1 : 0) + countMatchingNodes(node.children || [], predicate),
+    0
+  )
+)
+
+const isFolderNode = (node) => Array.isArray(node.children) && node.children.length > 0 || Number(node.type) === 0
+const isPageNode = (node) => Number(node.type) === 1 || (!isFolderNode(node) && Number(node.type) !== 2)
+const isActionNode = (node) => Number(node.type) === 2
+
+const totalMenuCount = computed(() => countTreeNodes(menuList.value))
+const folderCount = computed(() => countMatchingNodes(menuList.value, isFolderNode))
+const pageMenuCount = computed(() => countMatchingNodes(menuList.value, isPageNode))
+const actionCount = computed(() => countMatchingNodes(menuList.value, isActionNode))
+
+const resetForm = () => {
+  Object.assign(form, createDefaultForm())
+}
+
+const handleDialogClosed = () => {
+  formRef.value?.clearValidate?.()
+  resetForm()
+}
+
+const validateForm = async () => {
+  if (!formRef.value) {
+    return true
+  }
+
+  try {
+    await formRef.value.validate()
+    return true
+  } catch {
+    return false
+  }
+}
+
+const countVisibleNodes = (nodes) => countTreeNodes(nodes || [])
+
+const refreshAllMenus = async () => {
+  const response = await getTreeMenus({ pageNum: 1, pageSize: 1000 })
+  allMenus.value = response.data || []
+}
 
 onMounted(async () => {
   await fetchMenus()
-  // 修改为获取树形菜单数据
-  const response = await getTreeMenus({ pageNum: 1, pageSize: 1000 })
-  allMenus.value = response.data
+  await refreshAllMenus()
 })
 
-// 获取菜单列表
 const fetchMenus = async () => {
   try {
     loading.value = true
     const response = await getTreeMenus({ pageNum: currentPage.value, pageSize: pageSize.value })
-    menuList.value = response.data
-    total.value = response.data.length
+    menuList.value = response.data || []
+    total.value = countVisibleNodes(response.data)
   } catch (error) {
     console.error('获取菜单列表失败:', error)
     ElMessage.error('获取菜单列表失败')
@@ -136,30 +312,31 @@ const fetchMenus = async () => {
   }
 }
 
-// 分页改变事件
+const handleRefresh = async () => {
+  await fetchMenus()
+  await refreshAllMenus()
+}
+
 const handlePageChange = (newPage) => {
   currentPage.value = newPage
   fetchMenus()
 }
 
-// 新建菜单
 const handleCreate = () => {
+  resetForm()
   isCreate.value = true
   formTitle.value = '新建菜单'
-  form.id = null
-  form.name = ''
-  form.path = ''
-  form.type = ''
-  form.sort = 0
-  form.menuPid = null
   dialogVisible.value = true
 }
 
-// 编辑菜单
 const handleEdit = async (row) => {
   try {
     const response = await getMenuById(row.id)
-    Object.assign(form, response.data)
+    resetForm()
+    Object.assign(form, {
+      ...createDefaultForm(),
+      ...response.data
+    })
     isCreate.value = false
     formTitle.value = '编辑菜单'
     dialogVisible.value = true
@@ -169,8 +346,13 @@ const handleEdit = async (row) => {
   }
 }
 
-// 提交表单
 const submitForm = async () => {
+  const valid = await validateForm()
+
+  if (!valid) {
+    return
+  }
+
   try {
     if (isCreate.value) {
       await createMenu(form)
@@ -179,175 +361,69 @@ const submitForm = async () => {
       await updateMenu(form)
       ElMessage.success('更新菜单成功')
     }
+
     dialogVisible.value = false
-    fetchMenus()
+    handleRefresh()
   } catch (error) {
     console.error('操作失败:', error)
     ElMessage.error('操作失败')
   }
 }
 
-// 删除菜单
 const handleDelete = (row) => {
-  ElMessageBox.confirm('确认删除该菜单？', '警告', {
-    confirmButtonText: '确认',
+  ElMessageBox.confirm('确认删除该菜单吗？', '删除确认', {
+    confirmButtonText: '确认删除',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
     try {
       await deleteMenu(row.id)
       ElMessage.success('删除成功')
-      fetchMenus()
+      handleRefresh()
     } catch (error) {
       console.error('删除失败:', error)
+      ElMessage.error('删除失败')
     }
   })
 }
 
 const handleCascaderVisibleChange = async (visible) => {
-  if (visible) {
-    try {
-      const response = await getTreeMenus({ pageNum: 1, pageSize: 1000 })
-      allMenus.value = response.data
-    } catch (error) {
-      console.error('获取菜单数据失败:', error)
-      ElMessage.error('获取菜单数据失败')
+  if (!visible) {
+    return
+  }
+
+  try {
+    await refreshAllMenus()
+  } catch (error) {
+    console.error('获取菜单数据失败:', error)
+    ElMessage.error('获取菜单数据失败')
+  }
+}
+
+const getMenuTypeMeta = (row) => {
+  if (isFolderNode(row)) {
+    return {
+      label: '目录',
+      tag: 'info',
+      note: '承载下级菜单分组',
+      icon: Collection
     }
   }
-}
 
-// 处理级联选择器变化事件
-const handleCascaderChange = (value) => {
-  if (value && value.length > 0) {
-    form.menuPid = value[value.length - 1]; // 获取最后一级的 ID
-  } else {
-    form.menuPid = null;
+  if (isActionNode(row)) {
+    return {
+      label: '按钮',
+      tag: 'warning',
+      note: '页面级动作或权限点',
+      icon: Operation
+    }
+  }
+
+  return {
+    label: '菜单',
+    tag: 'success',
+    note: '实际可访问页面入口',
+    icon: Grid
   }
 }
-
 </script>
-
-<style scoped>
-.menu-container {
-  padding: 16px;
-  background-color: #fff;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.toolbar-btn {
-  height: 32px;
-  padding: 0 14px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  background-color: #5f6368;
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
-}
-
-.toolbar-btn:hover {
-  background-color: #202124;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16), 0 1px 2px rgba(0, 0, 0, 0.12);
-}
-
-.el-table {
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  border: 1px solid #e8e8e8;
-}
-
-.el-table th {
-  background-color: #fafafa;
-  color: #333;
-  font-weight: 500;
-  border-bottom: 1px solid #e8e8e8;
-}
-
-.el-table td {
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.el-table .el-button--small {
-  margin-right: 8px;
-}
-
-.el-pagination {
-  margin-top: 20px;
-  text-align: right;
-}
-
-:deep(.el-dialog) {
-  border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-:deep(.el-dialog__header) {
-  padding: 16px 24px;
-  border-bottom: 1px solid #f0f0f0;
-  font-weight: 600;
-  color: #303133;
-  border-radius: 8px 8px 0 0;
-}
-
-:deep(.el-dialog__body) {
-  padding: 24px;
-  color: #606266;
-}
-
-:deep(.el-dialog__footer) {
-  padding: 12px 24px;
-  border-top: 1px solid #f0f0f0;
-  text-align: right;
-  border-radius: 0 0 8px 8px;
-}
-
-.el-form-item {
-  margin-bottom: 20px;
-}
-
-.el-input .el-input__inner,
-.el-cascader .el-input__inner {
-  border-radius: 4px;
-}
-
-@media (max-width: 768px) {
-  .menu-container {
-    padding: 10px;
-  }
-
-  .toolbar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .el-table-column[label="操作"] {
-    width: auto !important;
-  }
-
-  .el-dialog {
-    width: 90% !important;
-  }
-}
-</style>
