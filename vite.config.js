@@ -13,15 +13,13 @@ import { createSvgIconsPlugin } from 'vite-plugin-svg-icons';
 export default defineConfig({
   plugins: [
     vue(),
-      //  svg-icon
+    //  svg-icon
     createSvgIconsPlugin({
       // 指定需要缓存的图标文件夹
       iconDirs: [path.resolve(process.cwd(), 'src/icons/svg')],
       // 指定symbolId格式
       symbolId: 'icon-[name]',
     }),
-
-
   ],
   server: {
     port: 3000,
@@ -32,15 +30,15 @@ export default defineConfig({
     // },
     proxy: {
       '/assets/oss': {
-        target: 'https://yun.yiruserene.top:58888',
+        target: 'https://littlenote.yun.yiruserene.top', // 修改目标地址
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/assets\/oss/, '/assets/oss'),
-      }
+        rewrite: (path) => path.replace(/^\/assets\/oss/, '/assets/oss'), // 保留原路径
+      },
     },
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src')
-    }
+      '@': path.resolve(__dirname, 'src'),
+    },
   },
 })
