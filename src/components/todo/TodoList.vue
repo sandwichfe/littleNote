@@ -44,17 +44,14 @@
             :content="task.status === 1 ? '已完成' : '完成一次'"
             placement="top"
           >
-            <el-button
-              circle
-              :type="task.status === 1 ? 'success' : 'primary'"
-              :plain="task.status !== 1"
+            <button
+              class="custom-check-btn"
+              :class="{ 'is-completed': task.status === 1 }"
               :disabled="task.status === 1"
-              class="check-btn"
               @click.stop="$emit('increment-task', task)"
             >
-              <el-icon v-if="task.status === 1"><Check /></el-icon>
-              <el-icon v-else><Finished /></el-icon>
-            </el-button>
+              <el-icon class="check-icon"><Check /></el-icon>
+            </button>
           </el-tooltip>
           <span v-if="task.targetCount > 0" class="count-badge">
             {{ task.completedCount }}/{{ task.targetCount }}
@@ -76,10 +73,6 @@
               {{ getTaskTypeLabel(task.type || task.taskType) }}
             </el-tag>
 
-            <span class="meta-item points">
-              +{{ task.points }} 积分
-            </span>
-
             <span class="meta-divider">|</span>
 
             <span class="meta-item date">
@@ -100,10 +93,10 @@
               </span>
             </template>
 
-            <template v-if="task.lastCompleteTime">
+            <template v-if="task.status === 1">
               <span class="meta-divider">|</span>
               <span class="meta-item date">
-                {{ task.status === 1 ? '完成于' : '上次完成' }} {{ formatDateTime(task.lastCompleteTime) }}
+                {{ '完成于'  }} {{ formatDateTime(task.lastCompleteTime) }}
               </span>
             </template>
           </div>
@@ -136,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { Plus, Check, Edit, Delete, Finished, View } from '@element-plus/icons-vue'
+import { Plus, Check, Edit, Delete, View } from '@element-plus/icons-vue'
 import { useTaskUtils } from '@/composables/useTaskUtils'
 import type { Task } from '@/network/todo'
 
@@ -346,17 +339,86 @@ const isCompletedTask = (task: Task) => task.status === 1
   min-width: 52px;
 }
 
-.check-btn {
-  width: 36px;
-  height: 36px;
-  font-size: 18px;
-  transition: all 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border-width: 2px;
+.custom-check-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 2px solid rgba(203, 213, 225, 0.8);
+  background: rgba(248, 250, 252, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.8), 0 2px 4px rgba(148, 163, 184, 0.05);
 }
 
-.check-btn:not(.is-disabled):hover {
-  transform: translateY(-1px) scale(1.06);
-  box-shadow: 0 8px 18px rgba(61, 199, 188, 0.26);
+.custom-check-btn::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 4px;
+  background: white;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.custom-check-btn:not(.is-completed):hover {
+  border-color: var(--todo-accent, #3dc7bc);
+  background: rgba(61, 199, 188, 0.08);
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(61, 199, 188, 0.2);
+}
+
+.custom-check-btn:not(.is-completed):hover::before {
+  opacity: 0.4;
+}
+
+.custom-check-btn:not(.is-completed):active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.custom-check-btn.is-completed {
+  border-color: var(--todo-accent, #3dc7bc);
+  background: var(--todo-accent, #3dc7bc);
+  cursor: default;
+  box-shadow: 0 4px 12px rgba(61, 199, 188, 0.3);
+  animation: checkPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.custom-check-btn.is-completed::before {
+  opacity: 0;
+}
+
+@keyframes checkPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.custom-check-btn .check-icon {
+  color: white;
+  font-size: 16px;
+  opacity: 0;
+  transform: scale(0.5) translateY(2px);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+.custom-check-btn.is-completed .check-icon {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.custom-check-btn:not(.is-completed):hover .check-icon {
+  opacity: 0.6;
+  color: var(--todo-accent, #3dc7bc);
+  transform: scale(0.9) translateY(0);
 }
 
 .count-badge {

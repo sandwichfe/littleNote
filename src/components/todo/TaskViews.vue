@@ -28,6 +28,7 @@
           placeholder="选择日期"
           size="small"
           class="view-picker"
+          :shortcuts="dateShortcuts"
           @update:model-value="$emit('date-change', $event)"
         />
         <el-button circle size="small" @click="shiftDay(1)">
@@ -372,6 +373,29 @@ const emit = defineEmits<{
 }>()
 
 const { getTaskTypeColor, getTaskTypeLabel } = useTaskUtils()
+
+const dateShortcuts = [
+  {
+    text: '今天',
+    value: new Date(),
+  },
+  {
+    text: '昨天',
+    value: () => {
+      const date = new Date()
+      date.setTime(date.getTime() - 3600 * 1000 * 24)
+      return date
+    },
+  },
+  {
+    text: '明天',
+    value: () => {
+      const date = new Date()
+      date.setTime(date.getTime() + 3600 * 1000 * 24)
+      return date
+    },
+  },
+]
 
 const viewTypes = [
   { key: 'day', label: '日视图' },

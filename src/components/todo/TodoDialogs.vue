@@ -1,11 +1,26 @@
 <template>
   <el-dialog
     v-model="showAddTaskDialog"
-    title="添加新待办"
-    width="500px"
-    class="todo-dialog"
+    width="460px"
+    class="todo-dialog modern-dialog"
+    :show-close="false"
   >
-    <el-form :model="newTask" label-width="88px" class="todo-dialog-form">
+    <template #header="{ close }">
+      <div class="modern-dialog-header">
+        <div class="header-icon bg-primary-soft">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </div>
+        <h3 class="header-title">添加新待办</h3>
+        <button class="header-close" @click="close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </template>
+    <el-form :model="newTask" label-position="top" class="todo-dialog-form">
       <el-form-item label="任务名称">
         <el-input v-model="newTask.content" placeholder="请输入任务名称" />
       </el-form-item>
@@ -25,6 +40,7 @@
           placeholder="请选择截止时间"
           clearable
           class="full-width"
+          :shortcuts="datetimeShortcuts"
         />
       </el-form-item>
       <el-form-item label="目标次数">
@@ -41,18 +57,35 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="handleCancelAddTask">取消</el-button>
-      <el-button type="primary" @click="handleConfirmAddTask">确定</el-button>
+      <div class="modern-dialog-footer">
+        <el-button class="btn-cancel" @click="handleCancelAddTask">取消</el-button>
+        <el-button type="primary" class="btn-confirm" @click="handleConfirmAddTask">确定</el-button>
+      </div>
     </template>
   </el-dialog>
 
   <el-dialog
     v-model="showEditTaskDialog"
-    title="编辑任务"
-    width="500px"
-    class="todo-dialog"
+    width="460px"
+    class="todo-dialog modern-dialog"
+    :show-close="false"
   >
-    <el-form :model="editTaskForm" label-width="88px" class="todo-dialog-form">
+    <template #header="{ close }">
+      <div class="modern-dialog-header">
+        <div class="header-icon bg-warning-soft">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </div>
+        <h3 class="header-title">编辑任务</h3>
+        <button class="header-close" @click="close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </template>
+    <el-form :model="editTaskForm" label-position="top" class="todo-dialog-form">
       <el-form-item label="任务名称">
         <el-input v-model="editTaskForm.content" placeholder="请输入任务名称" />
       </el-form-item>
@@ -72,6 +105,7 @@
           placeholder="请选择截止时间"
           clearable
           class="full-width"
+          :shortcuts="datetimeShortcuts"
         />
       </el-form-item>
       <el-form-item label="目标次数">
@@ -89,8 +123,10 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="handleCancelEditTask">取消</el-button>
-      <el-button type="primary" @click="handleConfirmEditTask">确定</el-button>
+      <div class="modern-dialog-footer">
+        <el-button class="btn-cancel" @click="handleCancelEditTask">取消</el-button>
+        <el-button type="primary" class="btn-confirm" @click="handleConfirmEditTask">确定</el-button>
+      </div>
     </template>
   </el-dialog>
 
@@ -205,11 +241,26 @@
 
   <el-dialog
     v-model="showEditCompletionDialog"
-    title="编辑完成时间"
-    width="480px"
-    class="todo-dialog"
+    width="460px"
+    class="todo-dialog modern-dialog"
+    :show-close="false"
   >
-    <el-form :model="editCompletionForm" label-width="88px" class="todo-dialog-form">
+    <template #header="{ close }">
+      <div class="modern-dialog-header">
+        <div class="header-icon bg-primary-soft">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="header-title">编辑完成时间</h3>
+        <button class="header-close" @click="close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </template>
+    <el-form :model="editCompletionForm" label-position="top" class="todo-dialog-form">
       <el-form-item label="完成时间">
         <el-date-picker
           v-model="editCompletionForm.completedAt"
@@ -219,12 +270,15 @@
           placeholder="请选择完成时间"
           clearable
           class="full-width"
+          :shortcuts="datetimeShortcuts"
         />
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="handleCancelEditCompletion">取消</el-button>
-      <el-button type="primary" @click="handleConfirmEditCompletion">确定</el-button>
+      <div class="modern-dialog-footer">
+        <el-button class="btn-cancel" @click="handleCancelEditCompletion">取消</el-button>
+        <el-button type="primary" class="btn-confirm" @click="handleConfirmEditCompletion">确定</el-button>
+      </div>
     </template>
   </el-dialog>
 </template>
@@ -281,6 +335,29 @@ const emit = defineEmits([
 ])
 
 const { getTaskTypeColor, getTaskTypeLabel, formatDateTime } = useTaskUtils()
+
+const datetimeShortcuts = [
+  {
+    text: '今天',
+    value: new Date(),
+  },
+  {
+    text: '明天',
+    value: () => {
+      const date = new Date()
+      date.setTime(date.getTime() + 3600 * 1000 * 24)
+      return date
+    },
+  },
+  {
+    text: '下周',
+    value: () => {
+      const date = new Date()
+      date.setTime(date.getTime() + 3600 * 1000 * 24 * 7)
+      return date
+    },
+  }
+]
 
 const showAddTaskDialog = ref(props.showAddTaskDialog)
 const showAddRewardDialog = ref(props.showAddRewardDialog)
@@ -805,28 +882,175 @@ const formatFriendlyRecordTime = (time) => {
   color: #607086;
 }
 
+/* Modern Dialog Styles */
+:deep(.todo-dialog.modern-dialog.el-dialog .el-dialog__header),
+:deep(.todo-dialog.modern-dialog .el-dialog__header) {
+  padding: 0 !important;
+  border-bottom: none !important;
+  background: transparent !important;
+}
+
+:deep(.todo-dialog.modern-dialog.el-dialog .el-dialog__body),
+:deep(.todo-dialog.modern-dialog .el-dialog__body) {
+  padding: 0 !important;
+  background: #ffffff !important;
+}
+
+:deep(.todo-dialog.modern-dialog.el-dialog .el-dialog__footer),
+:deep(.todo-dialog.modern-dialog .el-dialog__footer) {
+  padding: 0 !important;
+  border-top: none !important;
+  background: transparent !important;
+}
+
+.modern-dialog-header {
+  display: flex;
+  align-items: center;
+  padding: 24px 32px;
+  background: #f8fafc;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+  border-radius: 30px 30px 0 0;
+}
+
+.header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+}
+
+.header-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.bg-primary-soft {
+  background: rgba(61, 199, 188, 0.1);
+  color: #2ea79f;
+}
+
+.bg-warning-soft {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.header-close {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.header-close:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.header-close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.todo-dialog-form {
+  padding: 32px;
+}
+
+.modern-dialog-footer {
+  padding: 20px 32px 24px;
+  background: #ffffff;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-radius: 0 0 30px 30px;
+}
+
+.modern-dialog-footer .btn-cancel {
+  padding: 10px 24px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.modern-dialog-footer .btn-cancel:hover {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.modern-dialog-footer .btn-confirm {
+  padding: 10px 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #44c9bf 0%, #2ea79f 100%);
+  border: none;
+  color: #ffffff;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(61, 199, 188, 0.2);
+}
+
+.modern-dialog-footer .btn-confirm:hover {
+  box-shadow: 0 6px 16px rgba(61, 199, 188, 0.3);
+  transform: translateY(-1px);
+}
+
 @media (max-width: 768px) {
-  :deep(.todo-dialog.el-dialog),
-  :deep(.todo-dialog .el-dialog) {
-    width: calc(100vw - 24px) !important;
-    margin-top: 0 !important;
-    border-radius: 24px;
-  }
+    :deep(.todo-dialog.el-dialog),
+    :deep(.todo-dialog .el-dialog) {
+      width: calc(100vw - 24px) !important;
+      margin-top: 0 !important;
+      border-radius: 24px;
+    }
 
-  :deep(.todo-dialog.el-dialog .el-dialog__header),
-  :deep(.todo-dialog .el-dialog__header) {
-    padding: 20px 18px 14px;
-  }
+    :deep(.todo-dialog:not(.modern-dialog).el-dialog .el-dialog__header),
+    :deep(.todo-dialog:not(.modern-dialog) .el-dialog__header) {
+      padding: 20px 18px 14px;
+    }
 
-  :deep(.todo-dialog.el-dialog .el-dialog__body),
-  :deep(.todo-dialog .el-dialog__body) {
-    padding: 20px 18px 10px;
-  }
+    :deep(.todo-dialog:not(.modern-dialog).el-dialog .el-dialog__body),
+    :deep(.todo-dialog:not(.modern-dialog) .el-dialog__body) {
+      padding: 20px 18px 10px;
+    }
 
-  :deep(.todo-dialog.el-dialog .el-dialog__footer),
-  :deep(.todo-dialog .el-dialog__footer) {
-    padding: 12px 18px 18px;
-  }
+    :deep(.todo-dialog:not(.modern-dialog).el-dialog .el-dialog__footer),
+    :deep(.todo-dialog:not(.modern-dialog) .el-dialog__footer) {
+      padding: 12px 18px 18px;
+    }
+
+    .modern-dialog-header {
+      padding: 20px 24px;
+    }
+
+    .todo-dialog-form {
+      padding: 24px;
+    }
+
+    .modern-dialog-footer {
+      padding: 16px 24px 20px;
+    }
 
   .detail-title-row,
   .timeline-header {
