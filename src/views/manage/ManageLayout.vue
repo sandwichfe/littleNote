@@ -5,7 +5,9 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Grid,
-  Operation
+  Operation,
+  Fold,
+  Expand
 } from '@element-plus/icons-vue'
 import GlobalHeader from '@/components/layout/GlobalHeader.vue'
 import { useMenuStore } from '@/store/menu'
@@ -19,6 +21,11 @@ const tabs = ref([])
 const menuData = computed(() => menuStore.menuData)
 const isMobileMenuVisible = ref(false)
 const isMobile = ref(false)
+const isCollapsed = ref(false)
+
+const toggleCollapse = () => {
+  isCollapsed.value = !isCollapsed.value
+}
 
 const normalizeManagePath = (path = '') => {
   if (!path) {
@@ -83,19 +90,15 @@ const ensureTab = (path) => {
   }
 }
 
-const getDefaultSections = () => []
-
-const resolveEntryMeta = (path, title) => getPageMeta(path, title)
-
 const navigationSections = computed(() => {
   if (!Array.isArray(menuData.value) || menuData.value.length === 0) {
-    return getDefaultSections()
+    return []
   }
 
   return menuData.value.map((menu) => {
     const children = Array.isArray(menu.children) ? menu.children : []
     const fallbackPath = normalizeManagePath(menu.path || '')
-    const sectionMeta = resolveEntryMeta(fallbackPath, menu.title || menu.name)
+    const sectionMeta = getPageMeta(fallbackPath, menu.title || menu.name)
 
     if (children.length > 0) {
       return {
@@ -104,7 +107,7 @@ const navigationSections = computed(() => {
         icon: sectionMeta.icon || Operation,
         items: children.map((child) => {
           const childPath = normalizeManagePath(child.path || '')
-          const childMeta = resolveEntryMeta(childPath, child.title || child.name)
+          const childMeta = getPageMeta(childPath, child.title || child.name)
 
           return {
             id: child.id || child.name || childPath,
@@ -216,7 +219,7 @@ watch(activeTab, (newTab) => {
   <div class="manage-layout">
     <GlobalHeader />
 
-    <div class="manage-shell">
+    <div class="manage-shell" :class="{ 'is-collapsed': isCollapsed }">
       <transition name="manage-fade">
         <button
           v-if="isMobile && isMobileMenuVisible"
@@ -227,15 +230,20 @@ watch(activeTab, (newTab) => {
         />
       </transition>
 
-      <aside class="manage-sidebar" :class="{ 'is-mobile-visible': isMobileMenuVisible }">
+      <aside class="manage-sidebar" :class="{ 'is-mobile-visible': isMobileMenuVisible, 'is-collapsed': isCollapsed }">
         <div class="manage-sidebar__panel">
-          <div class="manage-sidebar__intro">
-
-            <div>
-              <h2 class="manage-sidebar__title">后台管理</h2>
+          <div class="manage-sidebar__intro" :style="{ justifyContent: isCollapsed ? 'center' : 'space-between', alignItems: 'center', gap: isCollapsed ? '0' : '16px' }">
+            <div v-show="!isCollapsed">
+              <h2 class="manage-sidebar__title" style="margin-top: 0;">后台管理</h2>
             </div>
+            <el-icon 
+              class="manage-sidebar__collapse-btn" 
+              @click="toggleCollapse"
+            >
+              <Fold v-if="!isCollapsed" />
+              <Expand v-else />
+            </el-icon>
           </div>
-
 
           <nav class="manage-sidebar__nav" aria-label="manage navigation">
             <section
@@ -244,13 +252,13 @@ watch(activeTab, (newTab) => {
               class="manage-nav-group"
               :class="{ 'is-active': isSectionActive(section) }"
             >
-              <div v-if="section.label" class="manage-nav-group__label">
+              <div v-if="section.label" class="manage-nav-group__label" :title="isCollapsed ? section.label : ''">
                 <span class="manage-nav-group__label-icon">
                   <el-icon>
                     <component :is="section.icon || Grid" />
                   </el-icon>
                 </span>
-                <span>{{ section.label }}</span>
+                <span v-show="!isCollapsed">{{ section.label }}</span>
               </div>
 
               <div class="manage-nav-group__items">
@@ -260,6 +268,7 @@ watch(activeTab, (newTab) => {
                   class="manage-nav-item"
                   :class="{ 'is-active': route.path === item.path }"
                   type="button"
+                  :title="isCollapsed ? item.title : ''"
                   @click="handleSelect(item.path)"
                 >
                   <span class="manage-nav-item__icon">
@@ -268,7 +277,7 @@ watch(activeTab, (newTab) => {
                     </el-icon>
                   </span>
 
-                  <span class="manage-nav-item__copy">
+                  <span class="manage-nav-item__copy" v-show="!isCollapsed">
                     <span class="manage-nav-item__title">{{ item.title }}</span>
                   </span>
                 </button>
@@ -280,6 +289,14 @@ watch(activeTab, (newTab) => {
       </aside>
 
       <main class="manage-content">
+        <button
+          class="manage-mobile-toggle"
+          type="button"
+          @click="toggleMobileMenu"
+        >
+          <el-icon><Operation /></el-icon>
+          <span>菜单</span>
+        </button>
 
         <section class="manage-tabs-card">
           <div class="manage-tabs-shell">

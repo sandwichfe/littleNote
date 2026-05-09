@@ -25,7 +25,7 @@
       </div>
 
       <div class="manage-surface__body">
-        <el-table :data="roleList" v-loading="loading">
+        <el-table :data="roleList" v-loading="loading" height="100%">
           <el-table-column label="角色" min-width="240">
             <template #default="{ row }">
               <div class="manage-entity">

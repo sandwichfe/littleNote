@@ -76,7 +76,7 @@
           </div>
 
           <div class="manage-surface__body">
-            <el-table :data="userList" v-loading="loading">
+            <el-table :data="userList" v-loading="loading" height="100%">
               <el-table-column label="用户" min-width="260">
                 <template #default="{ row }">
                   <div class="manage-entity">

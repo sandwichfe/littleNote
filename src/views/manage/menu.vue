@@ -30,6 +30,7 @@
           v-loading="loading"
           row-key="id"
           :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+          height="100%"
         >
           <el-table-column label="菜单信息" min-width="260" class-name="manage-tree-column">
             <template #default="{ row }">

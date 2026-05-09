@@ -15,7 +15,7 @@
 
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(20, 184, 166, 0.14), transparent 28%),
@@ -31,10 +31,38 @@
   gap: 22px;
   padding: 20px;
   position: relative;
+  transition: grid-template-columns 0.3s ease;
+}
+
+@media (min-width: 769px) {
+  div.manage-shell.is-collapsed {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
 }
 
 .manage-sidebar {
   min-height: 0;
+}
+
+.manage-sidebar.is-collapsed .manage-nav-item {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.manage-sidebar.is-collapsed .manage-nav-group__label {
+  justify-content: center;
+  padding: 0;
+}
+
+.manage-sidebar__collapse-btn {
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--manage-muted);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.manage-sidebar__collapse-btn:hover {
+  color: var(--manage-accent);
 }
 
 .manage-sidebar__panel {
