@@ -1,19 +1,19 @@
-import { ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import {ref} from 'vue'
+import {ElMessage} from 'element-plus'
 import {
-  getTasks,
-  getTaskCounts,
   addTask,
-  updateTask,
-  deleteTask,
   completeTask,
+  deleteTask,
   getDayView,
-  getWeekView,
   getMonthView,
   getTaskCompletionRecords,
+  getTaskCounts,
+  getTasks,
+  getWeekView,
+  updateTask,
   updateTaskCompletionRecord,
 } from '@/network/todo'
-import { useTaskUtils } from './useTaskUtils'
+import {useTaskUtils} from './useTaskUtils'
 
 export function useTodo() {
   function getISOWeek(date) {

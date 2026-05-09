@@ -183,13 +183,6 @@ const router = useRouter();
 const contents = ref<Note[]>([]);
 const loading = ref(false);
 
-// 用户信息
-const userForm = ref({
-  nickname: '默认昵称',
-  avatar: 'http://49.235.149.110/favicon.ico'
-});
-
-
 // 检测是否为移动端
 const isMobile = computed(() => {
   return window.innerWidth <= 768;
@@ -484,11 +477,6 @@ const addOrUpdateNote = (id) => {
   }
 }
 
-.filter-icon, .search-icon {
-  color: #909399;
-  margin-right: 5px;
-}
-
 .top-box div {
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.3s ease;
@@ -586,15 +574,6 @@ const addOrUpdateNote = (id) => {
 }
 
 /* Better-Scroll滚动条样式 */
-.scroll_content .bscroll-vertical-scrollbar {
-  width: 6px !important;
-  right: 2px !important;
-}
-
-.scroll_content .bscroll-indicator {
-  border-radius: 3px !important;
-  background: rgba(0, 0, 0, 0.3) !important;
-}
 
 ul {
   margin-left: 10px;
@@ -696,47 +675,13 @@ ul>i {
   color: #909399;
 }
 
-.util-col {
-  display: flex;
-  flex-direction: row-reverse;
-  height: 50px; /* Increased height */
-  background-color: #ffffff;
-  border: 1px solid #e0e0e0;
-  border-top: none;
-  align-items: center; /* Vertically align button */
-  padding-right: 15px; /* Add some padding */
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-}
-
-
-.add-btn-svg {
-  width: 35px; /* Adjusted size */
-  height: 35px;
-  line-height: 35px;
-  color: #78a8e4; /* Darker icon color */
-}
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
-  .add-btn-svg {
-    width: 30px; /* 移动端减小图标尺寸 */
-    height: 30px;
-    line-height: 30px;
-  }
 }
 
 /* 极小屏幕适配 */
 @media screen and (max-width: 500px) {
-  .add-btn-svg {
-    width: 25px; /* 更小的图标尺寸 */
-    height: 25px;
-    line-height: 25px;
-  }
-}
-
-.add-btn-svg:hover {
-color: #409EFF;
 }
 
 

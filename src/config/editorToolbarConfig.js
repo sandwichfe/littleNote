@@ -80,7 +80,3 @@ export const toolbarKeys = [
   "|", 
   "fullScreen" 
 ];
-
-export default {
-  toolbarKeys
-};

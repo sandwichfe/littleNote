@@ -104,17 +104,16 @@
 
 <script setup lang="ts">
 import '@wangeditor/editor/dist/css/style.css';
-import {onBeforeUnmount, ref, shallowRef, onMounted, watch} from 'vue';
+import {onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
 import {Editor, Toolbar} from '@wangeditor/editor-for-vue';
-import {getNote, editNote, addNote, deleteNoteItem, uploadImage} from "@/network/base";
+import {addNote, deleteNoteItem, editNote, getNote, uploadImage} from "@/network/base";
 import {useRouter} from 'vue-router';
 import {ElMessage} from 'element-plus'
-import {Edit, View, DocumentChecked, Delete} from '@element-plus/icons-vue'
+import {Delete, DocumentChecked, Edit, View} from '@element-plus/icons-vue'
 import {cipherText, decrypted} from "@/utils/aesUtil";
-import {openLoading, closeLoading} from "@/utils/loadingUtil";
+import {closeLoading} from "@/utils/loadingUtil";
 import {listNoteGroup} from "@/network/noteGroup";
 import {toolbarKeys} from '@/config/editorToolbarConfig';
-import { de } from 'element-plus/es/locales.mjs';
 
 const router = useRouter();
 

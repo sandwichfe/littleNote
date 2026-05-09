@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref,onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
+import {onMounted, ref} from 'vue';
+import {useRouter} from 'vue-router';
+import {ElMessage} from 'element-plus';
 import Cookies from 'js-cookie';
 import Vcode from 'vue3-puzzle-vcode';
 import Img01 from "@/assets/img/yysls_1.jpg";
@@ -12,10 +12,10 @@ import Img05 from "@/assets/img/wwnn_1.jpg";
 import Img06 from "@/assets/img/wwnn_2.jpg";
 
 import QRCode from '@/components/QRCode.vue';
-import { userLogin, generateQrCode, qrCoderStatus, userRegister } from '@/network/base';
-import { useMenuStore } from '@/store/menu';
-import { openLoading, closeLoading } from "@/utils/loadingUtil";
-import { RefreshRight, ArrowLeft } from '@element-plus/icons-vue';
+import {generateQrCode, qrCoderStatus, userLogin, userRegister} from '@/network/base';
+import {useMenuStore} from '@/store/menu';
+import {closeLoading, openLoading} from "@/utils/loadingUtil";
+import {ArrowLeft, RefreshRight} from '@element-plus/icons-vue';
 
 
 onMounted(() => {

@@ -264,12 +264,6 @@ const submitForm = () => {
   margin-right: 10px;
 }
 
-.filter-icon,
-.search-icon {
-  color: #909399;
-  margin-right: 5px;
-}
-
 .add-btn {
   display: flex;
   align-items: center;
