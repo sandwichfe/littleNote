@@ -1,5 +1,5 @@
 .manage-layout {
-  --manage-accent: #0f8f86;
+  --manage-accent: #0da49a;
   --manage-accent-strong: #0f766e;
   --manage-accent-soft: rgba(15, 143, 134, 0.12);
   --manage-slate: #0f172a;
@@ -375,7 +375,7 @@
 }
 
 .manage-tabs-shell .manage-tabs > .el-tabs__header .el-tabs__nav-wrap::-webkit-scrollbar {
-  height: 6px;
+  height: 5px;
 }
 
 .manage-tabs-shell .manage-tabs > .el-tabs__header .el-tabs__nav-wrap::-webkit-scrollbar-thumb {
@@ -408,7 +408,7 @@
 }
 
 .manage-tabs-shell .manage-tabs.el-tabs--card > .el-tabs__header .el-tabs__item {
-  height: 40px;
+  height: 30px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -452,7 +452,7 @@
   position: relative;
   z-index: 1;
   color: var(--manage-accent);
-  background: #ffffff;
+  background: #e1f5f1;
   border-color: #f1f5f9;
   border-bottom-color: #ffffff;
 }

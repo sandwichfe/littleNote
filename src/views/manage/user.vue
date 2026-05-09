@@ -4,28 +4,31 @@
       <aside class="manage-tree-panel">
         <div class="manage-tree-panel__header">
           <div>
-            <h2 class="manage-tree-panel__title">部门筛选</h2>
+            <h2 class="manage-tree-panel__title">组织架构</h2>
           </div>
 
           <div class="manage-tree-panel__actions">
-            <el-button circle @click="fetchDepts">
+            <el-button text circle @click="fetchDepts" title="刷新">
               <el-icon><Refresh /></el-icon>
             </el-button>
           </div>
         </div>
 
-        <div class="manage-tree-panel__footer">
-          <el-button
-            :type="currentDeptId ? 'default' : 'primary'"
-            :plain="Boolean(currentDeptId)"
-            @click="clearDeptFilter"
-          >
-            全部用户
-          </el-button>
-          <span class="manage-pill">当前筛选 <strong>{{ selectedDeptName }}</strong></span>
-        </div>
-
         <div class="manage-tree-panel__body">
+          <div
+            class="manage-nav-item"
+            :class="{ 'is-active': !currentDeptId }"
+            @click="clearDeptFilter"
+            style="padding: 8px 12px; border-radius: 12px; margin-bottom: 8px;"
+          >
+            <span class="manage-entity__avatar" :class="!currentDeptId ? '' : 'is-slate'" style="width: 32px; height: 32px; border-radius: 10px; font-size: 14px;">
+              <el-icon><Grid /></el-icon>
+            </span>
+            <span class="manage-entity__text">
+              <span class="manage-entity__title" style="font-size: 14px;">全部用户</span>
+            </span>
+          </div>
+
           <el-tree
             ref="deptTreeRef"
             :data="allDepts"
@@ -38,14 +41,8 @@
           >
             <template #default="{ node, data }">
               <span class="manage-entity" style="gap: 10px;">
-                <span class="manage-entity__avatar is-slate" style="width: 32px; height: 32px; border-radius: 12px; font-size: 14px;">
-                  <el-icon>
-                    <component :is="data.children && data.children.length ? OfficeBuilding : User" />
-                  </el-icon>
-                </span>
                 <span class="manage-entity__text">
                   <span class="manage-entity__title" style="font-size: 14px;">{{ node.label }}</span>
-                  <span class="manage-entity__meta">{{ data.children?.length ? '组织分组' : '叶子节点' }}</span>
                 </span>
               </span>
             </template>
@@ -240,7 +237,7 @@ import { createUser, deleteUser, getAllUsers, getUserById, updateUser } from '@/
 import { getAllRoles } from '@/network/role'
 import { getTreeDepts } from '@/network/dept'
 import { assignRolesToUser, getRolesByUserId } from '@/network/userRole'
-import { findTreeNodeById, formatDateTime, getInitial } from './manage-utils'
+import { formatDateTime, getInitial } from './manage-utils'
 
 const createDefaultForm = () => ({
   id: null,
@@ -281,12 +278,6 @@ const rules = reactive({
   ]
 })
 
-const selectedDeptNode = computed(() => findTreeNodeById(allDepts.value, currentDeptId.value))
-const selectedDeptName = computed(() => selectedDeptNode.value?.name || '全部用户')
-const selectedDeptShortLabel = computed(() => {
-  const label = selectedDeptName.value
-  return label.length > 4 ? `${label.slice(0, 4)}...` : label
-})
 const emailReadyCount = computed(() => userList.value.filter(item => item.email).length)
 const mobileReadyCount = computed(() => userList.value.filter(item => item.mobile).length)
 
