@@ -49,10 +49,22 @@
           :min="1"
           placeholder="需要完成的次数"
         />
-        <div v-if="newTask.targetCount > 1" class="limit-toggle">
-          <el-checkbox v-model="newTask.isDailyLimit" :true-label="1" :false-label="0">
-            每日仅可完成一次
-          </el-checkbox>
+        <div v-if="newTask.targetCount > 1" class="limit-toggle-card" :class="{ 'is-active': newTask.isDailyLimit === 1 }">
+          <div class="limit-toggle-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="limit-toggle-content">
+            <div class="limit-toggle-title">每日仅限一次</div>
+            <div class="limit-toggle-desc">开启后，该任务每天最多只能完成一次</div>
+          </div>
+          <el-switch
+            v-model="newTask.isDailyLimit"
+            :active-value="1"
+            :inactive-value="0"
+            style="--el-switch-on-color: #2ea79f;"
+          />
         </div>
       </el-form-item>
     </el-form>
@@ -115,10 +127,22 @@
           :max="9999"
           placeholder="需要完成的次数"
         />
-        <div v-if="editTaskForm.targetCount > 1" class="limit-toggle">
-          <el-checkbox v-model="editTaskForm.isDailyLimit" :true-label="1" :false-label="0">
-            每日仅可完成一次
-          </el-checkbox>
+        <div v-if="editTaskForm.targetCount > 1" class="limit-toggle-card" :class="{ 'is-active': editTaskForm.isDailyLimit === 1 }">
+          <div class="limit-toggle-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="limit-toggle-content">
+            <div class="limit-toggle-title">每日仅限一次</div>
+            <div class="limit-toggle-desc">开启后，该任务每天最多只能完成一次</div>
+          </div>
+          <el-switch
+            v-model="editTaskForm.isDailyLimit"
+            :active-value="1"
+            :inactive-value="0"
+            style="--el-switch-on-color: #2ea79f;"
+          />
         </div>
       </el-form-item>
     </el-form>
@@ -603,21 +627,64 @@ const formatFriendlyRecordTime = (time) => {
   border-left: 1px solid rgba(226, 232, 240, 0.95);
 }
 
-.limit-toggle {
-  margin-top: 12px;
-  padding: 10px 12px;
+.limit-toggle-card {
+  margin-top: 14px;
+  padding: 14px 16px;
   border-radius: 16px;
-  background: #f7fbfb;
-  border: 1px solid rgba(208, 220, 228, 0.92);
+  background: rgba(244, 250, 249, 0.4);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
 }
 
-.todo-dialog-form :deep(.el-checkbox__label) {
+.limit-toggle-card.is-active {
+  background: rgba(61, 199, 188, 0.04);
+  border-color: rgba(61, 199, 188, 0.3);
+}
+
+.limit-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #ffffff;
   color: #607086;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: all 0.3s ease;
 }
 
-.todo-dialog-form :deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-  background: linear-gradient(135deg, #44c9bf 0%, #2ea79f 100%);
-  border-color: #2ea79f;
+.limit-toggle-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.limit-toggle-card.is-active .limit-toggle-icon {
+  color: #2ea79f;
+  background: #ffffff;
+  border-color: rgba(61, 199, 188, 0.3);
+  box-shadow: 0 4px 12px rgba(61, 199, 188, 0.1);
+}
+
+.limit-toggle-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.limit-toggle-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #162033;
+}
+
+.limit-toggle-desc {
+  font-size: 12px;
+  color: #8c9aab;
 }
 
 :deep(.todo-dialog) {

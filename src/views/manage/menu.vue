@@ -1,16 +1,8 @@
 <template>
   <section class="manage-page">
     <header class="manage-page__hero">
-      <div class="manage-page__hero-copy">
-        <p class="manage-page__eyebrow">Navigation Structure</p>
-        <h1 class="manage-page__hero-title">菜单结构</h1>
-      </div>
 
       <div class="manage-page__actions">
-        <div class="manage-page__hint">
-          <span class="manage-page__hint-label">当前节点</span>
-          <span class="manage-page__hint-value">{{ totalMenuCount }}</span>
-        </div>
 
         <el-button class="manage-secondary-button" @click="handleRefresh">
           <el-icon><Refresh /></el-icon>
@@ -24,39 +16,12 @@
       </div>
     </header>
 
-    <section class="manage-page__stats">
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-success">
-          <el-icon><Collection /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">目录分组</span>
-          <span class="manage-stat-card__value">{{ folderCount }}</span>
-        </div>
-      </article>
-
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-warm">
-          <el-icon><Grid /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">页面菜单</span>
-          <span class="manage-stat-card__value">{{ pageMenuCount }}</span>
-        </div>
-      </article>
-
-    </section>
-
     <section class="manage-surface manage-table">
       <div class="manage-surface__header">
         <div class="manage-surface__header-title">
           <h2>菜单树</h2>
         </div>
 
-        <div class="manage-surface__header-side">
-          <span class="manage-pill">首层入口 <strong>{{ menuList.length }}</strong></span>
-          <span class="manage-pill">当前页码 <strong>{{ currentPage }}</strong></span>
-        </div>
       </div>
 
       <div class="manage-surface__body">

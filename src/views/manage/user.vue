@@ -55,15 +55,8 @@
 
       <div class="manage-page">
         <header class="manage-page__hero">
-          <div class="manage-page__hero-copy">
-            <h1 class="manage-page__hero-title">用户管理</h1>
-          </div>
 
           <div class="manage-page__actions">
-            <div class="manage-page__hint">
-              <span class="manage-page__hint-label">当前部门</span>
-              <span class="manage-page__hint-value">{{ selectedDeptShortLabel }}</span>
-            </div>
 
             <el-button class="manage-secondary-button" @click="fetchUsers">
               <el-icon><Refresh /></el-icon>
@@ -83,10 +76,6 @@
               <h2>用户列表</h2>
             </div>
 
-            <div class="manage-surface__header-side">
-              <span class="manage-pill">筛选部门 <strong>{{ selectedDeptName }}</strong></span>
-              <span class="manage-pill">页码 <strong>{{ currentPage }}</strong></span>
-            </div>
           </div>
 
           <div class="manage-surface__body">

@@ -4,12 +4,8 @@ import './manage-theme.css'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  Connection,
   Grid,
-  Menu as MenuIcon,
-  OfficeBuilding,
-  Operation,
-  UserFilled
+  Operation
 } from '@element-plus/icons-vue'
 import GlobalHeader from '@/components/layout/GlobalHeader.vue'
 import { useMenuStore } from '@/store/menu'
@@ -20,42 +16,9 @@ const menuStore = useMenuStore()
 
 const activeTab = ref(route.path)
 const tabs = ref([])
-const menuData = menuStore.menuData
+const menuData = computed(() => menuStore.menuData)
 const isMobileMenuVisible = ref(false)
 const isMobile = ref(false)
-
-const pageCatalog = [
-  {
-    path: '/manage/user',
-    title: '用户管理',
-    eyebrow: 'Accounts',
-    description: '',
-    icon: UserFilled
-  },
-  {
-    path: '/manage/role',
-    title: '角色权限',
-    eyebrow: 'Permissions',
-    description: '',
-    icon: Connection
-  },
-  {
-    path: '/manage/menu',
-    title: '菜单结构',
-    eyebrow: 'Navigation',
-    description: '',
-    icon: MenuIcon
-  },
-  {
-    path: '/manage/dept',
-    title: '部门组织',
-    eyebrow: 'Organization',
-    description: '',
-    icon: OfficeBuilding
-  }
-]
-
-const pageMetaMap = Object.fromEntries(pageCatalog.map(item => [item.path, item]))
 
 const normalizeManagePath = (path = '') => {
   if (!path) {
@@ -69,20 +32,28 @@ const normalizeManagePath = (path = '') => {
   return `/manage${path.startsWith('/') ? path : `/${path}`}`
 }
 
-const getPageMeta = (path, fallbackTitle = '') => (
-  pageMetaMap[path] || {
-    title: fallbackTitle || '管理中心',
-    eyebrow: 'Workspace',
-    description: '统一管理账号、角色、菜单与组织结构，保持后台信息简洁有序。',
-    icon: Grid
-  }
-)
+const getPageMeta = (path, fallbackTitle = '') => ({
+  title: fallbackTitle || '管理中心',
+  eyebrow: 'Workspace',
+  description: '统一管理账号、角色、菜单与组织结构，保持后台信息简洁有序。',
+  icon: Grid
+})
 
 const getTabLabel = (path) => {
-  const metaByPath = getPageMeta(path)
+  const findTitle = (menus, targetPath) => {
+    for (const m of menus) {
+      if (normalizeManagePath(m.path) === targetPath) return m.title || m.name
+      if (m.children) {
+        const found = findTitle(m.children, targetPath)
+        if (found) return found
+      }
+    }
+    return null
+  }
 
-  if (metaByPath.title && metaByPath.title !== '管理中心') {
-    return metaByPath.title
+  const dynamicTitle = findTitle(menuData.value || [], path)
+  if (dynamicTitle) {
+    return dynamicTitle
   }
 
   const resolved = router.resolve(path)
@@ -112,19 +83,7 @@ const ensureTab = (path) => {
   }
 }
 
-const getDefaultSections = () => [
-  {
-    id: 'system',
-    label: '系统管理',
-    icon: Grid,
-    items: pageCatalog.map(item => ({
-      path: item.path,
-      title: item.title,
-      description: item.description,
-      icon: item.icon
-    }))
-  }
-]
+const getDefaultSections = () => []
 
 const resolveEntryMeta = (path, title) => getPageMeta(path, title)
 
@@ -136,21 +95,21 @@ const navigationSections = computed(() => {
   return menuData.value.map((menu) => {
     const children = Array.isArray(menu.children) ? menu.children : []
     const fallbackPath = normalizeManagePath(menu.path || '')
-    const sectionMeta = resolveEntryMeta(fallbackPath, menu.title)
+    const sectionMeta = resolveEntryMeta(fallbackPath, menu.title || menu.name)
 
     if (children.length > 0) {
       return {
         id: menu.id || menu.name || menu.title,
-        label: menu.title,
+        label: menu.title || menu.name,
         icon: sectionMeta.icon || Operation,
         items: children.map((child) => {
           const childPath = normalizeManagePath(child.path || '')
-          const childMeta = resolveEntryMeta(childPath, child.title)
+          const childMeta = resolveEntryMeta(childPath, child.title || child.name)
 
           return {
             id: child.id || child.name || childPath,
             path: childPath,
-            title: child.title,
+            title: child.title || child.name,
             description: childMeta.description,
             icon: childMeta.icon
           }
@@ -166,7 +125,7 @@ const navigationSections = computed(() => {
         {
           id: menu.id || menu.name || fallbackPath,
           path: fallbackPath,
-          title: menu.title,
+          title: menu.title || menu.name,
           description: sectionMeta.description,
           icon: sectionMeta.icon
         }
@@ -175,10 +134,6 @@ const navigationSections = computed(() => {
   })
 })
 
-const currentPageMeta = computed(() => getPageMeta(route.path, getTabLabel(route.path)))
-const navigationEntryCount = computed(() => (
-  navigationSections.value.reduce((total, section) => total + section.items.length, 0)
-))
 
 const handleSelect = (path) => {
   if (!path || path === route.path) {
@@ -203,7 +158,7 @@ const handleTabRemove = (tabName) => {
   }
 
   const fallbackTab = tabs.value[index] || tabs.value[index - 1]
-  const targetPath = fallbackTab?.name || '/manage/user'
+  const targetPath = fallbackTab?.name || navigationSections.value[0]?.items[0]?.path || '/manage'
 
   activeTab.value = targetPath
   router.push(targetPath)
@@ -275,19 +230,12 @@ watch(activeTab, (newTab) => {
       <aside class="manage-sidebar" :class="{ 'is-mobile-visible': isMobileMenuVisible }">
         <div class="manage-sidebar__panel">
           <div class="manage-sidebar__intro">
-            <div class="manage-sidebar__badge">
-              <el-icon>
-                <component :is="currentPageMeta.icon" />
-              </el-icon>
-            </div>
 
             <div>
-              <p class="manage-sidebar__eyebrow">Control Center</p>
               <h2 class="manage-sidebar__title">后台管理</h2>
             </div>
           </div>
 
-          <div class="manage-sidebar__section-label">Navigation</div>
 
           <nav class="manage-sidebar__nav" aria-label="manage navigation">
             <section

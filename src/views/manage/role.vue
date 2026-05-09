@@ -1,16 +1,8 @@
 <template>
   <section class="manage-page">
     <header class="manage-page__hero">
-      <div class="manage-page__hero-copy">
-        <p class="manage-page__eyebrow">Permissions Matrix</p>
-        <h1 class="manage-page__hero-title">角色权限</h1>
-      </div>
 
       <div class="manage-page__actions">
-        <div class="manage-page__hint">
-          <span class="manage-page__hint-label">角色总量</span>
-          <span class="manage-page__hint-value">{{ total }}</span>
-        </div>
 
         <el-button class="manage-secondary-button" @click="fetchRoles">
           <el-icon><Refresh /></el-icon>
@@ -24,58 +16,12 @@
       </div>
     </header>
 
-    <section class="manage-page__stats">
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-accent">
-          <el-icon><Connection /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">全部角色</span>
-          <span class="manage-stat-card__value">{{ total }}</span>
-        </div>
-      </article>
-
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-success">
-          <el-icon><Collection /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">当前页展示</span>
-          <span class="manage-stat-card__value">{{ roleList.length }}</span>
-        </div>
-      </article>
-
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-warm">
-          <el-icon><MenuIcon /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">可分配菜单</span>
-          <span class="manage-stat-card__value">{{ menuNodeCount }}</span>
-        </div>
-      </article>
-
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-slate">
-          <el-icon><Grid /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">已写描述</span>
-          <span class="manage-stat-card__value">{{ describedRoleCount }}</span>
-        </div>
-      </article>
-    </section>
-
     <section class="manage-surface manage-table">
       <div class="manage-surface__header">
         <div class="manage-surface__header-title">
           <h2>角色列表</h2>
         </div>
 
-        <div class="manage-surface__header-side">
-          <span class="manage-pill">页码 <strong>{{ currentPage }}</strong></span>
-          <span class="manage-pill">本页角色 <strong>{{ roleList.length }}</strong></span>
-        </div>
       </div>
 
       <div class="manage-surface__body">

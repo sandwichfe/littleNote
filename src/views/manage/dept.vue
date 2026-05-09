@@ -1,16 +1,8 @@
 <template>
   <section class="manage-page">
     <header class="manage-page__hero">
-      <div class="manage-page__hero-copy">
-        <p class="manage-page__eyebrow">Organization Structure</p>
-        <h1 class="manage-page__hero-title">部门架构</h1>
-      </div>
 
       <div class="manage-page__actions">
-        <div class="manage-page__hint">
-          <span class="manage-page__hint-label">组织节点</span>
-          <span class="manage-page__hint-value">{{ totalDeptCount }}</span>
-        </div>
 
         <el-button class="manage-secondary-button" @click="fetchDepts">
           <el-icon><Refresh /></el-icon>
@@ -24,61 +16,12 @@
       </div>
     </header>
 
-    <section class="manage-page__stats">
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-accent">
-          <el-icon><OfficeBuilding /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">全部部门</span>
-          <span class="manage-stat-card__value">{{ totalDeptCount }}</span>
-
-        </div>
-      </article>
-
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-success">
-          <el-icon><CircleCheck /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">正常状态</span>
-          <span class="manage-stat-card__value">{{ activeDeptCount }}</span>
-
-        </div>
-      </article>
-
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-warm">
-          <el-icon><WarningFilled /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">停用部门</span>
-          <span class="manage-stat-card__value">{{ disabledDeptCount }}</span>
-
-        </div>
-      </article>
-
-      <article class="manage-stat-card">
-        <div class="manage-stat-card__icon is-slate">
-          <el-icon><User /></el-icon>
-        </div>
-        <div class="manage-stat-card__body">
-          <span class="manage-stat-card__label">已配负责人</span>
-          <span class="manage-stat-card__value">{{ assignedLeaderCount }}</span>
-        </div>
-      </article>
-    </section>
-
     <section class="manage-surface manage-table">
       <div class="manage-surface__header">
         <div class="manage-surface__header-title">
           <h2>部门列表</h2>
         </div>
 
-        <div class="manage-surface__header-side">
-          <span class="manage-pill">根部门 <strong>{{ rootDeptCount }}</strong></span>
-          <span class="manage-pill">已配置邮箱 <strong>{{ emailReadyCount }}</strong></span>
-        </div>
       </div>
 
       <div class="manage-surface__body">
