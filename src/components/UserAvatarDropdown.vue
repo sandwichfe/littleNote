@@ -212,87 +212,72 @@ onMounted(() => {
       </template>
     </el-dropdown>
 
-    <!-- 用户信息修改对话框 - 自定义弹窗 -->
-    <transition name="dialog-fade">
-      <div v-if="dialogVisible" class="custom-dialog-overlay" @click.self="dialogVisible = false">
-        <div class="custom-dialog">
-          <!-- Header -->
-          <div class="custom-dialog-header">
-            <h3 class="custom-dialog-title">个人资料</h3>
-            <button class="custom-dialog-close" @click="dialogVisible = false">
-              <el-icon><Close /></el-icon>
-            </button>
-          </div>
-
-          <!-- Body -->
-          <div class="custom-dialog-body">
-            <el-form :model="userForm" label-width="80px" class="user-info-form">
-              <!-- 头像区域 - 居中显示 -->
-              <div class="avatar-section">
-                <div class="avatar-wrapper">
-                  <el-upload
-                    class="avatar-uploader"
-                    :show-file-list="false"
-                    :before-upload="beforeAvatarUpload"
-                  >
-                    <div class="avatar-upload-container">
-                      <img v-if="userForm.avatar" :src="userForm.avatar" class="avatar-preview" />
-                      <el-icon v-else class="avatar-uploader-icon">
-                        <Plus />
-                      </el-icon>
-                      <div class="avatar-mask">
-                        <el-icon class="camera-icon"><Plus /></el-icon>
-                        <span class="upload-text">更换头像</span>
-                      </div>
-                    </div>
-                  </el-upload>
+    <!-- 用户信息修改对话框 -->
+    <el-dialog v-model="dialogVisible" title="个人资料" width="500px" center append-to-body>
+      <el-form :model="userForm" label-width="80px" class="user-info-form">
+        <!-- 头像区域 - 居中显示 -->
+        <div class="avatar-section">
+          <div class="avatar-wrapper">
+            <el-upload
+              class="avatar-uploader"
+              :show-file-list="false"
+              :before-upload="beforeAvatarUpload"
+            >
+              <div class="avatar-upload-container">
+                <img v-if="userForm.avatar" :src="userForm.avatar" class="avatar-preview" />
+                <el-icon v-else class="avatar-uploader-icon">
+                  <Plus />
+                </el-icon>
+                <div class="avatar-mask">
+                  <el-icon class="camera-icon"><Plus /></el-icon>
+                  <span class="upload-text">更换头像</span>
                 </div>
-                <p class="avatar-tip">点击头像可更换，支持 JPG、PNG 格式</p>
               </div>
-
-              <!-- 昵称输入 -->
-              <el-form-item label="昵称" class="form-item-custom">
-                <el-input
-                  v-model="userForm.nickname"
-                  placeholder="请输入昵称"
-                  maxlength="20"
-                  show-word-limit
-                  clearable
-                ></el-input>
-              </el-form-item>
-
-              <!-- 性别选择 -->
-              <el-form-item label="性别" class="form-item-custom">
-                <el-radio-group v-model="userForm.gender">
-                  <el-radio label="male">男</el-radio>
-                  <el-radio label="female">女</el-radio>
-                  <el-radio label="">保密</el-radio>
-                </el-radio-group>
-              </el-form-item>
-
-              <!-- 个性签名 -->
-              <el-form-item label="个性签名" class="form-item-custom">
-                <el-input
-                  v-model="userForm.signature"
-                  type="textarea"
-                  placeholder="写下你的个性签名..."
-                  maxlength="100"
-                  show-word-limit
-                  :rows="2"
-                  resize="none"
-                ></el-input>
-              </el-form-item>
-            </el-form>
+            </el-upload>
           </div>
-
-          <!-- Footer -->
-          <div class="custom-dialog-footer">
-            <el-button @click="dialogVisible = false" size="large">取消</el-button>
-            <el-button type="primary" @click="updateCurrentUserInfo" size="large">保存</el-button>
-          </div>
+          <p class="avatar-tip">点击头像可更换，支持 JPG、PNG 格式</p>
         </div>
-      </div>
-    </transition>
+
+        <!-- 昵称输入 -->
+        <el-form-item label="昵称" class="form-item-custom">
+          <el-input
+            v-model="userForm.nickname"
+            placeholder="请输入昵称"
+            maxlength="20"
+            show-word-limit
+            clearable
+          ></el-input>
+        </el-form-item>
+
+        <!-- 性别选择 -->
+        <el-form-item label="性别" class="form-item-custom">
+          <el-radio-group v-model="userForm.gender">
+            <el-radio label="male">男</el-radio>
+            <el-radio label="female">女</el-radio>
+            <el-radio label="">保密</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <!-- 个性签名 -->
+        <el-form-item label="个性签名" class="form-item-custom">
+          <el-input
+            v-model="userForm.signature"
+            type="textarea"
+            placeholder="写下你的个性签名..."
+            maxlength="100"
+            show-word-limit
+            :rows="2"
+            resize="none"
+          ></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="updateCurrentUserInfo">保 存</el-button>
+        </span>
+      </template>
+    </el-dialog>
 
     <!-- Cropper Dialog -->
     <el-dialog v-model="cropperDialogVisible" title="裁剪头像" width="500px" center append-to-body>
@@ -314,59 +299,44 @@ onMounted(() => {
       </template>
     </el-dialog>
 
-    <!-- 修改密码对话框 - 自定义弹窗 -->
-    <transition name="dialog-fade">
-      <div v-if="passwordDialogVisible" class="custom-dialog-overlay" @click.self="passwordDialogVisible = false">
-        <div class="custom-dialog custom-dialog-small">
-          <!-- Header -->
-          <div class="custom-dialog-header">
-            <h3 class="custom-dialog-title">修改密码</h3>
-            <button class="custom-dialog-close" @click="passwordDialogVisible = false">
-              <el-icon><Close /></el-icon>
-            </button>
-          </div>
-
-          <!-- Body -->
-          <div class="custom-dialog-body">
-            <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="90px" class="password-form">
-              <el-form-item label="原密码" prop="oldPassword">
-                <el-input
-                  v-model="passwordForm.oldPassword"
-                  type="password"
-                  placeholder="请输入原密码"
-                  show-password
-                  clearable
-                ></el-input>
-              </el-form-item>
-              <el-form-item label="新密码" prop="newPassword">
-                <el-input
-                  v-model="passwordForm.newPassword"
-                  type="password"
-                  placeholder="请输入新密码"
-                  show-password
-                  clearable
-                ></el-input>
-              </el-form-item>
-              <el-form-item label="确认密码" prop="confirmPassword">
-                <el-input
-                  v-model="passwordForm.confirmPassword"
-                  type="password"
-                  placeholder="请再次输入新密码"
-                  show-password
-                  clearable
-                ></el-input>
-              </el-form-item>
-            </el-form>
-          </div>
-
-          <!-- Footer -->
-          <div class="custom-dialog-footer">
-            <el-button @click="passwordDialogVisible = false" size="large">取消</el-button>
-            <el-button type="primary" @click="updatePassword" size="large">确认修改</el-button>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <!-- 修改密码对话框 -->
+    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="450px" center append-to-body>
+      <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="90px" class="password-form">
+        <el-form-item label="原密码" prop="oldPassword">
+          <el-input
+            v-model="passwordForm.oldPassword"
+            type="password"
+            placeholder="请输入原密码"
+            show-password
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input
+            v-model="passwordForm.newPassword"
+            type="password"
+            placeholder="请输入新密码"
+            show-password
+            clearable
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input
+            v-model="passwordForm.confirmPassword"
+            type="password"
+            placeholder="请再次输入新密码"
+            show-password
+            clearable
+          ></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="passwordDialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="updatePassword">确认修改</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -617,125 +587,6 @@ onMounted(() => {
   outline: none !important;
 }
 
-/* Custom Dialog Overlay */
-.custom-dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: 20px;
-}
-
-/* Custom Dialog */
-.custom-dialog {
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Small Dialog for password change */
-.custom-dialog-small {
-  max-width: 450px;
-}
-
-/* Dialog Header */
-.custom-dialog-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 20px;
-  border-bottom: 1px solid #e8e8e8;
-  flex-shrink: 0;
-  position: relative;
-}
-
-.custom-dialog-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
-  line-height: 1.5;
-}
-
-.custom-dialog-close {
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  color: #909399;
-  font-size: 18px;
-  transition: all 0.2s;
-  padding: 0;
-}
-
-.custom-dialog-close:hover {
-  background-color: #f5f5f5;
-  color: #606266;
-}
-
-/* Dialog Body */
-.custom-dialog-body {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-/* Dialog Footer */
-.custom-dialog-footer {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  padding: 14px 20px;
-  border-top: 1px solid #e8e8e8;
-  flex-shrink: 0;
-}
-
-.custom-dialog-footer .el-button {
-  min-width: 100px;
-}
-
-/* Dialog Fade Animation */
-.dialog-fade-enter-active,
-.dialog-fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.dialog-fade-enter-active .custom-dialog,
-.dialog-fade-leave-active .custom-dialog {
-  transition: transform 0.3s ease;
-}
-
-.dialog-fade-enter-from,
-.dialog-fade-leave-to {
-  opacity: 0;
-}
-
-.dialog-fade-enter-from .custom-dialog,
-.dialog-fade-leave-to .custom-dialog {
-  transform: scale(0.9);
-}
-
 /* Mobile responsive */
 @media (max-width: 768px) {
   .nickname {
@@ -744,31 +595,6 @@ onMounted(() => {
 
   .user-info-container {
     padding: 6px;
-  }
-
-  .custom-dialog {
-    max-width: 95%;
-    margin: 0 10px;
-  }
-
-  .custom-dialog-header {
-    padding: 12px 16px;
-  }
-
-  .custom-dialog-title {
-    font-size: 15px;
-  }
-
-  .custom-dialog-body {
-    padding: 16px;
-  }
-
-  .custom-dialog-footer {
-    padding: 12px 16px;
-  }
-
-  .custom-dialog-footer .el-button {
-    min-width: 80px;
   }
 
   .avatar-upload-container,
