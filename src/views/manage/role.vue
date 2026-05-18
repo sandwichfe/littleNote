@@ -29,13 +29,9 @@
           <el-table-column label="角色" min-width="240">
             <template #default="{ row }">
               <div class="manage-entity">
-                <span class="manage-entity__avatar">
-                  {{ getInitial(row.roleName) }}
-                </span>
 
                 <span class="manage-entity__text">
                   <span class="manage-entity__title">{{ row.roleName }}</span>
-                  <span class="manage-entity__meta">角色 ID {{ row.id }}</span>
                 </span>
               </div>
             </template>

@@ -35,13 +35,9 @@
           <el-table-column label="部门信息" min-width="260" class-name="manage-tree-column">
             <template #default="{ row }">
               <div class="manage-entity">
-                <span class="manage-entity__avatar">
-                  <el-icon><OfficeBuilding /></el-icon>
-                </span>
 
                 <span class="manage-entity__text">
                   <span class="manage-entity__title">{{ row.name }}</span>
-                  <span class="manage-entity__meta">排序 {{ row.sort ?? 0 }}</span>
                 </span>
               </div>
             </template>

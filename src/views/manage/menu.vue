@@ -35,11 +35,6 @@
           <el-table-column label="菜单信息" min-width="260" class-name="manage-tree-column">
             <template #default="{ row }">
               <div class="manage-entity">
-                <span class="manage-entity__avatar">
-                  <el-icon>
-                    <component :is="getMenuTypeMeta(row).icon" />
-                  </el-icon>
-                </span>
 
                 <span class="manage-entity__text">
                   <span class="manage-entity__title">{{ row.name }}</span>

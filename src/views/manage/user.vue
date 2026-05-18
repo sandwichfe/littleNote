@@ -21,11 +21,8 @@
             @click="clearDeptFilter"
             style="padding: 8px 12px; border-radius: 12px; margin-bottom: 8px;"
           >
-            <span class="manage-entity__avatar" :class="!currentDeptId ? '' : 'is-slate'" style="width: 32px; height: 32px; border-radius: 10px; font-size: 14px;">
-              <el-icon><Grid /></el-icon>
-            </span>
             <span class="manage-entity__text">
-              <span class="manage-entity__title" style="font-size: 14px;">全部用户</span>
+              <span class="manage-entity__title" style="font-size: 14px; color:#4a4545;">全部用户</span>
             </span>
           </div>
 
@@ -80,13 +77,9 @@
               <el-table-column label="用户" min-width="260">
                 <template #default="{ row }">
                   <div class="manage-entity">
-                    <span class="manage-entity__avatar">
-                      {{ getInitial(row.nickname || row.username) }}
-                    </span>
 
                     <span class="manage-entity__text">
                       <span class="manage-entity__title">{{ row.nickname || '--' }}</span>
-                      <span class="manage-entity__meta">@{{ row.username || '--' }}</span>
                     </span>
                   </div>
                 </template>

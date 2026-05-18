@@ -127,6 +127,7 @@
   overflow: auto;
   display: flex;
   flex-direction: column;
+  margin-top: 8px;
   gap: 8px;
   padding-right: 4px;
 }
@@ -144,7 +145,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 12px;
+  margin-top: 5px;
 }
 
 .manage-nav-group:first-child {
@@ -154,8 +155,7 @@
 .manage-nav-group__label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  padding: 4px 8px;
   border-radius: 8px;
   transition: background-color 0.2s;
 }
@@ -167,10 +167,10 @@
 .manage-nav-group__title {
   flex: 1;
   margin: 0;
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1.2;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--manage-slate);
+  line-height: 1.2;
 }
 
 .manage-nav-group__label-icon {
@@ -503,24 +503,10 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 20px 24px;
+  padding: 2px 5px;
   border-radius: 16px;
-  border: 1px solid #f1f5f9;
-  background: #f8fafc;
   box-shadow: none;
   overflow: hidden;
-}
-
-.manage-page__hero::after {
-  content: '';
-  position: absolute;
-  inset: auto -34px -38px auto;
-  width: 180px;
-  height: 180px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(20, 184, 166, 0.12), transparent 72%);
-  pointer-events: none;
 }
 
 .manage-page__eyebrow {
@@ -788,29 +774,6 @@
   min-width: 0;
 }
 
-.manage-entity__avatar {
-  width: 42px;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: 15px;
-  background: rgba(20, 184, 166, 0.14);
-  color: var(--manage-accent);
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.manage-entity__avatar.is-slate {
-  background: rgba(148, 163, 184, 0.16);
-  color: #475569;
-}
-
-.manage-entity__avatar.is-warm {
-  background: rgba(249, 115, 22, 0.14);
-  color: #ea580c;
-}
 
 .manage-entity__text {
   min-width: 0;
@@ -876,7 +839,6 @@
 .manage-primary-button {
   background: linear-gradient(135deg, var(--manage-accent), #0ea5a6);
   border-color: transparent;
-  box-shadow: 0 14px 28px rgba(15, 143, 134, 0.24);
 }
 
 .manage-primary-button:hover {
