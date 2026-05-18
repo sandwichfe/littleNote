@@ -9,7 +9,7 @@ import {
   Fold,
   Expand
 } from '@element-plus/icons-vue'
-import GlobalHeader from '@/components/layout/GlobalHeader.vue'
+import ManageHeader from './ManageHeader.vue'
 import { useMenuStore } from '@/store/menu'
 
 const route = useRoute()
@@ -217,7 +217,7 @@ watch(activeTab, (newTab) => {
 
 <template>
   <div class="manage-layout">
-    <GlobalHeader />
+    <ManageHeader />
 
     <div class="manage-shell" :class="{ 'is-collapsed': isCollapsed }">
       <transition name="manage-fade">

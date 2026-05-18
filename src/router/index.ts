@@ -11,6 +11,11 @@ const constantRoutes: RouteRecordRaw[] = [
     name: 'Login',
   },
   {
+    path: '/manage/login',
+    component: () => import('../views/manage/login.vue'),
+    name: 'ManageLogin',
+  },
+  {
     path: '/',
     component: AppLayout,
     name: 'AppLayout',
@@ -121,9 +126,9 @@ export function generateRoutes(menuData) {
   return routes
 }
 
-function handleUnauthenticatedUser(to, next, menuStore) {
+function handleUnauthenticatedUser(to, next, menuStore, redirectPath = '/login') {
   menuStore.resetMenuState()
-  next('/login')
+  next(redirectPath)
 }
 
 async function handleMenuAndRoutes(to, next, menuStore) {
@@ -149,7 +154,8 @@ router.beforeEach(async (to, from, next) => {
   const token = Cookies.get('loginToken')
   const menuStore = useMenuStore()
 
-  if (to.path === '/login') {
+  // 排除登录页面
+  if (to.path === '/login' || to.path === '/manage/login') {
     next()
     return
   }
@@ -164,7 +170,7 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.path.startsWith('/manage')) {
     if (!token) {
-      handleUnauthenticatedUser(to, next, menuStore)
+      handleUnauthenticatedUser(to, next, menuStore, '/manage/login')
     } else {
       await handleMenuAndRoutes(to, next, menuStore)
     }

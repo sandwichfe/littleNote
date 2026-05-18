@@ -103,7 +103,8 @@ const updateCurrentUserInfo = async () => {
 const logout = () => {
   menuStore.resetMenuState()
   Cookies.remove('loginToken')
-  router.push('/login')
+  const redirectPath = router.currentRoute.value.path.startsWith('/manage') ? '/manage/login' : '/login'
+  router.push(redirectPath)
 }
 
 const openDialog = () => {

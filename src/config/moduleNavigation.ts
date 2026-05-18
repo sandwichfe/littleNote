@@ -19,12 +19,6 @@ export const moduleNavigationItems: ModuleNavigationItem[] = [
     label: 'Todo',
     description: '任务安排',
     route: '/todo'
-  },
-  {
-    key: 'manage',
-    label: 'Manager',
-    description: '后台管理',
-    route: '/manage/user'
   }
 ]
 
