@@ -7,7 +7,8 @@ import {
   Grid,
   Operation,
   Fold,
-  Expand
+  Expand,
+  ArrowDown
 } from '@element-plus/icons-vue'
 import ManageHeader from './ManageHeader.vue'
 import { useMenuStore } from '@/store/menu'
@@ -23,9 +24,26 @@ const isMobileMenuVisible = ref(false)
 const isMobile = ref(false)
 const isCollapsed = ref(false)
 
+// 跟踪展开的菜单组 ID
+const expandedGroups = ref(new Set())
+
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
 }
+
+// 切换菜单组展开状态（手风琴模式）
+const toggleGroup = (sectionId) => {
+  if (expandedGroups.value.has(sectionId)) {
+    expandedGroups.value.delete(sectionId)
+  } else {
+    // 手风琴模式：只允许展开一个
+    expandedGroups.value.clear()
+    expandedGroups.value.add(sectionId)
+  }
+}
+
+// 检查菜单组是否展开
+const isGroupExpanded = (sectionId) => expandedGroups.value.has(sectionId)
 
 const normalizeManagePath = (path = '') => {
   if (!path) {
@@ -185,6 +203,23 @@ const closeMobileMenu = () => {
 
 const isSectionActive = (section) => section.items.some(item => item.path === route.path)
 
+// 默认展开第一个菜单组
+watch(
+  navigationSections,
+  (sections) => {
+    if (sections.length > 0 && expandedGroups.value.size === 0) {
+      // 查找当前激活项所在的组，如果没有则展开第一个
+      const activeSection = sections.find(isSectionActive)
+      if (activeSection) {
+        expandedGroups.value.add(activeSection.id)
+      } else {
+        expandedGroups.value.add(sections[0].id)
+      }
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
@@ -204,6 +239,19 @@ watch(
     activeTab.value = newPath
     ensureTab(newPath)
     closeMobileMenu()
+
+    // 路由变化时，确保所属的菜单组是展开的
+    const sectionIndex = navigationSections.value.findIndex(section => 
+      section.items.some(item => item.path === newPath)
+    )
+    if (sectionIndex !== -1) {
+      const sectionId = navigationSections.value[sectionIndex].id
+      if (!expandedGroups.value.has(sectionId)) {
+        // 如果需要手风琴模式，则先清空
+        expandedGroups.value.clear()
+        expandedGroups.value.add(sectionId)
+      }
+    }
   },
   { immediate: true }
 )
@@ -250,38 +298,49 @@ watch(activeTab, (newTab) => {
               v-for="section in navigationSections"
               :key="section.id"
               class="manage-nav-group"
-              :class="{ 'is-active': isSectionActive(section) }"
+              :class="{ 'is-active': isSectionActive(section), 'is-expanded': isGroupExpanded(section.id) }"
             >
-              <div v-if="section.label" class="manage-nav-group__label" :title="isCollapsed ? section.label : ''">
+              <div 
+                v-if="section.label" 
+                class="manage-nav-group__label" 
+                :title="isCollapsed ? section.label : ''"
+                @click="toggleGroup(section.id)"
+                style="cursor: pointer; user-select: none;"
+              >
                 <span class="manage-nav-group__label-icon">
                   <el-icon>
                     <component :is="section.icon || Grid" />
                   </el-icon>
                 </span>
-                <span v-show="!isCollapsed">{{ section.label }}</span>
+                <span v-show="!isCollapsed" style="flex: 1;">{{ section.label }}</span>
+                <el-icon v-show="!isCollapsed" class="manage-nav-group__arrow" :style="{ transform: isGroupExpanded(section.id) ? 'rotate(180deg)' : 'rotate(0)' }">
+                  <ArrowDown />
+                </el-icon>
               </div>
 
-              <div class="manage-nav-group__items">
-                <button
-                  v-for="item in section.items"
-                  :key="item.id"
-                  class="manage-nav-item"
-                  :class="{ 'is-active': route.path === item.path }"
-                  type="button"
-                  :title="isCollapsed ? item.title : ''"
-                  @click="handleSelect(item.path)"
-                >
-                  <span class="manage-nav-item__icon">
-                    <el-icon>
-                      <component :is="item.icon || Grid" />
-                    </el-icon>
-                  </span>
+              <transition name="manage-menu-fade">
+                <div class="manage-nav-group__items" v-show="isGroupExpanded(section.id)">
+                  <button
+                    v-for="item in section.items"
+                    :key="item.id"
+                    class="manage-nav-item"
+                    :class="{ 'is-active': route.path === item.path }"
+                    type="button"
+                    :title="isCollapsed ? item.title : ''"
+                    @click="handleSelect(item.path)"
+                  >
+                    <span class="manage-nav-item__icon">
+                      <el-icon>
+                        <component :is="item.icon || Grid" />
+                      </el-icon>
+                    </span>
 
-                  <span class="manage-nav-item__copy" v-show="!isCollapsed">
-                    <span class="manage-nav-item__title">{{ item.title }}</span>
-                  </span>
-                </button>
-              </div>
+                    <span class="manage-nav-item__copy" v-show="!isCollapsed">
+                      <span class="manage-nav-item__title">{{ item.title }}</span>
+                    </span>
+                  </button>
+                </div>
+              </transition>
             </section>
           </nav>
 
