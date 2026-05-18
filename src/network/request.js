@@ -1,6 +1,7 @@
 import axios from 'axios'
 import Cookies from 'js-cookie'
 import router from '../router';
+import { ElMessage } from 'element-plus'
 
 // 从环境变量读取各模块 Base URL
 // /api/little-note
@@ -63,22 +64,36 @@ export function request(config) {
 
      // 响应拦截器
      instance.interceptors.response.use(res => {
-        if(401 == res?.data?.code) {
-            console.log(res.data.msg);
-            Cookies.remove('loginToken');
-            router.push("/login")
-         }
-         return res.data;
+        // 检查业务代码是否为 401
+        if (res?.data?.code === 401) {
+            handleUnauthorized(res?.data?.msg);
+        }
+        return res.data;
      }, err => {
-         if(401 === (err?.response?.data?.code)) {
-             console.log(err?.response?.data?.msg);
-             router.push("/login")
-          }
-        console.log(err);
+        // 检查 HTTP 状态码或响应数据中的业务代码是否为 401
+        if (err?.response?.status === 401 || err?.response?.data?.code === 401) {
+            handleUnauthorized(err?.response?.data?.msg || '登录已过期，请重新登录');
+        }
+        console.error(err);
         return Promise.reject(err);
      });
 
     return instance(config);
+}
+
+// 统一处理未授权情况
+let isRedirecting = false;
+function handleUnauthorized(msg) {
+    Cookies.remove('loginToken');
+    if (!isRedirecting) {
+        isRedirecting = true;
+        ElMessage.error(msg || '登录已过期，请重新登录');
+        router.push("/login").then(() => {
+            isRedirecting = false;
+        }).catch(() => {
+            isRedirecting = false;
+        });
+    }
 }
 
 // 导出 LoginRequest 以保持兼容性，但实际上指向 request
