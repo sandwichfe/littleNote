@@ -307,12 +307,7 @@ watch(activeTab, (newTab) => {
                 @click="toggleGroup(section.id)"
                 style="cursor: pointer; user-select: none;"
               >
-                <span class="manage-nav-group__label-icon">
-                  <el-icon>
-                    <component :is="section.icon || Grid" />
-                  </el-icon>
-                </span>
-                <span v-show="!isCollapsed" style="flex: 1;">{{ section.label }}</span>
+                <div v-show="!isCollapsed" class="manage-nav-group__title">{{ section.label }}</div>
                 <el-icon v-show="!isCollapsed" class="manage-nav-group__arrow" :style="{ transform: isGroupExpanded(section.id) ? 'rotate(180deg)' : 'rotate(0)' }">
                   <ArrowDown />
                 </el-icon>
@@ -329,12 +324,6 @@ watch(activeTab, (newTab) => {
                     :title="isCollapsed ? item.title : ''"
                     @click="handleSelect(item.path)"
                   >
-                    <span class="manage-nav-item__icon">
-                      <el-icon>
-                        <component :is="item.icon || Grid" />
-                      </el-icon>
-                    </span>
-
                     <span class="manage-nav-item__copy" v-show="!isCollapsed">
                       <span class="manage-nav-item__title">{{ item.title }}</span>
                     </span>
