@@ -45,7 +45,7 @@ const onSuccess = async () => {
       // 获取菜单和路由
       const { success, message } = await menuStore.fetchAndSetMenus();
       if (success) {
-        ElMessage.success("管理员登录成功");
+        ElMessage.success("登录成功");
         router.push('/manage');
       } else {
         ElMessage.error(message || '管理菜单加载失败');
@@ -113,9 +113,6 @@ const onVcodeFail = () => {
         </el-button>
       </el-form>
 
-      <div class="login-footer">
-        <router-link to="/login" class="back-link">返回前台登录</router-link>
-      </div>
     </div>
 
     <Vcode
