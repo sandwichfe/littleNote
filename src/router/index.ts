@@ -78,6 +78,11 @@ const constantRoutes: RouteRecordRaw[] = [
         name: 'Dict',
       },
       {
+        path: 'operationLog',
+        component: () => import('../views/manage/operationLog.vue'),
+        name: 'OperationLog',
+      },
+      {
         path: 'noteGroup',
         component: () => import('../views/apps/note/noteGroup.vue'),
         name: 'NoteGroup',
@@ -91,6 +96,8 @@ const componentMap: Record<string, () => Promise<any>> = {
   '/role': () => import('../views/manage/role.vue'),
   '/menu': () => import('../views/manage/menu.vue'),
   '/dict': () => import('../views/manage/dict.vue'),
+  '/operationLog': () => import('../views/manage/operationLog.vue'),
+  '/operation-log': () => import('../views/manage/operationLog.vue'),
   '/qrcode': () => import('../views/apps/qrcode/qrcodeView.vue'),
   '/noteGroup': () => import('../views/apps/note/noteGroup.vue'),
   '/todo': () => import('../views/apps/todo/todo.vue'),
