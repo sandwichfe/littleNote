@@ -14,6 +14,9 @@
             <el-button text circle title="新建类型" @click="handleCreateType">
               <el-icon><Plus /></el-icon>
             </el-button>
+            <el-button text circle title="删除类型" :disabled="!currentTypeId" @click="handleDeleteCurrentType">
+              <el-icon><Delete /></el-icon>
+            </el-button>
           </div>
         </div>
 
@@ -208,7 +211,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh } from '@element-plus/icons-vue'
+import { Delete, Plus, Refresh } from '@element-plus/icons-vue'
 import {
   createDictItem,
   createDictType,
@@ -400,6 +403,11 @@ const handleDeleteType = async (row: any) => {
   }
 }
 
+const handleDeleteCurrentType = async () => {
+  if (!currentType.value) return
+  await handleDeleteType(currentType.value)
+}
+
 const handleCreateItem = async () => {
   if (!currentTypeId.value) return
   itemIsCreate.value = true
@@ -470,4 +478,3 @@ onMounted(async () => {
   await fetchTypes()
 })
 </script>
-
