@@ -3,10 +3,7 @@
     <div class="manage-tree-layout">
       <aside class="manage-tree-panel">
         <div class="manage-tree-panel__header">
-          <div>
-            <h2 class="manage-tree-panel__title">字典类型</h2>
-          </div>
-
+          <span class="manage-tree-panel__title">字典类型</span>
           <div class="manage-tree-panel__actions">
             <el-button text circle title="刷新" @click="fetchTypes">
               <el-icon><Refresh /></el-icon>

@@ -2,22 +2,22 @@
   <section class="manage-page">
     <div class="manage-tree-layout">
       <aside class="manage-tree-panel">
+        <div class="manage-tree-panel__header">
+          <span class="manage-tree-panel__title">部门</span>
+          <div class="manage-tree-panel__actions">
+            <el-button text circle @click="fetchDepts" title="刷新">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+          </div>
+        </div>
 
         <div class="manage-tree-panel__body">
           <div
             class="manage-nav-item"
             :class="{ 'is-active': !currentDeptId }"
             @click="clearDeptFilter"
-            style="padding: 8px 12px; border-radius: 12px; margin-bottom: 8px;"
           >
-            <span class="manage-entity__text">
-              <span class="manage-entity__title" style="font-size: 14px; color:#4a4545;">全部用户</span>
-                <div class="manage-tree-panel__actions">
-            <el-button text circle @click="fetchDepts" title="刷新">
-              <el-icon><Refresh /></el-icon>
-            </el-button>
-          </div>
-            </span>
+            <span class="manage-nav-item__title">全部用户</span>
           </div>
 
           <el-tree
@@ -29,15 +29,7 @@
             :expand-on-click-node="false"
             highlight-current
             @node-click="handleNodeClick"
-          >
-            <template #default="{ node, data }">
-              <span class="manage-entity" style="gap: 10px;">
-                <span class="manage-entity__text">
-                  <span class="manage-entity__title" style="font-size: 14px;">{{ node.label }}</span>
-                </span>
-              </span>
-            </template>
-          </el-tree>
+          />
         </div>
       </aside>
 
