@@ -4,9 +4,9 @@ import { ref, watch } from 'vue'
 const STORAGE_KEY = 'manage-theme-colors'
 
 const DEFAULTS = {
-  accent: '#CA8A04',
-  textColor: '#831843',
-  bgColor: '#FDF2F8'
+  accent: '#193069',
+  textColor: '#3A3034',
+  bgColor: '#EFF1F8'
 }
 
 function hexToRgb(hex: string) {

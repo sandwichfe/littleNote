@@ -882,7 +882,7 @@
   padding: 20px;
   border-radius: 16px;
   border: none;
-  background: var(--manage-bg);
+  background: var(--manage-surface-strong);
   box-shadow: none;
 }
 

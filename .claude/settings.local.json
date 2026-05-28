@@ -13,7 +13,8 @@
       "Bash(py --version)",
       "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"romantic wedding soft pink gold admin panel\" --design-system -p \"LittleNote Admin\")",
       "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"soft ui glassmorphism neumorphism\" --domain style)",
-      "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"admin dashboard panel\" --stack vue)"
+      "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"admin dashboard panel\" --stack vue)",
+      "Bash(npx vite:*)"
     ]
   }
 }
