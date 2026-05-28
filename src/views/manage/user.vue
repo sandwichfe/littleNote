@@ -2,17 +2,6 @@
   <section class="manage-page">
     <div class="manage-tree-layout">
       <aside class="manage-tree-panel">
-        <div class="manage-tree-panel__header">
-          <div>
-            <h2 class="manage-tree-panel__title">组织架构</h2>
-          </div>
-
-          <div class="manage-tree-panel__actions">
-            <el-button text circle @click="fetchDepts" title="刷新">
-              <el-icon><Refresh /></el-icon>
-            </el-button>
-          </div>
-        </div>
 
         <div class="manage-tree-panel__body">
           <div
@@ -23,6 +12,11 @@
           >
             <span class="manage-entity__text">
               <span class="manage-entity__title" style="font-size: 14px; color:#4a4545;">全部用户</span>
+                <div class="manage-tree-panel__actions">
+            <el-button text circle @click="fetchDepts" title="刷新">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+          </div>
             </span>
           </div>
 

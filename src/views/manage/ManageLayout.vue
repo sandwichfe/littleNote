@@ -1,7 +1,7 @@
 <script setup>
 import './manage-theme.css'
 
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   Grid,
@@ -12,6 +12,7 @@ import {
 } from '@element-plus/icons-vue'
 import ManageHeader from './ManageHeader.vue'
 import { useMenuStore } from '@/store/menu'
+import { useThemeStore } from '@/store/theme'
 
 const route = useRoute()
 const router = useRouter()
@@ -220,9 +221,12 @@ watch(
   { immediate: true }
 )
 
+const themeStore = useThemeStore()
+
 onMounted(() => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
+  nextTick(() => themeStore.applyTheme())
 })
 
 onUnmounted(() => {

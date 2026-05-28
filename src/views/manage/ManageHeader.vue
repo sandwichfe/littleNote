@@ -3,9 +3,11 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import Cookies from 'js-cookie'
 import UserAvatarDropdown from '@/components/UserAvatarDropdown.vue'
-import { HomeFilled } from '@element-plus/icons-vue'
+import { HomeFilled, Brush } from '@element-plus/icons-vue'
+import { useThemeStore } from '@/store/theme'
 
 const router = useRouter()
+const themeStore = useThemeStore()
 
 const hasToken = computed(() => {
   return Boolean(Cookies.get('loginToken'))
@@ -33,14 +35,46 @@ const goManage = () => {
     </div>
 
     <div class="header-right">
+      <el-popover placement="bottom-end" :width="260" trigger="click" :teleported="false" popper-style="overflow: visible;">
+        <template #reference>
+          <el-button circle>
+            <el-icon><Brush /></el-icon>
+          </el-button>
+        </template>
+        <div class="theme-panel">
+          <div class="theme-panel__title">主题设置</div>
+          <div class="theme-panel__item">
+            <span>主题色</span>
+            <el-color-picker v-model="themeStore.accent" size="small" :teleported="false"
+              @active-change="(v: string) => { themeStore.accent = v }"
+              @change="themeStore.save()" />
+          </div>
+          <div class="theme-panel__item">
+            <span>文字色</span>
+            <el-color-picker v-model="themeStore.textColor" size="small" :teleported="false"
+              @active-change="(v: string) => { themeStore.textColor = v }"
+              @change="themeStore.save()" />
+          </div>
+          <div class="theme-panel__item">
+            <span>背景色</span>
+            <el-color-picker v-model="themeStore.bgColor" size="small" :teleported="false"
+              @active-change="(v: string) => { themeStore.bgColor = v }"
+              @change="themeStore.save()" />
+          </div>
+          <el-button size="small" @click="themeStore.reset()" style="width:100%;margin-top:12px">
+            恢复默认
+          </el-button>
+        </div>
+      </el-popover>
+
       <el-tooltip content="返回前台" placement="bottom">
         <el-button circle @click="goHome">
           <el-icon><HomeFilled /></el-icon>
         </el-button>
       </el-tooltip>
-      
+
       <div class="divider"></div>
-      
+
       <div v-if="hasToken" class="user-area">
         <UserAvatarDropdown />
       </div>
@@ -58,9 +92,9 @@ const goManage = () => {
   justify-content: space-between;
   height: 64px;
   padding: 0 24px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: none;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -86,7 +120,7 @@ const goManage = () => {
 .brand-logo {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #0da49a 0%, #0f766e 100%);
+  background: linear-gradient(135deg, #DB2777 0%, #CA8A04 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -104,13 +138,13 @@ const goManage = () => {
 .brand-title {
   font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--manage-slate, #831843);
   line-height: 1.2;
 }
 
 .brand-tag {
   font-size: 11px;
-  color: #64748b;
+  color: var(--manage-muted, #9D7A8A);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -125,7 +159,7 @@ const goManage = () => {
 .divider {
   width: 1px;
   height: 20px;
-  background: #e2e8f0;
+  background: var(--manage-border, rgba(219, 39, 119, 0.12));
 }
 
 .user-area {
@@ -134,13 +168,33 @@ const goManage = () => {
 }
 
 :deep(.el-button.is-circle) {
-  border-color: #e2e8f0;
-  color: #64748b;
+  border-color: var(--manage-border, rgba(219, 39, 119, 0.12));
+  color: var(--manage-muted, #9D7A8A);
 }
 
 :deep(.el-button.is-circle:hover) {
-  color: #0da49a;
-  border-color: #0da49a;
-  background-color: rgba(13, 164, 154, 0.05);
+  color: var(--manage-accent, #CA8A04);
+  border-color: var(--manage-accent, #CA8A04);
+  background-color: var(--manage-accent-soft, rgba(202, 138, 4, 0.05));
+}
+
+.theme-panel__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--manage-slate, #831843);
+  margin-bottom: 14px;
+}
+
+.theme-panel__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--manage-slate, #831843);
+}
+
+:deep(.el-color-picker__panel) {
+  z-index: 9999 !important;
 }
 </style>
