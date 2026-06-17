@@ -1,14 +1,12 @@
 <template>
-  <div class="main_content" :style="{ height: mainContentHeight }">
-
-
+  <div class="main_content">
 
     <div class="top-box">
       <div class="filter-container">
         <!-- 分组筛选 -->
         <div class="filter-item">
           <el-select v-model="queryParams.groupId" placeholder="类型" size="large" clearable
-            @change="changeGroup" @clear="handleClear">
+                     @clear="handleClear">
             <template #prefix>
               <svg-icon iconClass="filter" className="filter-icon" />
             </template>
@@ -34,12 +32,12 @@
     </div>
 
     <!-- 列表 -->
-    <div ref="scrollContainer" :style="{ height: scrollerHeight }" class="scroll_content" v-loading="loading"
-      element-loading-text="o(*≧▽≦)ツ加载中~">
+    <div ref="scrollContainer" class="scroll_content" v-loading="loading"
+         element-loading-text="o(*≧▽≦)ツ加载中~">
       <div ref="scrollWrapper" class="scroll-wrapper">
         <div v-if="contents && contents.length > 0">
           <ul>
-            <li v-for="(c, index) in contents" :key="index" class="line" >
+            <li v-for="(c, index) in contents" :key="index" class="line">
               <div class="file-li-item" @click="addOrUpdateNote(c.id)">
                 <div class="prename">{{ c.title }}</div>
                 <div class="ptime">{{ c.updateTime || c.createTime }}</div>
@@ -56,21 +54,15 @@
   </div>
 </template>
 
-<!-- 声明导出组件名 -->
-<script lang="ts">
-export default {
-  name: "note",
-}
-</script>
-
-<!-- setup语法糖 -->
 <script setup lang="ts">
-import { listNote, type Note } from "@/network/base"; // 引入自己封装的axios请求函数
+defineOptions({ name: 'note' })
+
+import { listNote, type Note } from "@/network/base";
 import { listNoteGroup } from "@/network/noteGroup";
-import { ref, computed, watch, onMounted, onActivated, onDeactivated, onUnmounted, nextTick, reactive } from 'vue';
+import { ref, watch, onMounted, nextTick, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import { useNoteGroupStore } from "@/store/noteGroup"; // 引入笔记分组 Pinia store
-import BScroll from 'better-scroll'; // 引入Better-Scroll
+import { useNoteGroupStore } from "@/store/noteGroup";
+import { useNoteScroll } from "@/composables/useNoteScroll";
 
 // 定义查询对象接口
 interface QueryParams {
@@ -80,189 +72,48 @@ interface QueryParams {
 
 const noteGroupStore = useNoteGroupStore();
 
-// 创建响应式查询对象
 const queryParams = reactive<QueryParams>({
   groupId: null,
   keyword: ''
 });
 
-// 监听查询参数变化
-watch(() => [queryParams.groupId, queryParams.keyword], () => {
-  // 当查询参数变化时，延迟加载数据
-  delay(() => {
-    loadNotesByQuery();
-  }, 300);
-}, { deep: true });
+const isInitializing = ref(true);
 
-const groups = ref(
-  [
-    {
-      id: 1,
-      groupName: 'Option1',
-    },
-  ]
-)
-
-// 处理选中项变化
-const changeGroup = (newValue: number| null) => {
-  console.log('changeGroup', newValue);
-};
-
-// 定义 ref 用于引用 DOM 元素
-const scrollContainer = ref<HTMLElement | null>(null);
-const scrollWrapper = ref<HTMLElement | null>(null);
-
-// 窗口高度响应式变量
-const windowHeight = ref(window.innerHeight);
-
-// Better-Scroll 实例
-const scroll = ref<any>(null);
-
-// 初始化 Better-Scroll
-const initScroll = () => {
-  if (scrollContainer.value && !scroll.value) {
-    nextTick(() => {
-      scroll.value = new BScroll(scrollContainer.value!, {
-        scrollY: true,
-        click: true,
-        mouseWheel: true,
-        bounce: true,
-        observeDOM: true,
-        probeType: 3, // 实时监听滚动位置
-        scrollbar: {
-          fade: false, // 总是显示滚动条
-          interactive: true // 允许用户拖动滚动条
-        }
-      });
-
-      // 监听滚动事件
-      scroll.value.on('scroll', (pos) => {
-        // 可以在这里处理滚动事件
-        // console.log('滚动位置:', pos.y);
-      });
-      
-      // 强制刷新以确保滚动条显示
-      setTimeout(() => {
-        refreshScroll();
-      }, 300);
-    });
-  }
-};
-
-// 刷新 Better-Scroll
-const refreshScroll = () => {
-  if (scroll.value) {
-    scroll.value.refresh();
-    scroll.value.scrollTo(0, 0);
-  }
-};
-
-// 设置滚动条到指定位置
-const scrollToPosition = (position) => {
-  console.log('尝试设置滚动条位置:', position);
-  if (scroll.value) {
-     // Better-Scroll 的 y 轴方向是相反的，所以需要取负值
-    scroll.value.scrollTo(0, -position, 100);
-  }
-};
-
-
-// 节流函数
-const delay = (function () {
-  let timer: ReturnType<typeof setTimeout>; 
-  return function (callback, ms) {
+const debounce = (() => {
+  let timer: ReturnType<typeof setTimeout>;
+  return (callback: () => void, ms: number) => {
     clearTimeout(timer);
     timer = setTimeout(callback, ms);
   };
 })();
 
-// Vue 3 使用 `useRouter` 钩子进行路由跳转
-const router = useRouter(); 
+watch(() => [queryParams.groupId, queryParams.keyword], () => {
+  if (isInitializing.value) return;
+  debounce(() => {
+    loadNotesByQuery();
+  }, 300);
+}, { deep: true });
 
-// 定义响应式变量
+const groups = ref<Array<{ id: number; groupName: string }>>([]);
+
+const scrollContainer = ref<HTMLElement | null>(null);
+const scrollWrapper = ref<HTMLElement | null>(null);
+
+const { refreshScroll } = useNoteScroll(scrollContainer);
+
+const router = useRouter();
+
 const contents = ref<Note[]>([]);
 const loading = ref(false);
 
-// 检测是否为移动端
-const isMobile = computed(() => {
-  return window.innerWidth <= 768;
-});
-
-// 计算 main_content 的高度
-const mainContentHeight = computed(() => {
-  const headerHeight = isMobile.value ? 56 : 64; // AppLayout header 高度（移动端56px，桌面端64px）
-  return (windowHeight.value - headerHeight) + 'px';
-});
-
-// 计算滚动区域高度 - 优化版本
-const scrollerHeight = computed(() => {
-  // 使用响应式的窗口高度,动态计算滚动区域高度
-
-  const headerHeight = isMobile.value ? 56 : 64; // AppLayout header 高度（移动端56px，桌面端64px）
-  const topBoxHeight = 60; // top-box 的总高度(包括padding)
-  const scrollContentBorderTop = 1; // scroll_content 只有顶部border
-
-  // 计算可用高度 = 窗口高度 - header高度 - top-box高度 - border-top
-  // padding 是在容器内部的，所以不影响这里的高度计算
-  return (windowHeight.value - headerHeight - topBoxHeight - scrollContentBorderTop) + 'px';
-});
-
-// 搜索框输入直接绑定到queryParams.keyword
-// queryParams的变化会通过之前设置的watch触发数据加载
-
-// 窗口大小改变处理函数（保持滚动相对进度）
-const handleResize = () => {
-  // 记录当前相对滚动进度（基于 Better-Scroll 的 y/maxScrollY）
-  let percent = 0;
-  if (scroll.value) {
-    const y = scroll.value.y || 0; // y <= 0
-    const maxY = scroll.value.maxScrollY || 0; // maxY <= 0
-    percent = maxY ? (y / maxY) : 0; // 0~1
-  }
-
-  // 更新窗口高度，触发滚动容器高度重算
-  windowHeight.value = window.innerHeight;
-
-  // 高度变化渲染完成后，刷新并按相对进度恢复位置
-  nextTick(() => {
-    if (scroll.value) {
-      scroll.value.refresh();
-      const maxYAfter = scroll.value.maxScrollY || 0;
-      let targetY = maxYAfter ? percent * maxYAfter : 0; // targetY <= 0
-      // 保险起见做边界夹取
-      targetY = Math.min(0, Math.max(maxYAfter, targetY));
-      scroll.value.scrollTo(0, targetY, 0);
-    }
-  });
-};
-
 onMounted(() => {
   initList();
-
-  // 初始化Better-Scroll
-  nextTick(() => {
-    initScroll();
-  });
-
-  // 添加窗口resize监听
-  window.addEventListener('resize', handleResize);
 });
 
-// 组件卸载时移除监听
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize);
-});
-
-
-// 处理清除选择事件
 const handleClear = () => {
-  // 重置pinia中保存的分组ID
   noteGroupStore.resetSelectedGroupId();
-  // queryParams.groupId 已通过 v-model 自动更新为null
-  // 查询参数变化会触发watch，自动加载数据
 };
 
-// 加载笔记分组数据
 const loadNoteGroups = async () => {
   try {
     const groupRes = await listNoteGroup(-1, -1);
@@ -272,41 +123,29 @@ const loadNoteGroups = async () => {
   }
 };
 
-// 根据当前分组列表选择合适的分组
 const selectGroup = () => {
-  if (!groups.value || groups.value.length === 0) {
-    return null;
-  }
-  
-   let storeSaveId =  noteGroupStore.selectedGroupId
+  if (!groups.value || groups.value.length === 0) return;
 
-  // 如果pinia中有保存的分组ID，则使用它
+  const storeSaveId = noteGroupStore.selectedGroupId;
+
   if (storeSaveId) {
-    // 检查保存的分组ID是否在当前分组列表中
     const groupExists = groups.value.some(group => group.id === storeSaveId);
-    // 如果保存的分组ID不在当前列表中， 就是手动设置为-1的情况 此时不需要根据下拉查询
-      if(groupExists){
-        queryParams.groupId =storeSaveId;
-        // 手动设置为-1的情况 不需要根据下拉查询 
-      }else if(storeSaveId === -1){
-        queryParams.groupId = null;
-        // 情况默认取第一个
-      }else if(storeSaveId === null){
-        queryParams.groupId = groups.value[0].id;
-      }
+    if (groupExists) {
+      queryParams.groupId = storeSaveId;
+    } else if (storeSaveId === -1) {
+      queryParams.groupId = null;
+    } else if (storeSaveId === null) {
+      queryParams.groupId = groups.value[0].id;
+    }
   } else {
-    // 如果pinia中没有保存的分组ID（为空字符串），则
     queryParams.groupId = Number(groups.value[0].id);
   }
 };
 
-// 根据查询对象加载笔记数据
 const loadNotesByQuery = async () => {
   loading.value = true;
   try {
-    // 使用查询对象中的参数
     await loadNotes(queryParams.groupId, queryParams.keyword);
-    // 数据加载完成后，刷新Better-Scroll
     nextTick(() => {
       refreshScroll();
     });
@@ -317,23 +156,19 @@ const loadNotesByQuery = async () => {
   }
 };
 
-// 加载笔记数据
-const loadNotes = async (groupId = null, keyword = '') => {
+const loadNotes = async (groupId: number | null = null, keyword = '') => {
   try {
-    // 这里可以扩展API，添加keyword参数用于后端搜索
-    // 目前仅使用groupId进行筛选
-    const noteRes = await listNote(-1, -1, groupId,keyword);
-    
-    // 如果有关键词，在前端进行过滤
+    const noteRes = await listNote(-1, -1, groupId, keyword);
+
     if (keyword && keyword.trim() !== '') {
       const lowerKeyword = keyword.toLowerCase();
-      contents.value = noteRes.data.records.filter(note => 
-        note.title.toLowerCase().includes(lowerKeyword)
+      contents.value = noteRes.data.records.filter(note =>
+          note.title.toLowerCase().includes(lowerKeyword)
       );
     } else {
       contents.value = noteRes.data.records;
     }
-    
+
     return true;
   } catch (error) {
     console.error('Failed to load notes:', error);
@@ -341,29 +176,22 @@ const loadNotes = async (groupId = null, keyword = '') => {
   }
 };
 
-// 初始化列表数据
 const initList = async () => {
+  isInitializing.value = true;
   loading.value = true;
   try {
-    // 1. 加载分组数据
     await loadNoteGroups();
-    
-    // 2. 获取当前选中分组id并更新查询对象
     selectGroup();
-    
-    // 3. 使用查询对象加载笔记数据
-    // 这里不使用watch触发的自动加载，因为初始化时需要确保顺序执行
     await loadNotes(queryParams.groupId, queryParams.keyword);
   } catch (error) {
     console.error('Failed to initialize data:', error);
   } finally {
     loading.value = false;
+    isInitializing.value = false;
   }
 };
 
-
-// 添加或更新笔记 
-const addOrUpdateNote = (id) => {
+const addOrUpdateNote = (id: number) => {
   const url = router.resolve({ path: `/noteDetail/${id}` }).href;
   window.open(url, '_blank');
 };
@@ -374,7 +202,16 @@ const addOrUpdateNote = (id) => {
   margin: 0 auto;
   position: relative;
   overflow: hidden;
-  background-color: #f4f6f8; /* Light gray background for a softer look */
+  background-color: #f4f6f8;
+  height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+}
+
+@media screen and (max-width: 768px) {
+  .main_content {
+    height: calc(100vh - 56px);
+  }
 }
 
 .top-box {
@@ -386,20 +223,21 @@ const addOrUpdateNote = (id) => {
   align-items: center;
   padding: 15px 20px;
   border-radius: 10px 10px 0 0;
+  flex-shrink: 0;
 }
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .top-box {
-    padding: 10px 15px; /* 移动端减小内边距 */
-    flex-wrap: nowrap; /* 确保不换行 */
+    padding: 10px 15px;
+    flex-wrap: nowrap;
   }
 }
 
 /* 极小屏幕适配 */
 @media screen and (max-width: 500px) {
   .top-box {
-    padding: 8px 10px; /* 更小的内边距 */
+    padding: 8px 10px;
   }
 }
 
@@ -408,72 +246,72 @@ const addOrUpdateNote = (id) => {
   align-items: center;
   gap: 15px;
   flex: 1;
-  width: calc(100% - 50px); /* 减去添加按钮的宽度 */
-  justify-content: space-between; /* 确保元素之间分布均匀 */
+  width: calc(100% - 50px);
+  justify-content: space-between;
 }
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .filter-container {
-    gap: 8px; /* 移动端减小间距 */
+    gap: 8px;
     flex: 1;
-    min-width: 0; /* 允许子元素缩小到比内容更小 */
-    width: calc(100% - 40px); /* 减去移动端添加按钮的宽度 */
+    min-width: 0;
+    width: calc(100% - 40px);
   }
 }
 
 /* 极小屏幕适配 */
 @media screen and (max-width: 500px) {
   .filter-container {
-    gap: 5px; /* 更小的间距 */
-    width: calc(100% - 35px); /* 减去极小屏幕添加按钮的宽度 */
+    gap: 5px;
+    width: calc(100% - 35px);
   }
 }
 
 .filter-item {
   transition: all 0.3s ease;
-  width: 120px; /* 固定宽度 */
-  flex-shrink: 0; /* 防止压缩 */
-  flex-grow: 0; /* 不允许扩展 */
+  width: 120px;
+  flex-shrink: 0;
+  flex-grow: 0;
 }
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .filter-item {
-    width: 100px; /* 移动端减小宽度 */
+    width: 100px;
   }
 }
 
 /* 极小屏幕适配 */
 @media screen and (max-width: 500px) {
   .filter-item {
-    width: 80px; /* 更小的宽度 */
+    width: 80px;
   }
 }
 
 .filter-item .el-select {
-  width: 100%; /* 使select填满filter-item */
+  width: 100%;
 }
 
 .search-box {
-  flex: 1; /* 占据剩余空间 */
-  min-width: 100px; /* 最小宽度 */
+  flex: 1;
+  min-width: 100px;
   margin-right: 10px;
 }
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .search-box {
-    min-width: 60px; /* 移动端减小最小宽度 */
-    margin-right: 5px; /* 减小右边距 */
+    min-width: 60px;
+    margin-right: 5px;
   }
 }
 
 /* 极小屏幕适配 */
 @media screen and (max-width: 500px) {
   .search-box {
-    min-width: 40px; /* 更小的最小宽度 */
-    margin-right: 3px; /* 更小的右边距 */
+    min-width: 40px;
+    margin-right: 3px;
   }
 }
 
@@ -487,24 +325,24 @@ const addOrUpdateNote = (id) => {
   align-items: center;
   justify-content: center;
   transition: transform 0.3s ease;
-  width: 50px; /* 固定宽度 */
-  flex-shrink: 0; /* 防止压缩 */
-  z-index: 1; /* 确保按钮在最上层 */
+  width: 50px;
+  flex-shrink: 0;
+  z-index: 1;
 }
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .add-btn {
-    width: 40px; /* 移动端减小宽度 */
-    margin-left: 5px; /* 增加左边距 */
+    width: 40px;
+    margin-left: 5px;
   }
 }
 
 /* 极小屏幕适配 */
 @media screen and (max-width: 500px) {
   .add-btn {
-    width: 35px; /* 更小的宽度 */
-    margin-left: 3px; /* 更小的左边距 */
+    width: 35px;
+    margin-left: 3px;
   }
 }
 
@@ -528,41 +366,20 @@ const addOrUpdateNote = (id) => {
 }
 
 .el-select {
-  transition: box-shadow 0.3s ease; /* Add transition for select focus */
+  transition: box-shadow 0.3s ease;
 }
 
 .el-select:focus-within {
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2); /* Element Plus like focus ring */
-}
-
-.keyword-serach {
-  background-color: #ffffff; /* White background for header */
-  border-radius: 10px;
-}
-
-.keyword-serach .el-input__inner {
-  border-radius: 6px; /* Rounded input field */
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.keyword-serach .el-input__inner:focus {
-  border-color: #409EFF;
   box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
 }
 
-.keyword-serach .el-input {
-  transition: box-shadow 0.3s ease; /* Add transition for input focus */
-}
-
-.keyword-serach .el-input:focus-within {
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2); /* Element Plus like focus ring */
-}
-
 .scroll_content {
+  flex: 1;
+  min-height: 0;
   position: relative;
-  overflow: hidden; /* 对于Better-Scroll，外层容器需要隐藏溢出 */
-  border: 1px solid #e0e0e0; /* Lighter border */
-  background-color: #ffffff; /* White background for content area */
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+  background-color: #ffffff;
   border-bottom: none;
   border-radius: 0 0 8px 8px;
   padding: 10px;
@@ -570,36 +387,34 @@ const addOrUpdateNote = (id) => {
 
 .scroll-wrapper {
   width: 100%;
-  min-height: 101%; /* 确保内容高度至少比容器高1%，这样Better-Scroll才会启用滚动 */
+  min-height: 101%;
 }
-
-/* Better-Scroll滚动条样式 */
 
 ul {
   margin-left: 10px;
   margin-right: 10px;
   list-style: none;
   display: flex;
-  flex-direction: column; /* 改为纵向排列 */
-  padding: 0; /* Remove default padding */
-  width: 100%; /* 确保宽度为100% */
+  flex-direction: column;
+  padding: 0;
+  width: 100%;
 }
 
 ul>i {
-  width: 10rem; /* Consider making this responsive or removing if not needed */
+  width: 10rem;
 }
 
 .line {
   background-color: #fff;
   border-radius: 8px;
-  margin-top: 8px; /* Increased margin */
-  margin-bottom: 8px; /* Increased margin */
+  margin-top: 8px;
+  margin-bottom: 8px;
   width: 100%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Subtle shadow for list items */
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   opacity: 0;
   animation: itemFadeInUp 0.5s ease-out forwards;
-  box-sizing: border-box; /* 确保宽度计算包含padding和border */
+  box-sizing: border-box;
 }
 
 .line:hover {
@@ -607,13 +422,11 @@ ul>i {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Staggered animation for list items */
 .line:nth-child(1) { animation-delay: 0.1s; }
 .line:nth-child(2) { animation-delay: 0.15s; }
 .line:nth-child(3) { animation-delay: 0.2s; }
 .line:nth-child(4) { animation-delay: 0.25s; }
 .line:nth-child(5) { animation-delay: 0.3s; }
-/* Add more if needed */
 
 @keyframes itemFadeInUp {
   from {
@@ -627,65 +440,54 @@ ul>i {
 }
 
 .file-li-item {
-  width: calc(100% - 40px); /* Adjust width considering padding */
+  width: calc(100% - 40px);
   height: 90px;
   margin-left: 20px;
   display: flex;
   align-items: flex-start;
   flex-direction: column;
-  justify-content: center; /* Center content vertically */
-  padding: 10px 0; /* Add some vertical padding */
-  overflow: hidden; /* 防止内容溢出 */
+  justify-content: center;
+  padding: 10px 0;
+  overflow: hidden;
 }
 
 .prename {
   text-align: left;
-  line-height: 1.4; /* Improved line height */
+  line-height: 1.4;
   margin-top: 5px;
-  margin-bottom: 5px; /* Adjusted margin */
-  color: #333; /* Darker text for better readability */
-  font-size: 17px; /* Slightly larger font */
-  font-weight: 500; /* Medium weight */
+  margin-bottom: 5px;
+  color: #333;
+  font-size: 17px;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   transition: color 0.3s ease;
-  width: 100%; /* 确保宽度为100% */
-  max-width: 100%; /* 限制最大宽度 */
+  width: 100%;
+  max-width: 100%;
 }
 
 .line:hover .prename {
-  color: #409EFF; /* Highlight title on hover */
+  color: #409EFF;
 }
 
 .ptime {
-  text-align: left; /* Align with title */
+  text-align: left;
   line-height: 1.4;
-  margin-top: 0px; /* Adjusted margin */
+  margin-top: 0px;
   margin-bottom: 5px;
-  color: #888; /* Lighter gray for time */
-  font-size: 13px; /* Slightly smaller font for time */
+  color: #888;
+  font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .empty-msg-box {
-  margin-top: 100px; /* Adjusted margin */
+  margin-top: 100px;
   color: #909399;
 }
 
-
-/* 移动端适配 */
-@media screen and (max-width: 768px) {
-}
-
-/* 极小屏幕适配 */
-@media screen and (max-width: 500px) {
-}
-
-
-/* General transitions for interactive elements */
 .el-button, .el-select, .el-input {
   transition: all 0.3s ease-in-out;
 }
@@ -693,43 +495,4 @@ ul>i {
 .el-button:hover, .el-select:hover, .el-input:hover {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
-
-/* Dialog styling */
-.el-dialog {
-  border-radius: 10px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-}
-
-.el-dialog__header {
-  padding: 15px 20px;
-  border-bottom: 1px solid #f0f0f0;
-  font-weight: 600;
-  color: #303133;
-}
-
-.el-dialog__body {
-  padding: 20px;
-  color: #606266;
-}
-
-.el-dialog__footer {
-  padding: 15px 20px;
-  border-top: 1px solid #f0f0f0;
-  text-align: right;
-}
-
-.dialog-footer .el-button {
-  margin-left: 10px;
-}
-
-.dialog-footer .el-button--primary {
-  background-color: #409EFF;
-  border-color: #409EFF;
-}
-
-.dialog-footer .el-button--primary:hover {
-  background-color: #66b1ff;
-  border-color: #66b1ff;
-}
-
 </style>
