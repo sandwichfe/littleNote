@@ -88,32 +88,22 @@
 
     <div
         style="border: 1px solid #ccc; margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
-      <Toolbar :editor="editorRef" :defaultConfig="toolbarConfig" :mode="mode" style="border-bottom: 1px solid #ccc;"
-               id="editor-Toolbar"/>
-      <div style="flex-grow: 1; overflow-y: auto;">
-        <Editor id="myEditor" :defaultConfig="editorConfig" :mode="mode" v-model="valueHtml"
-                :style="{ height: '100%' }"
-                @onCreated="handleCreated" @onChange="handleChange" @onDestroyed="handleDestroyed"
-                @onFocus="handleFocus"
-                @onBlur="handleBlur" @customAlert="customAlert" @customPaste="customPaste"/>
-      </div>
+      <RichEditor ref="editorRef" v-model="valueHtml" :editable="viewMode === 'edit'"/>
     </div>
 
   </div>
 </template>
 
 <script setup lang="ts">
-import '@wangeditor/editor/dist/css/style.css';
 import {onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
-import {Editor, Toolbar} from '@wangeditor/editor-for-vue';
-import {addNote, deleteNoteItem, editNote, getNote, uploadImage} from "@/network/base";
+import RichEditor from '@/components/RichEditor/index.vue';
+import {addNote, deleteNoteItem, editNote, getNote} from "@/network/base";
 import {useRouter} from 'vue-router';
 import {ElMessage} from 'element-plus'
 import {Delete, DocumentChecked, Edit, View} from '@element-plus/icons-vue'
 import {cipherText, decrypted} from "@/utils/aesUtil";
 import {closeLoading} from "@/utils/loadingUtil";
 import {listNoteGroup} from "@/network/noteGroup";
-import {toolbarKeys} from '@/config/editorToolbarConfig';
 
 const router = useRouter();
 
@@ -135,8 +125,6 @@ const handleClear = () => {
 };
 
 
-const editStatus = ref(false);
-const mode = ref('default');
 const editorRef = shallowRef();
 const valueHtml = ref("");
 
@@ -145,44 +133,8 @@ const viewMode = ref('preview');
 
 // 监听视图模式变化
 watch(viewMode, (newMode) => {
-  const editor = editorRef.value;
-  if (!editor) return;
-
-  if (newMode === 'edit') {
-    editor.enable();
-    editStatus.value = true;
-    ElMessage.success('进入编辑模式');
-  } else {
-    editor.disable();
-    editStatus.value = false;
-    ElMessage.success('进入预览模式');
-  }
+  ElMessage.success(newMode === 'edit' ? '进入编辑模式' : '进入预览模式');
 });
-
-const toolbarConfig = {
-  toolbarKeys
-};
-
-const editorConfig = {
-  placeholder: '',
-  readOnly: true,
-  MENU_CONF: {
-    uploadImage: {
-      async customUpload(file: File, insertFn: any) { // InsertFnType is not exported, use any
-        try {
-          const fileName = file.name === 'image.png' ? `${Date.now()}.png` : file.name;
-          const uploadFile = new File([file], fileName, {type: file.type});
-          const response = await uploadImage(uploadFile);
-          const url = `${import.meta.env.VITE_OSS_LOAD_BASE_URL}/${response.data}`;
-          insertFn(url, fileName, url);
-        } catch (error) {
-          console.error('上传失败:', error);
-          ElMessage.error('图片上传失败');
-        }
-      },
-    }
-  }
-};
 
 onMounted(() => {
   const paramId = Number(router.currentRoute.value.params.id);
@@ -215,35 +167,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  const editor = editorRef.value;
-  if (editor) {
-    editor.destroy();
-  }
-
   window.removeEventListener('keydown', handleEvent);
 });
-
-const handleCreated = (editor: any) => {
-  editorRef.value = editor;
-
-  // 使用 nextTick 确保 DOM 已更新
-  // nextTick(() => {
-  //   // 获取工具栏实例
-  //   const toolbar = DomEditor.getToolbar(editor);
-  //   if (toolbar) {
-  //     // 获取当前工具栏配置
-  //     const curToolbarConfig = toolbar.getConfig();
-  //     // 查看当前菜单排序和分组
-  //     console.log(curToolbarConfig.toolbarKeys);
-  //   } else {
-  //     console.warn('toolbar 实例为 null');
-  //   }
-  //
-  //   // 查询编辑器注册的所有菜单 key
-  //   console.log(editor.getAllMenuKeys());
-  // });
-
-};
 
 // 将 html格式 提取为 只要正文
 const extractTitleFromHtml = (htmlString: string) => {
@@ -258,7 +183,7 @@ const saveNote = () => {
   const editor = editorRef.value;
   if (!editor) return;
 
-  let noteValue = editor.getHtml();
+  let noteValue = editor.getHTML();
   let title = extractTitleFromHtml(noteValue);
   noteValue = cipherText(noteValue);
 
@@ -310,21 +235,6 @@ function handleEvent(event: KeyboardEvent) {
     }, 1000); // 1秒内无法重复保存
   }
 }
-
-// Empty functions from original editor, can be removed if not used
-const handleChange = (editor: any) => {
-};
-const handleDestroyed = (editor: any) => {
-};
-const handleFocus = (editor: any) => {
-};
-const handleBlur = (editor: any) => {
-};
-const customAlert = (info: any, type: any) => {
-};
-const customPaste = (editor: any, event: any, callback: any) => {
-  callback(true)
-};
 
 </script>
 
@@ -548,10 +458,6 @@ const customPaste = (editor: any, event: any, callback: any) => {
 
 .toolbar-btn-delete:active {
   background-color: #f9dedc;
-}
-
-.w-e-scroll {
-  min-height: 300px !important; /* use important to override default styles */
 }
 
 /* 移动端适配 */
