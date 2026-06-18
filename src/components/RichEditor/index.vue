@@ -390,6 +390,13 @@ const TableWithResizableColumns = Table.extend({
   },
 });
 
+const getImageFileFromClipboard = (event: ClipboardEvent) => {
+  const items = Array.from(event.clipboardData?.items || []);
+  const imageItem = items.find((item) => item.kind === 'file' && item.type.startsWith('image/'));
+
+  return imageItem?.getAsFile() || null;
+};
+
 const editor = useEditor({
   content: props.modelValue,
   editable: props.editable,
@@ -424,6 +431,16 @@ const editor = useEditor({
   },
   onSelectionUpdate: ({ editor }) => {
     syncToolbarState(editor);
+  },
+  editorProps: {
+    handlePaste: (view, event) => {
+      const imageFile = getImageFileFromClipboard(event);
+      if (!imageFile) return false;
+
+      event.preventDefault();
+      void insertUploadedImage(imageFile, view.state.selection.from);
+      return true;
+    },
   },
 });
 
@@ -530,16 +547,29 @@ const doUpload = async (file: File) => {
   return `${import.meta.env.VITE_OSS_LOAD_BASE_URL}/${res.data}`;
 };
 
+const insertUploadedImage = async (file: File, position?: number) => {
+  try {
+    const url = await doUpload(file);
+    const chain = editor.value?.chain().focus();
+    if (!chain) return;
+
+    if (typeof position === 'number') {
+      chain.insertContentAt(position, { type: 'image', attrs: { src: url } }).run();
+    } else {
+      chain.setImage({ src: url }).run();
+    }
+  } catch (err) {
+    console.error('图片上传失败:', err);
+    ElMessage.error('图片上传失败');
+  }
+};
+
 const onImageChange = async (e: Event) => {
   const input = e.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
   try {
-    const url = await doUpload(file);
-    run((c) => c.setImage({ src: url }));
-  } catch (err) {
-    console.error('图片上传失败:', err);
-    ElMessage.error('图片上传失败');
+    await insertUploadedImage(file);
   } finally {
     input.value = '';
   }
