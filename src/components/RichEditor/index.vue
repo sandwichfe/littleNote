@@ -382,7 +382,11 @@ const editor = useEditor({
     Italic,
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     Image.configure({ inline: false }),
-    Table.configure({ resizable: true }),
+    Table.configure({
+      resizable: true,
+      renderWrapper: true,
+      cellMinWidth: 80,
+    }),
     TableRow,
     TableHeader,
     TableCell,
@@ -860,10 +864,16 @@ defineExpose({ getHTML });
   padding: 16px;
   font-family: inherit;
 }
+.re-content :deep(.ProseMirror .tableWrapper) {
+  margin: 12px 0;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.re-content :deep(.ProseMirror.resize-cursor) {
+  cursor: col-resize;
+}
 .re-content :deep(.ProseMirror table) {
   border-collapse: collapse;
-  width: 100%;
-  margin: 12px 0;
   table-layout: fixed;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
@@ -872,8 +882,13 @@ defineExpose({ getHTML });
 .re-content :deep(.ProseMirror th),
 .re-content :deep(.ProseMirror td) {
   border: 1px solid #e8e8e8;
-  padding: 10px 12px;
+  box-sizing: border-box;
+  min-width: 80px;
+  height: 40px;
+  padding: 8px 12px;
+  line-height: 1.5;
   vertical-align: top;
+  position: relative;
 }
 .re-content :deep(.ProseMirror th) {
   background: #fafafa;
@@ -882,6 +897,23 @@ defineExpose({ getHTML });
 }
 .re-content :deep(.ProseMirror td) {
   background: #fff;
+}
+.re-content :deep(.ProseMirror .column-resize-handle) {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: -1px;
+  width: 4px;
+  background: #1677ff;
+  cursor: col-resize;
+  pointer-events: none;
+}
+.re-content :deep(.ProseMirror .selectedCell::after) {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(22, 119, 255, 0.12);
+  pointer-events: none;
 }
 .re-content :deep(.ProseMirror hr) {
   border: none;
