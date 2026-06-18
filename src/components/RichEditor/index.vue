@@ -1089,10 +1089,10 @@ defineExpose({ getHTML });
 .re-content :deep(.ProseMirror .re-image-node) {
   position: relative;
   display: inline-block;
+  vertical-align: bottom;
   max-width: 100%;
-  margin: 4px 4px 36px 0;
+  margin: 4px 12px 0 0;
   line-height: 0;
-  vertical-align: text-bottom;
 }
 .re-content :deep(.ProseMirror .re-image-stage) {
   position: relative;
