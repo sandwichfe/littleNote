@@ -30,29 +30,16 @@ export default defineConfig({
     // },
     proxy: {
       '/assets/oss': {
-        target: 'https://littlenote.yun.yiruserene.top',
+        target: 'https://littlenote.yun.yiruserene.top', // 修改目标地址
         changeOrigin: true,
-        secure: false,
-        // 添加日志查看请求详情
-        configure: (proxy, options) => {
-          proxy.on('proxyReq', (proxyReq, req, res) => {
-            console.log('代理请求:', req.url, '->', options.target + req.url)
-          })
-          proxy.on('proxyRes', (proxyRes, req, res) => {
-            console.log('代理响应状态:', proxyRes.statusCode)
-          })
-          proxy.on('error', (err, req, res) => {
-            console.error('代理错误:', err.message)
-          })
-        }
+        rewrite: (path) => path.replace(/^\/assets\/oss/, '/assets/oss'), // 保留原路径
       },
       '/api/oss': {
-        target: 'https://littlenote.yun.yiruserene.top',
+        target: 'https://littlenote.yun.yiruserene.top', // 修改目标地址
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path,
-      }
-    }
+        rewrite: (path) => path.replace(/^\/api\/oss/, '/api/oss'), // 保留原路径
+      },
+    },
   },
   resolve: {
     alias: {
