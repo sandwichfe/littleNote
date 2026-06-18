@@ -154,6 +154,7 @@ import TableCell from '@tiptap/extension-table-cell';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import type { NodeViewRendererProps } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
+import { columnResizing, tableEditing } from '@tiptap/pm/tables';
 import type { ViewMutationRecord } from '@tiptap/pm/view';
 import { common, createLowlight } from 'lowlight';
 import { ElMessage } from 'element-plus';
@@ -368,6 +369,27 @@ const CodeBlockWithTools = CodeBlockLowlight.extend({
   },
 });
 
+const TableWithResizableColumns = Table.extend({
+  addProseMirrorPlugins() {
+    return [
+      ...(this.options.resizable
+        ? [
+            columnResizing({
+              handleWidth: this.options.handleWidth,
+              cellMinWidth: this.options.cellMinWidth,
+              defaultCellMinWidth: this.options.cellMinWidth,
+              View: this.options.View,
+              lastColumnResizable: this.options.lastColumnResizable,
+            }),
+          ]
+        : []),
+      tableEditing({
+        allowTableNodeSelection: this.options.allowTableNodeSelection,
+      }),
+    ];
+  },
+});
+
 const editor = useEditor({
   content: props.modelValue,
   editable: props.editable,
@@ -382,7 +404,7 @@ const editor = useEditor({
     Italic,
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     Image.configure({ inline: false }),
-    Table.configure({
+    TableWithResizableColumns.configure({
       resizable: true,
       renderWrapper: true,
       cellMinWidth: 80,
@@ -702,7 +724,7 @@ defineExpose({ getHTML });
 
 .re-content {
   flex-grow: 1;
-  overflow-y: auto;
+  overflow: auto;
   background: #fff;
 }
 
@@ -866,11 +888,10 @@ defineExpose({ getHTML });
 }
 .re-content :deep(.ProseMirror .tableWrapper) {
   display: inline-block;
-  max-width: 100%;
   margin: 12px 0;
-  border: 2px solid #7f8c99;
-  border-radius: 8px;
-  overflow-x: auto;
+  border: 1px solid #c4e0ff;
+  border-radius: 6px;
+  overflow: hidden;
   background: #ffffff;
 }
 .re-content :deep(.ProseMirror.resize-cursor) {
@@ -903,7 +924,7 @@ defineExpose({ getHTML });
 .re-content :deep(.ProseMirror .column-resize-handle) {
   position: absolute;
   top: 0;
-  right: -2px;
+  right: 0;
   bottom: -1px;
   width: 4px;
   background: #1677ff;
