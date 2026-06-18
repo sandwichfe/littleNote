@@ -130,7 +130,7 @@
       <input ref="videoInput" type="file" accept="video/*" hidden @change="onVideoChange" />
     </div>
 
-    <editor-content :editor="editor" class="re-content" />
+    <editor-content :editor="editor" class="re-content" @mousedown="onEditorBlankMouseDown" />
   </div>
 </template>
 
@@ -153,6 +153,7 @@ import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import type { NodeViewRendererProps } from '@tiptap/core';
+import { TextSelection } from '@tiptap/pm/state';
 import type { ViewMutationRecord } from '@tiptap/pm/view';
 import { common, createLowlight } from 'lowlight';
 import { ElMessage } from 'element-plus';
@@ -418,6 +419,27 @@ watch(
 );
 
 onBeforeUnmount(() => editor.value?.destroy());
+
+const onEditorBlankMouseDown = (event: MouseEvent) => {
+  if (!props.editable || !editor.value) return;
+
+  const target = event.target as HTMLElement;
+  const proseMirror = rootRef.value?.querySelector<HTMLElement>('.ProseMirror');
+  if (!proseMirror || target !== proseMirror) return;
+
+  const { state, view } = editor.value;
+  const lastNode = state.doc.lastChild;
+  if (lastNode?.type.name !== 'codeBlock') return;
+
+  event.preventDefault();
+  const insertPos = state.doc.content.size;
+  const paragraph = state.schema.nodes.paragraph.create();
+  const tr = state.tr.insert(insertPos, paragraph);
+
+  tr.setSelection(TextSelection.create(tr.doc, insertPos + 1));
+  view.dispatch(tr.scrollIntoView());
+  view.focus();
+};
 
 const run = (fn: (chain: any) => any) => {
   if (!editor.value) return;
