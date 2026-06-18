@@ -31,12 +31,12 @@ export default defineConfig({
     proxy: {
       // /assets/oss 代理到 https://littlenote.yun.yiruserene.top/assets/oss
       '/assets/oss': {
-        target: 'https://littlenote.yun.yiruserene.top',
+        target: 'https://yiruserene.top:58888',
         changeOrigin: true
       },
       // /api/oss 代理到 https://littlenote.yun.yiruserene.top/api/oss
       '/api/oss': {
-        target: 'https://littlenote.yun.yiruserene.top',
+        target: 'https://yiruserene.top:58888',
         changeOrigin: true
       }
     }

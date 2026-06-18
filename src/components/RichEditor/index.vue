@@ -226,8 +226,204 @@ const currentFont = ref('');
 const currentColor = ref('#000000');
 const currentBg = ref('#ffff00');
 
+const DEFAULT_IMAGE_WIDTH = '50%';
+const MIN_IMAGE_WIDTH_PERCENT = 10;
+
+const imageToolbarOptions = [
+  { label: '30%', value: '30%' },
+  { label: '50%', value: '50%' },
+  { label: '100%', value: '100%' },
+  { label: 'Auto', value: '' },
+];
+
 const isHexColor = (value: unknown): value is string =>
   typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+
+const normalizeImageWidth = (value: unknown) => {
+  if (typeof value !== 'string') return null;
+
+  const width = value.trim();
+  if (!width) return null;
+  if (/^\d+(\.\d+)?$/.test(width)) return `${width}px`;
+  if (/^\d+(\.\d+)?(px|%|rem|em|vw|vh)$/i.test(width)) return width;
+
+  return null;
+};
+
+const getImageWidthPercent = (width: string | null, imageElement: HTMLElement, editorElement: HTMLElement) => {
+  if (width?.endsWith('%')) return Number.parseFloat(width);
+
+  const editorWidth = editorElement.clientWidth;
+  if (!editorWidth) return null;
+
+  const pixelWidth = width?.endsWith('px') ? Number.parseFloat(width) : imageElement.offsetWidth;
+  if (!pixelWidth) return null;
+
+  return Math.round((pixelWidth / editorWidth) * 100);
+};
+
+const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) => {
+  let currentNode = node;
+
+  const wrapper = document.createElement('span');
+  wrapper.className = 're-image-node';
+  wrapper.contentEditable = 'false';
+
+  const image = document.createElement('img');
+  image.draggable = true;
+
+  const stage = document.createElement('span');
+  stage.className = 're-image-stage';
+
+  const controls = document.createElement('span');
+  controls.className = 're-image-controls';
+  controls.addEventListener('mousedown', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  });
+
+  const toolbarButtons = imageToolbarOptions.map((item) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 're-image-control-btn';
+    button.textContent = item.label;
+    button.title = `图片缩放 ${item.label}`;
+    button.addEventListener('click', () => {
+      updateWidth(item.value || null);
+      view.focus();
+    });
+
+    controls.appendChild(button);
+    return { ...item, button };
+  });
+
+  const customSize = document.createElement('span');
+  customSize.className = 're-image-custom-size';
+  controls.appendChild(customSize);
+
+  const handle = document.createElement('span');
+  handle.className = 're-image-resize-handle';
+  handle.title = '拖拽调整图片大小';
+  stage.append(image, handle);
+  wrapper.append(stage, controls);
+
+  const updateImage = () => {
+    const width = normalizeImageWidth(currentNode.attrs.width);
+    image.src = currentNode.attrs.src;
+    image.alt = currentNode.attrs.alt || '';
+    image.title = currentNode.attrs.title || '';
+    if (width) {
+      wrapper.style.width = width;
+      wrapper.dataset.width = width;
+    } else {
+      wrapper.style.removeProperty('width');
+      delete wrapper.dataset.width;
+    }
+
+    const hasPresetWidth = imageToolbarOptions.some((item) => item.value === width);
+    customSize.textContent = width && !hasPresetWidth ? width : '';
+    toolbarButtons.forEach((item) => {
+      item.button.classList.toggle('active', item.value === (width || ''));
+    });
+  };
+
+  function updateWidth(width: string | null) {
+    const pos = getPos();
+    if (typeof pos !== 'number') return;
+
+    const normalizedWidth = normalizeImageWidth(width);
+    const current = view.state.doc.nodeAt(pos);
+    if (!current) return;
+
+    view.dispatch(
+      view.state.tr.setNodeMarkup(pos, undefined, {
+        ...current.attrs,
+        width: normalizedWidth,
+      })
+    );
+  }
+
+  handle.addEventListener('mousedown', (event) => {
+    if (!editor.isEditable) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const editorElement = view.dom as HTMLElement;
+    const startX = event.clientX;
+    const startPercent =
+      getImageWidthPercent(normalizeImageWidth(currentNode.attrs.width), wrapper, editorElement) ||
+      Number.parseFloat(DEFAULT_IMAGE_WIDTH);
+    let lastPercent = startPercent;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const editorWidth = editorElement.clientWidth || 1;
+      const deltaPercent = ((moveEvent.clientX - startX) / editorWidth) * 100;
+      const nextPercent = Math.max(
+        MIN_IMAGE_WIDTH_PERCENT,
+        Math.min(100, Math.round(startPercent + deltaPercent))
+      );
+
+      if (nextPercent === lastPercent) return;
+      lastPercent = nextPercent;
+      updateWidth(`${nextPercent}%`);
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      view.focus();
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+
+  updateImage();
+
+  return {
+    dom: wrapper,
+    update: (updatedNode) => {
+      if (updatedNode.type !== currentNode.type) return false;
+      currentNode = updatedNode;
+      updateImage();
+      return true;
+    },
+    selectNode: () => wrapper.classList.add('selected'),
+    deselectNode: () => wrapper.classList.remove('selected'),
+    stopEvent: (event: Event) =>
+      controls.contains(event.target as globalThis.Node) ||
+      handle.contains(event.target as globalThis.Node),
+    ignoreMutation: () => true,
+  };
+};
+
+const ImageWithSize = Image.extend({
+  addAttributes() {
+    const parentAttributes = this.parent?.() ?? {};
+
+    return {
+      ...parentAttributes,
+      width: {
+        default: null,
+        parseHTML: (element) =>
+          normalizeImageWidth(element.style.width || element.getAttribute('width')),
+        renderHTML: (attributes) => {
+          const width = normalizeImageWidth(attributes.width);
+          if (!width) return {};
+
+          return {
+            'data-width': width,
+            style: `width: ${width};`,
+          };
+        },
+      },
+    };
+  },
+  addNodeView() {
+    return createImageView;
+  },
+});
 
 const copyText = async (text: string) => {
   if (!text) {
@@ -410,7 +606,7 @@ const editor = useEditor({
     Strike,
     Italic,
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    Image.configure({ inline: false }),
+    ImageWithSize.configure({ inline: true }),
     TableWithResizableColumns.configure({
       resizable: true,
       renderWrapper: true,
@@ -553,10 +749,15 @@ const insertUploadedImage = async (file: File, position?: number) => {
     const chain = editor.value?.chain().focus();
     if (!chain) return;
 
+    const imageContent = [
+      { type: 'image', attrs: { src: url, width: DEFAULT_IMAGE_WIDTH } },
+      { type: 'text', text: ' ' },
+    ];
+
     if (typeof position === 'number') {
-      chain.insertContentAt(position, { type: 'image', attrs: { src: url } }).run();
+      chain.insertContentAt(position, imageContent).run();
     } else {
-      chain.setImage({ src: url }).run();
+      chain.insertContent(imageContent).run();
     }
   } catch (err) {
     console.error('图片上传失败:', err);
@@ -811,7 +1012,94 @@ defineExpose({ getHTML });
 .re-content :deep(.ProseMirror h6) {
   font-size: 16px;
 }
-.re-content :deep(.ProseMirror img),
+.re-content :deep(.ProseMirror .re-image-node) {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  margin: 4px 4px 36px 0;
+  line-height: 0;
+  vertical-align: text-bottom;
+}
+.re-content :deep(.ProseMirror .re-image-stage) {
+  position: relative;
+  display: block;
+  width: 100%;
+  line-height: 0;
+}
+.re-content :deep(.ProseMirror .re-image-node img) {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.re-content :deep(.ProseMirror .re-image-node:not([data-width]) img) {
+  width: auto;
+  max-width: 100%;
+}
+.re-content :deep(.ProseMirror .re-image-node.selected img) {
+  outline: 2px solid #1677ff;
+  outline-offset: 2px;
+}
+.re-content :deep(.ProseMirror .re-image-controls) {
+  position: absolute;
+  left: 0;
+  bottom: -34px;
+  display: none;
+  align-items: center;
+  gap: 0;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  line-height: 1;
+  z-index: 2;
+}
+.re-content :deep(.ProseMirror .re-image-node.selected .re-image-controls) {
+  display: inline-flex;
+}
+.re-content :deep(.ProseMirror .re-image-control-btn) {
+  height: 30px;
+  min-width: 52px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: #262626;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+.re-content :deep(.ProseMirror .re-image-control-btn:hover),
+.re-content :deep(.ProseMirror .re-image-control-btn.active) {
+  color: #1677ff;
+  background: #f0f7ff;
+}
+.re-content :deep(.ProseMirror .re-image-custom-size) {
+  min-width: 44px;
+  padding: 0 8px;
+  color: #1677ff;
+  font-size: 13px;
+  line-height: 30px;
+}
+.re-content :deep(.ProseMirror .re-image-resize-handle) {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: none;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #1677ff;
+  background: #fff;
+  box-sizing: border-box;
+  cursor: nwse-resize;
+  z-index: 3;
+}
+.re-content :deep(.ProseMirror .re-image-node.selected .re-image-resize-handle) {
+  display: block;
+}
 .re-content :deep(.ProseMirror video) {
   max-width: 100%;
   height: auto;
