@@ -277,6 +277,9 @@ const getImageScalePercent = (scale: string | null, image: HTMLImageElement, wra
 
 const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) => {
   let currentNode = node;
+  let resizeFrame = 0;
+  let pendingResizeScale: string | null = null;
+  let cleanupResizeListeners: (() => void) | null = null;
 
   const wrapper = document.createElement('span');
   wrapper.className = 're-image-node';
@@ -320,6 +323,14 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
   stage.append(image, handle);
   wrapper.append(stage, controls);
 
+  const updateScaleControls = (scale: string | null) => {
+    const hasPresetScale = imageToolbarOptions.some((item) => item.value === scale);
+    customSize.textContent = scale && !hasPresetScale ? scale : '';
+    toolbarButtons.forEach((item) => {
+      item.button.classList.toggle('active', item.value === scale);
+    });
+  };
+
   const updateImage = () => {
     const width = normalizeImageWidth(currentNode.attrs.width);
     const scale = normalizeImageScale(currentNode.attrs.scale) || normalizeImageScale(width) || DEFAULT_IMAGE_SCALE;
@@ -328,12 +339,7 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
     image.title = currentNode.attrs.title || '';
     image.onload = () => applyImageScale(scale, width);
     applyImageScale(scale, width);
-
-    const hasPresetScale = imageToolbarOptions.some((item) => item.value === scale);
-    customSize.textContent = scale && !hasPresetScale ? scale : '';
-    toolbarButtons.forEach((item) => {
-      item.button.classList.toggle('active', item.value === scale);
-    });
+    updateScaleControls(scale);
   };
 
   function applyImageScale(scale: string | null, fallbackWidth?: string | null) {
@@ -349,6 +355,18 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
     const width = `${Math.round((naturalWidth * scalePercent) / 100)}px`;
     wrapper.style.width = width;
     wrapper.dataset.scale = normalizedScale;
+  }
+
+  function previewScale(scale: string | null) {
+    const normalizedScale = normalizeImageScale(scale) || DEFAULT_IMAGE_SCALE;
+
+    if (resizeFrame) cancelAnimationFrame(resizeFrame);
+    pendingResizeScale = normalizedScale;
+    resizeFrame = requestAnimationFrame(() => {
+      resizeFrame = 0;
+      applyImageScale(pendingResizeScale);
+      updateScaleControls(pendingResizeScale);
+    });
   }
 
   function updateScale(scale: string | null) {
@@ -375,13 +393,14 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
     event.stopPropagation();
 
     const startX = event.clientX;
+    const naturalWidth = getImageNaturalWidth(image) || 1;
     const startPercent =
       getImageScalePercent(normalizeImageScale(currentNode.attrs.scale), image, wrapper) ||
       Number.parseFloat(DEFAULT_IMAGE_SCALE);
     let lastPercent = startPercent;
+    let finalPercent = startPercent;
 
     const onMouseMove = (moveEvent: MouseEvent) => {
-      const naturalWidth = getImageNaturalWidth(image) || 1;
       const deltaPercent = ((moveEvent.clientX - startX) / naturalWidth) * 100;
       const nextPercent = Math.max(
         MIN_IMAGE_SCALE_PERCENT,
@@ -390,17 +409,29 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
 
       if (nextPercent === lastPercent) return;
       lastPercent = nextPercent;
-      updateScale(`${nextPercent}%`);
+      finalPercent = nextPercent;
+      previewScale(`${nextPercent}%`);
     };
 
     const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      cleanupResizeListeners?.();
+      cleanupResizeListeners = null;
+      if (resizeFrame) {
+        cancelAnimationFrame(resizeFrame);
+        resizeFrame = 0;
+      }
+      if (finalPercent !== startPercent) {
+        updateScale(`${finalPercent}%`);
+      }
       view.focus();
     };
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
+    cleanupResizeListeners = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
   });
 
   updateImage();
@@ -419,6 +450,10 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
       controls.contains(event.target as globalThis.Node) ||
       handle.contains(event.target as globalThis.Node),
     ignoreMutation: () => true,
+    destroy: () => {
+      cleanupResizeListeners?.();
+      if (resizeFrame) cancelAnimationFrame(resizeFrame);
+    },
   };
 };
 
