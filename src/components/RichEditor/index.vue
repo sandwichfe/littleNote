@@ -96,15 +96,15 @@
         <span class="re-sep"></span>
 
         <!-- 插入 -->
+        <button class="re-btn" :class="{ active: editor.isActive('codeBlock') }"
+                @click="run(c => c.toggleCodeBlock())" title="代码块">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+        </button>
         <button class="re-btn" @click="pickImage" title="插入图片">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
         </button>
         <button class="re-btn" @click="pickVideo" title="插入视频">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-        </button>
-        <button class="re-btn" :class="{ active: editor.isActive('codeBlock') }"
-                @click="run(c => c.toggleCodeBlock())" title="代码块">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
         </button>
         <button class="re-btn" @click="insertTable" title="插入表格">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 10.02h5V21h-5zM17 21h3c1.1 0 2-.9 2-2v-9h-5v11zm3-18H5c-1.1 0-2 .9-2 2v3h19V5c0-1.1-.9-2-2-2zM3 19c0 1.1.9 2 2 2h3V10.02H3V19z"/></svg>
@@ -428,11 +428,21 @@ const onEditorBlankMouseDown = (event: MouseEvent) => {
   if (!proseMirror || target !== proseMirror) return;
 
   const { state, view } = editor.value;
+  const firstNode = state.doc.firstChild;
   const lastNode = state.doc.lastChild;
-  if (lastNode?.type.name !== 'codeBlock') return;
+  const firstElement = proseMirror.firstElementChild as HTMLElement | null;
+  const lastElement = proseMirror.lastElementChild as HTMLElement | null;
+  const firstRect = firstElement?.getBoundingClientRect();
+  const lastRect = lastElement?.getBoundingClientRect();
+  const isBeforeFirstCodeBlock =
+    firstNode?.type.name === 'codeBlock' && !!firstRect && event.clientY < firstRect.top;
+  const isAfterLastCodeBlock =
+    lastNode?.type.name === 'codeBlock' && !!lastRect && event.clientY > lastRect.bottom;
+
+  if (!isBeforeFirstCodeBlock && !isAfterLastCodeBlock) return;
 
   event.preventDefault();
-  const insertPos = state.doc.content.size;
+  const insertPos = isBeforeFirstCodeBlock ? 0 : state.doc.content.size;
   const paragraph = state.schema.nodes.paragraph.create();
   const tr = state.tr.insert(insertPos, paragraph);
 
