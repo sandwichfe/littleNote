@@ -29,17 +29,17 @@ export default defineConfig({
     //   cert: fs.readFileSync('D:\\certs\\localhost\\server.crt')
     // },
     proxy: {
+      // /assets/oss 代理到 https://littlenote.yun.yiruserene.top/assets/oss
       '/assets/oss': {
-        target: 'https://littlenote.yun.yiruserene.top', // 修改目标地址
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/assets\/oss/, '/assets/oss'), // 保留原路径
+        target: 'https://littlenote.yun.yiruserene.top',
+        changeOrigin: true
       },
+      // /api/oss 代理到 https://littlenote.yun.yiruserene.top/api/oss
       '/api/oss': {
-        target: 'https://littlenote.yun.yiruserene.top', // 修改目标地址
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/oss/, '/api/oss'), // 保留原路径
-      },
-    },
+        target: 'https://littlenote.yun.yiruserene.top',
+        changeOrigin: true
+      }
+    }
   },
   resolve: {
     alias: {
