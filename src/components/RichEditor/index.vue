@@ -865,9 +865,13 @@ defineExpose({ getHTML });
   font-family: inherit;
 }
 .re-content :deep(.ProseMirror .tableWrapper) {
+  display: inline-block;
+  max-width: 100%;
   margin: 12px 0;
+  border: 2px solid #7f8c99;
+  border-radius: 8px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  background: #ffffff;
 }
 .re-content :deep(.ProseMirror.resize-cursor) {
   cursor: col-resize;
@@ -875,13 +879,11 @@ defineExpose({ getHTML });
 .re-content :deep(.ProseMirror table) {
   border-collapse: collapse;
   table-layout: fixed;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-  overflow: hidden;
+  border: none;
 }
 .re-content :deep(.ProseMirror th),
 .re-content :deep(.ProseMirror td) {
-  border: 1px solid #e8e8e8;
+  border: 1px solid #c9d1d9;
   box-sizing: border-box;
   min-width: 80px;
   height: 40px;
@@ -891,12 +893,12 @@ defineExpose({ getHTML });
   position: relative;
 }
 .re-content :deep(.ProseMirror th) {
-  background: #fafafa;
+  background: #f3f6f8;
   font-weight: 600;
   color: #262626;
 }
 .re-content :deep(.ProseMirror td) {
-  background: #fff;
+  background: #ffffff;
 }
 .re-content :deep(.ProseMirror .column-resize-handle) {
   position: absolute;
