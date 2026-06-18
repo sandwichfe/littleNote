@@ -274,27 +274,20 @@ const decorateCodeBlocks = async () => {
 
     const tools = document.createElement('div');
     tools.className = 're-code-tools';
-    tools.setAttribute('contenteditable', 'false');
+    tools.contentEditable = 'false';
 
-    if (props.editable) {
-      const select = document.createElement('select');
-      select.className = 're-code-language';
-      select.title = '代码语言';
-      select.value = language;
-      codeLanguages.forEach((item) => {
-        const option = document.createElement('option');
-        option.value = item.value;
-        option.textContent = item.label;
-        option.selected = item.value === language;
-        select.appendChild(option);
-      });
-      tools.appendChild(select);
-    } else {
-      const label = document.createElement('span');
-      label.className = 're-code-language-label';
-      label.textContent = language || 'Plain Text';
-      tools.appendChild(label);
-    }
+    const select = document.createElement('select');
+    select.className = 're-code-language';
+    select.title = '代码语言';
+    select.value = language;
+    codeLanguages.forEach((item) => {
+      const option = document.createElement('option');
+      option.value = item.value;
+      option.textContent = item.label;
+      option.selected = item.value === language;
+      select.appendChild(option);
+    });
+    tools.appendChild(select);
 
     const button = document.createElement('button');
     button.type = 'button';
