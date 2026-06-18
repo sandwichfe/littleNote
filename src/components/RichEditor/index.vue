@@ -152,6 +152,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import ListItem from '@tiptap/extension-list-item';
 import type { NodeViewRendererProps } from '@tiptap/core';
 import { TextSelection } from '@tiptap/pm/state';
 import { columnResizing, tableEditing } from '@tiptap/pm/tables';
@@ -639,6 +640,10 @@ const CodeBlockWithTools = CodeBlockLowlight.extend({
   },
 });
 
+const ListItemWithHeading = ListItem.extend({
+  content: '(paragraph | heading) block*',
+});
+
 const TableWithResizableColumns = Table.extend({
   addProseMirrorPlugins() {
     return [
@@ -671,7 +676,8 @@ const editor = useEditor({
   content: props.modelValue,
   editable: props.editable,
   extensions: [
-    StarterKit.configure({ codeBlock: false }),
+    StarterKit.configure({ codeBlock: false, listItem: false }),
+    ListItemWithHeading,
     TextStyle,
     Color,
     FontFamily,
@@ -1341,6 +1347,14 @@ defineExpose({ getHTML });
   margin: 12px 0;
 }
 .re-content :deep(.ProseMirror li) {
+  margin: 4px 0;
+}
+.re-content :deep(.ProseMirror li > h1),
+.re-content :deep(.ProseMirror li > h2),
+.re-content :deep(.ProseMirror li > h3),
+.re-content :deep(.ProseMirror li > h4),
+.re-content :deep(.ProseMirror li > h5),
+.re-content :deep(.ProseMirror li > h6) {
   margin: 4px 0;
 }
 .re-content :deep(.ProseMirror code) {
