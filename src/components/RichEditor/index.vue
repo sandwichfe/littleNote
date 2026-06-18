@@ -226,14 +226,16 @@ const currentFont = ref('');
 const currentColor = ref('#000000');
 const currentBg = ref('#ffff00');
 
-const DEFAULT_IMAGE_WIDTH = '50%';
-const MIN_IMAGE_WIDTH_PERCENT = 10;
+const DEFAULT_IMAGE_SCALE = '100%';
+const MIN_IMAGE_SCALE_PERCENT = 10;
+const MAX_IMAGE_SCALE_PERCENT = 300;
 
 const imageToolbarOptions = [
-  { label: '30%', value: '30%' },
   { label: '50%', value: '50%' },
   { label: '100%', value: '100%' },
-  { label: 'Auto', value: '' },
+  { label: '125%', value: '125%' },
+  { label: '150%', value: '150%' },
+  { label: '175%', value: '175%' },
 ];
 
 const isHexColor = (value: unknown): value is string =>
@@ -250,16 +252,27 @@ const normalizeImageWidth = (value: unknown) => {
   return null;
 };
 
-const getImageWidthPercent = (width: string | null, imageElement: HTMLElement, editorElement: HTMLElement) => {
-  if (width?.endsWith('%')) return Number.parseFloat(width);
+const normalizeImageScale = (value: unknown) => {
+  if (typeof value !== 'string') return null;
 
-  const editorWidth = editorElement.clientWidth;
-  if (!editorWidth) return null;
+  const scale = value.trim();
+  if (!scale) return null;
+  if (/^\d+(\.\d+)?$/.test(scale)) return `${scale}%`;
+  if (/^\d+(\.\d+)?%$/.test(scale)) return scale;
 
-  const pixelWidth = width?.endsWith('px') ? Number.parseFloat(width) : imageElement.offsetWidth;
-  if (!pixelWidth) return null;
+  return null;
+};
 
-  return Math.round((pixelWidth / editorWidth) * 100);
+const getImageNaturalWidth = (image: HTMLImageElement) =>
+  image.naturalWidth || Number.parseFloat(image.getAttribute('width') || '') || image.offsetWidth;
+
+const getImageScalePercent = (scale: string | null, image: HTMLImageElement, wrapper: HTMLElement) => {
+  if (scale?.endsWith('%')) return Number.parseFloat(scale);
+
+  const naturalWidth = getImageNaturalWidth(image);
+  if (!naturalWidth) return Number.parseFloat(DEFAULT_IMAGE_SCALE);
+
+  return Math.round((wrapper.offsetWidth / naturalWidth) * 100);
 };
 
 const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) => {
@@ -289,7 +302,7 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
     button.textContent = item.label;
     button.title = `图片缩放 ${item.label}`;
     button.addEventListener('click', () => {
-      updateWidth(item.value || null);
+      updateScale(item.value);
       view.focus();
     });
 
@@ -309,36 +322,48 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
 
   const updateImage = () => {
     const width = normalizeImageWidth(currentNode.attrs.width);
+    const scale = normalizeImageScale(currentNode.attrs.scale) || normalizeImageScale(width) || DEFAULT_IMAGE_SCALE;
     image.src = currentNode.attrs.src;
     image.alt = currentNode.attrs.alt || '';
     image.title = currentNode.attrs.title || '';
-    if (width) {
-      wrapper.style.width = width;
-      wrapper.dataset.width = width;
-    } else {
-      wrapper.style.removeProperty('width');
-      delete wrapper.dataset.width;
-    }
+    image.onload = () => applyImageScale(scale, width);
+    applyImageScale(scale, width);
 
-    const hasPresetWidth = imageToolbarOptions.some((item) => item.value === width);
-    customSize.textContent = width && !hasPresetWidth ? width : '';
+    const hasPresetScale = imageToolbarOptions.some((item) => item.value === scale);
+    customSize.textContent = scale && !hasPresetScale ? scale : '';
     toolbarButtons.forEach((item) => {
-      item.button.classList.toggle('active', item.value === (width || ''));
+      item.button.classList.toggle('active', item.value === scale);
     });
   };
 
-  function updateWidth(width: string | null) {
+  function applyImageScale(scale: string | null, fallbackWidth?: string | null) {
+    const normalizedScale = normalizeImageScale(scale) || DEFAULT_IMAGE_SCALE;
+    const naturalWidth = getImageNaturalWidth(image);
+
+    if (!naturalWidth) {
+      if (fallbackWidth) wrapper.style.width = fallbackWidth;
+      return;
+    }
+
+    const scalePercent = Number.parseFloat(normalizedScale);
+    const width = `${Math.round((naturalWidth * scalePercent) / 100)}px`;
+    wrapper.style.width = width;
+    wrapper.dataset.scale = normalizedScale;
+  }
+
+  function updateScale(scale: string | null) {
     const pos = getPos();
     if (typeof pos !== 'number') return;
 
-    const normalizedWidth = normalizeImageWidth(width);
+    const normalizedScale = normalizeImageScale(scale) || DEFAULT_IMAGE_SCALE;
     const current = view.state.doc.nodeAt(pos);
     if (!current) return;
 
     view.dispatch(
       view.state.tr.setNodeMarkup(pos, undefined, {
         ...current.attrs,
-        width: normalizedWidth,
+        scale: normalizedScale,
+        width: null,
       })
     );
   }
@@ -349,24 +374,23 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
     event.preventDefault();
     event.stopPropagation();
 
-    const editorElement = view.dom as HTMLElement;
     const startX = event.clientX;
     const startPercent =
-      getImageWidthPercent(normalizeImageWidth(currentNode.attrs.width), wrapper, editorElement) ||
-      Number.parseFloat(DEFAULT_IMAGE_WIDTH);
+      getImageScalePercent(normalizeImageScale(currentNode.attrs.scale), image, wrapper) ||
+      Number.parseFloat(DEFAULT_IMAGE_SCALE);
     let lastPercent = startPercent;
 
     const onMouseMove = (moveEvent: MouseEvent) => {
-      const editorWidth = editorElement.clientWidth || 1;
-      const deltaPercent = ((moveEvent.clientX - startX) / editorWidth) * 100;
+      const naturalWidth = getImageNaturalWidth(image) || 1;
+      const deltaPercent = ((moveEvent.clientX - startX) / naturalWidth) * 100;
       const nextPercent = Math.max(
-        MIN_IMAGE_WIDTH_PERCENT,
-        Math.min(100, Math.round(startPercent + deltaPercent))
+        MIN_IMAGE_SCALE_PERCENT,
+        Math.min(MAX_IMAGE_SCALE_PERCENT, Math.round(startPercent + deltaPercent))
       );
 
       if (nextPercent === lastPercent) return;
       lastPercent = nextPercent;
-      updateWidth(`${nextPercent}%`);
+      updateScale(`${nextPercent}%`);
     };
 
     const onMouseUp = () => {
@@ -409,12 +433,27 @@ const ImageWithSize = Image.extend({
         parseHTML: (element) =>
           normalizeImageWidth(element.style.width || element.getAttribute('width')),
         renderHTML: (attributes) => {
+          if (normalizeImageScale(attributes.scale)) return {};
+
           const width = normalizeImageWidth(attributes.width);
           if (!width) return {};
 
           return {
             'data-width': width,
             style: `width: ${width};`,
+          };
+        },
+      },
+      scale: {
+        default: null,
+        parseHTML: (element) =>
+          normalizeImageScale(element.getAttribute('data-scale')) ||
+          normalizeImageScale(element.getAttribute('scale')),
+        renderHTML: (attributes) => {
+          const scale = normalizeImageScale(attributes.scale) || DEFAULT_IMAGE_SCALE;
+
+          return {
+            'data-scale': scale,
           };
         },
       },
@@ -750,7 +789,7 @@ const insertUploadedImage = async (file: File, position?: number) => {
     if (!chain) return;
 
     const imageContent = [
-      { type: 'image', attrs: { src: url, width: DEFAULT_IMAGE_WIDTH } },
+      { type: 'image', attrs: { src: url, scale: DEFAULT_IMAGE_SCALE } },
       { type: 'text', text: ' ' },
     ];
 
@@ -1033,7 +1072,7 @@ defineExpose({ getHTML });
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
-.re-content :deep(.ProseMirror .re-image-node:not([data-width]) img) {
+.re-content :deep(.ProseMirror .re-image-node:not([data-scale]) img) {
   width: auto;
   max-width: 100%;
 }
