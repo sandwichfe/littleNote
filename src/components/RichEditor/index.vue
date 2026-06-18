@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootRef" class="rich-editor" @change="onContentChange">
+  <div ref="rootRef" class="rich-editor">
     <div v-if="editable && editor" class="re-toolbar">
       <div class="re-toolbar-row">
         <!-- 正文 / 标题 -->
@@ -130,12 +130,12 @@
       <input ref="videoInput" type="file" accept="video/*" hidden @change="onVideoChange" />
     </div>
 
-    <editor-content :editor="editor" class="re-content" @click="onContentClick" />
+    <editor-content :editor="editor" class="re-content" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import TextStyle from '@tiptap/extension-text-style';
@@ -152,6 +152,8 @@ import TableRow from '@tiptap/extension-table-row';
 import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import type { NodeViewRendererProps } from '@tiptap/core';
+import type { ViewMutationRecord } from '@tiptap/pm/view';
 import { common, createLowlight } from 'lowlight';
 import { ElMessage } from 'element-plus';
 import { uploadImage } from '@/network/base';
@@ -225,6 +227,32 @@ const currentBg = ref('#ffff00');
 const isHexColor = (value: unknown): value is string =>
   typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
 
+const copyText = async (text: string) => {
+  if (!text) {
+    ElMessage.warning('当前代码块没有可复制的内容');
+    return;
+  }
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+    }
+    ElMessage.success('代码已复制');
+  } catch (err) {
+    console.error('代码复制失败:', err);
+    ElMessage.error('代码复制失败');
+  }
+};
+
 const syncToolbarState = (targetEditor?: any) => {
   if (!targetEditor) return;
 
@@ -244,60 +272,100 @@ const syncToolbarState = (targetEditor?: any) => {
 
 };
 
-const removeCodeTools = () => {
-  rootRef.value
-    ?.querySelectorAll<HTMLElement>('.re-code-tools')
-    .forEach((tools) => tools.remove());
-};
+const createCodeBlockView = ({ node, view, getPos, HTMLAttributes }: NodeViewRendererProps) => {
+  let currentNode = node;
+  const pre = document.createElement('pre');
+  Object.entries(HTMLAttributes).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) pre.setAttribute(key, String(value));
+  });
 
-const getCodeLanguageFromElement = (code: HTMLElement) => {
-  const languageClass = Array.from(code.classList).find((className) =>
-    className.startsWith('language-')
-  );
-  return languageClass?.replace('language-', '') || '';
-};
+  const tools = document.createElement('div');
+  tools.className = 're-code-tools';
+  tools.contentEditable = 'false';
+  tools.addEventListener('mousedown', (event) => {
+    event.stopPropagation();
+  });
 
-const decorateCodeBlocks = async () => {
-  await nextTick();
-  removeCodeTools();
+  const toolsLeft = document.createElement('div');
+  toolsLeft.className = 're-code-tools-left';
 
-  rootRef.value?.querySelectorAll<HTMLElement>('.ProseMirror pre').forEach((pre) => {
-    const code = pre.querySelector('code');
-    if (!code) return;
+  const select = document.createElement('select');
+  select.className = 're-code-language';
+  select.title = '代码语言';
+  select.addEventListener('change', () => {
+    const pos = getPos();
+    if (typeof pos !== 'number') return;
 
-    const language = getCodeLanguageFromElement(code);
+    const current = view.state.doc.nodeAt(pos);
+    if (!current) return;
+
+    view.dispatch(
+      view.state.tr.setNodeMarkup(pos, undefined, {
+        ...current.attrs,
+        language: select.value || null,
+      })
+    );
+  });
+  codeLanguages.forEach((item) => {
+    const option = document.createElement('option');
+    option.value = item.value;
+    option.textContent = item.label;
+    select.appendChild(option);
+  });
+  toolsLeft.appendChild(select);
+  tools.appendChild(toolsLeft);
+
+  const toolsRight = document.createElement('div');
+  toolsRight.className = 're-code-tools-right';
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 're-code-copy';
+  button.innerHTML =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  button.setAttribute('aria-label', '复制代码');
+  button.title = '复制代码';
+  button.addEventListener('click', () => {
+    void copyText(code.textContent || '');
+  });
+  toolsRight.appendChild(button);
+  tools.appendChild(toolsRight);
+
+  const code = document.createElement('code');
+  pre.append(tools, code);
+
+  const updateLanguage = (language: string) => {
+    select.value = language;
     if (language) {
       pre.dataset.language = language;
+      code.className = `language-${language}`;
     } else {
       delete pre.dataset.language;
+      code.removeAttribute('class');
     }
+  };
+  updateLanguage(node.attrs.language || '');
 
-    const tools = document.createElement('div');
-    tools.className = 're-code-tools';
-    tools.contentEditable = 'false';
-
-    const select = document.createElement('select');
-    select.className = 're-code-language';
-    select.title = '代码语言';
-    select.value = language;
-    codeLanguages.forEach((item) => {
-      const option = document.createElement('option');
-      option.value = item.value;
-      option.textContent = item.label;
-      option.selected = item.value === language;
-      select.appendChild(option);
-    });
-    tools.appendChild(select);
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 're-code-copy';
-    button.textContent = '复制';
-    button.title = '复制代码';
-    tools.appendChild(button);
-    pre.appendChild(tools);
-  });
+  return {
+    dom: pre,
+    contentDOM: code,
+    update: (updatedNode) => {
+      if (updatedNode.type !== currentNode.type) return false;
+      currentNode = updatedNode;
+      updateLanguage(updatedNode.attrs.language || '');
+      return true;
+    },
+    stopEvent: (event: Event) => tools.contains(event.target as globalThis.Node),
+    ignoreMutation: (mutation: ViewMutationRecord) =>
+      tools.contains(mutation.target as globalThis.Node),
+  };
 };
+
+const CodeBlockWithTools = CodeBlockLowlight.extend({
+  addNodeView() {
+    return createCodeBlockView;
+  },
+});
 
 const editor = useEditor({
   content: props.modelValue,
@@ -317,17 +385,15 @@ const editor = useEditor({
     TableRow,
     TableHeader,
     TableCell,
-    CodeBlockLowlight.configure({ lowlight }),
+    CodeBlockWithTools.configure({ lowlight }),
     Video,
   ],
   onCreate: ({ editor }) => {
     syncToolbarState(editor);
-    void decorateCodeBlocks();
   },
   onUpdate: ({ editor }) => {
     emit('update:modelValue', editor.getHTML());
     syncToolbarState(editor);
-    void decorateCodeBlocks();
   },
   onSelectionUpdate: ({ editor }) => {
     syncToolbarState(editor);
@@ -340,7 +406,6 @@ watch(
     if (editor.value && val !== editor.value.getHTML()) {
       editor.value.commands.setContent(val || '', false);
       syncToolbarState(editor.value);
-      void decorateCodeBlocks();
     }
   }
 );
@@ -349,7 +414,6 @@ watch(
   () => props.editable,
   (val) => {
     editor.value?.setEditable(val);
-    void decorateCodeBlocks();
   }
 );
 
@@ -396,89 +460,6 @@ const onBg = (e: Event) => {
 };
 
 const clearBgColor = () => run((c) => c.unsetHighlight());
-
-const copyText = async (text: string) => {
-  if (!text) {
-    ElMessage.warning('当前代码块没有可复制的内容');
-    return;
-  }
-
-  try {
-    if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(text);
-    } else {
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      textarea.remove();
-    }
-    ElMessage.success('代码已复制');
-  } catch (err) {
-    console.error('代码复制失败:', err);
-    ElMessage.error('代码复制失败');
-  }
-};
-
-const getCodeBlockPos = (pre: HTMLElement) => {
-  if (!editor.value) return null;
-
-  const { state, view } = editor.value;
-  const basePos = view.posAtDOM(pre, 0);
-  const candidates = [basePos, basePos - 1, basePos + 1];
-
-  return candidates.find((pos) => {
-    if (pos < 0 || pos > state.doc.content.size) return false;
-    return state.doc.nodeAt(pos)?.type.name === 'codeBlock';
-  }) ?? null;
-};
-
-const updateCodeBlockLanguage = (pre: HTMLElement, language: string) => {
-  if (!editor.value) return;
-
-  const pos = getCodeBlockPos(pre);
-  if (pos === null) return;
-
-  const { state, view } = editor.value;
-  const node = state.doc.nodeAt(pos);
-  if (!node) return;
-
-  view.dispatch(
-    state.tr.setNodeMarkup(pos, undefined, {
-      ...node.attrs,
-      language: language || null,
-    })
-  );
-  view.focus();
-  void decorateCodeBlocks();
-};
-
-const onContentChange = (e: Event) => {
-  const target = e.target as HTMLElement;
-  const select = target.closest<HTMLSelectElement>('.re-code-language');
-  if (!select) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-  const pre = select.closest<HTMLElement>('pre');
-  if (!pre) return;
-
-  updateCodeBlockLanguage(pre, select.value);
-};
-
-const onContentClick = (e: MouseEvent) => {
-  const target = e.target as HTMLElement;
-  const button = target.closest<HTMLButtonElement>('.re-code-copy');
-  if (!button) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-  const code = button.closest('pre')?.querySelector('code');
-  void copyText(code?.textContent || '');
-};
 
 const insertTable = () =>
   run((c) => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }));
@@ -762,7 +743,7 @@ defineExpose({ getHTML });
   background: #f6f8fa;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
-  padding: 48px 16px 16px;
+  padding: 0;
   overflow-x: auto;
   font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
   font-size: 13px;
@@ -770,28 +751,35 @@ defineExpose({ getHTML });
   margin: 12px 0;
 }
 .re-content :deep(.re-code-tools) {
-  position: absolute;
-  top: 10px;
-  left: 12px;
-  right: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 12px;
+  background: #ececec;
+  border-bottom: 1px solid #e1e1e1;
+  border-radius: 8px 8px 0 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.re-content :deep(.re-code-tools-left),
+.re-content :deep(.re-code-tools-right) {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  pointer-events: none;
 }
 .re-content :deep(.re-code-language),
 .re-content :deep(.re-code-language-label) {
   max-width: 160px;
-  height: 26px;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
-  background: #fff;
-  color: #595959;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #111827;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 12px;
-  line-height: 24px;
-  pointer-events: auto;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 30px;
   transition: all 0.2s;
 }
 .re-content :deep(.re-code-language) {
@@ -801,7 +789,8 @@ defineExpose({ getHTML });
 }
 .re-content :deep(.re-code-language:hover),
 .re-content :deep(.re-code-language:focus) {
-  border-color: #4096ff;
+  background: #fff;
+  border-color: #d9d9d9;
 }
 .re-content :deep(.re-code-language-label) {
   display: inline-flex;
@@ -809,30 +798,34 @@ defineExpose({ getHTML });
   padding: 0 10px;
 }
 .re-content :deep(.re-code-copy) {
-  height: 26px;
-  padding: 0 12px;
-  border: 1px solid #d9d9d9;
-  border-radius: 6px;
-  background: #fff;
-  color: #595959;
-  font-size: 12px;
-  line-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #7a7f86;
+  font-size: 14px;
+  line-height: 1;
   cursor: pointer;
-  pointer-events: auto;
   transition: all 0.2s;
   outline: none;
 }
 .re-content :deep(.re-code-copy:hover) {
-  background: #f5f5f5;
+  background: #fff;
   color: #262626;
-  border-color: #bfbfbf;
+  border-color: #d9d9d9;
 }
 .re-content :deep(.re-code-copy:active) {
   transform: scale(0.96);
 }
 .re-content :deep(.ProseMirror pre code) {
+  display: block;
   background: none;
-  padding: 0;
+  padding: 16px;
   font-family: inherit;
 }
 .re-content :deep(.ProseMirror table) {
