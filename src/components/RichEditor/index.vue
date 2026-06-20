@@ -106,12 +106,17 @@
         <button class="re-btn" @click="pickVideo" title="插入视频">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
         </button>
-        <div class="re-table-insert" @mouseleave="resetTablePickerPreview">
+        <div
+          class="re-table-insert"
+          :title="isSelectionInTable ? '单元格内不能插入表格' : '插入表格'"
+          @mouseleave="resetTablePickerPreview"
+        >
           <button
             class="re-btn"
-            :class="{ active: showTablePicker }"
+            :class="{ active: showTablePicker && !isSelectionInTable }"
             type="button"
-            title="插入表格"
+            :disabled="isSelectionInTable"
+            :aria-disabled="isSelectionInTable"
             @click="toggleTablePicker"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 10.02h5V21h-5zM17 21h3c1.1 0 2-.9 2-2v-9h-5v11zm3-18H5c-1.1 0-2 .9-2 2v3h19V5c0-1.1-.9-2-2-2zM3 19c0 1.1.9 2 2 2h3V10.02H3V19z"/></svg>
@@ -288,6 +293,7 @@ const currentFont = ref('');
 const currentColor = ref('#000000');
 const currentBg = ref('#ffff00');
 const showTablePicker = ref(false);
+const isSelectionInTable = ref(false);
 const tablePickerRows = ref(6);
 const tablePickerCols = ref(6);
 const tableToolbar = reactive({
@@ -625,6 +631,12 @@ const syncToolbarState = (targetEditor?: any) => {
   const activeBg = targetEditor.getAttributes('highlight').color;
   if (isHexColor(activeBg)) currentBg.value = activeBg;
 
+  isSelectionInTable.value = targetEditor.isActive('table');
+  if (isSelectionInTable.value) {
+    showTablePicker.value = false;
+    tablePickerRows.value = TABLE_PICKER_DEFAULT_ROWS;
+    tablePickerCols.value = TABLE_PICKER_DEFAULT_COLS;
+  }
 };
 
 const hideTableToolbar = () => {
@@ -664,11 +676,12 @@ const updateTableToolbarPosition = () => {
 
     const shellRect = shell.getBoundingClientRect();
     const tableRect = tableElement.getBoundingClientRect();
-    const maxLeft = Math.max(0, shell.clientWidth - TABLE_TOOLBAR_WIDTH - 12);
+    const maxLeft = Math.max(0, shell.clientWidth - TABLE_TOOLBAR_WIDTH -0);
+    const toolbarLeft = tableRect.right - shellRect.left + shell.scrollLeft - TABLE_TOOLBAR_WIDTH;
 
     tableToolbar.left = Math.max(
       8,
-      Math.min(maxLeft, tableRect.left - shellRect.left + shell.scrollLeft)
+      Math.min(maxLeft, toolbarLeft)
     );
     tableToolbar.top = Math.max(
       8,
