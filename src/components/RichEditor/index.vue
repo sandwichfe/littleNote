@@ -106,9 +106,37 @@
         <button class="re-btn" @click="pickVideo" title="插入视频">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
         </button>
-        <button class="re-btn" @click="insertTable" title="插入表格">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 10.02h5V21h-5zM17 21h3c1.1 0 2-.9 2-2v-9h-5v11zm3-18H5c-1.1 0-2 .9-2 2v3h19V5c0-1.1-.9-2-2-2zM3 19c0 1.1.9 2 2 2h3V10.02H3V19z"/></svg>
-        </button>
+        <div class="re-table-insert" @mouseleave="resetTablePickerPreview">
+          <button
+            class="re-btn"
+            :class="{ active: showTablePicker }"
+            type="button"
+            title="插入表格"
+            @click="toggleTablePicker"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 10.02h5V21h-5zM17 21h3c1.1 0 2-.9 2-2v-9h-5v11zm3-18H5c-1.1 0-2 .9-2 2v3h19V5c0-1.1-.9-2-2-2zM3 19c0 1.1.9 2 2 2h3V10.02H3V19z"/></svg>
+          </button>
+          <div v-if="showTablePicker" class="re-table-picker" @mousedown.prevent>
+            <div
+              class="re-table-picker-grid"
+              :style="{
+                gridTemplateColumns: `repeat(${TABLE_PICKER_COLS}, 18px)`,
+                gridTemplateRows: `repeat(${TABLE_PICKER_ROWS}, 18px)`,
+              }"
+            >
+              <button
+                v-for="cell in tablePickerCells"
+                :key="`${cell.row}-${cell.col}`"
+                class="re-table-picker-cell"
+                :class="{ active: cell.row <= tablePickerRows && cell.col <= tablePickerCols }"
+                type="button"
+                @mouseenter="previewTableSize(cell.row, cell.col)"
+                @click="insertTable(cell.row, cell.col)"
+              ></button>
+            </div>
+            <div class="re-table-picker-size">{{ tablePickerRows }} x {{ tablePickerCols }}</div>
+          </div>
+        </div>
         <button class="re-btn" @click="run(c => c.setHorizontalRule())" title="分割线">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5v-2h14v2z"/></svg>
         </button>
@@ -130,12 +158,45 @@
       <input ref="videoInput" type="file" accept="video/*" hidden @change="onVideoChange" />
     </div>
 
-    <editor-content :editor="editor" class="re-content" @mousedown="onEditorBlankMouseDown" />
+    <div class="re-editor-shell">
+      <div
+        v-if="editable && editor && tableToolbar.visible"
+        class="re-table-toolbar"
+        :style="{ top: `${tableToolbar.top}px`, left: `${tableToolbar.left}px` }"
+        @mousedown.prevent
+      >
+        <button class="re-table-tool" type="button" title="在上方插入行" @click="runTableCommand('addRowBefore')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v5H4V4zm0 7h16v9H4v-9zm7-5v1h8V6h-8zm0 8v4h8v-4h-8zM6 14v4h3v-4H6zM6 6v1h3V6H6z"/><path d="M12 2h2v2h3v2h-3v2h-2V6H9V4h3V2z"/></svg>
+        </button>
+        <button class="re-table-tool" type="button" title="在下方插入行" @click="runTableCommand('addRowAfter')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v9H4V4zm0 11h16v5H4v-5zm7-9v4h8V6h-8zm0 11v1h8v-1h-8zM6 6v4h3V6H6zM6 17v1h3v-1H6z"/><path d="M12 16h2v2h3v2h-3v2h-2v-2H9v-2h3v-2z"/></svg>
+        </button>
+        <span class="re-table-tool-sep"></span>
+        <button class="re-table-tool" type="button" title="在左侧插入列" @click="runTableCommand('addColumnBefore')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h5v16H4V4zm7 0h9v16h-9V4zM6 6v3h1V6H6zm0 5v7h1v-7H6zm8-5v3h4V6h-4zm0 5v7h4v-7h-4z"/><path d="M2 12h2V9h2v3h2v2H6v3H4v-3H2v-2z"/></svg>
+        </button>
+        <button class="re-table-tool" type="button" title="在右侧插入列" @click="runTableCommand('addColumnAfter')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h9v16H4V4zm11 0h5v16h-5V4zM6 6v3h4V6H6zm0 5v7h4v-7H6zm11-5v3h1V6h-1zm0 5v7h1v-7h-1z"/><path d="M16 12h2V9h2v3h2v2h-2v3h-2v-3h-2v-2z"/></svg>
+        </button>
+        <span class="re-table-tool-sep"></span>
+        <button class="re-table-tool" type="button" title="删除行" @click="runTableCommand('deleteRow')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v5H4V4zm0 7h16v9H4v-9zm2-5v1h12V6H6zm0 8v4h12v-4H6z"/><path d="M8 12h8v2H8v-2z"/></svg>
+        </button>
+        <button class="re-table-tool" type="button" title="删除列" @click="runTableCommand('deleteColumn')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h5v16H4V4zm7 0h9v16h-9V4zM6 6v12h1V6H6zm8 0v12h4V6h-4z"/><path d="M11 11h9v2h-9v-2z"/></svg>
+        </button>
+        <span class="re-table-tool-sep"></span>
+        <button class="re-table-tool danger" type="button" title="删除表格" @click="runTableCommand('deleteTable')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 3h8l1 2h4v2H3V5h4l1-2zm-2 6h12l-1 12H7L6 9zm3 2 .5 8h1.5l-.5-8H9zm4 0-.5 8H14l.5-8H13z"/></svg>
+        </button>
+      </div>
+      <editor-content :editor="editor" class="re-content" @mousedown="onEditorBlankMouseDown" @scroll="updateTableToolbarPosition" />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import TextStyle from '@tiptap/extension-text-style';
@@ -226,10 +287,31 @@ const currentBlock = ref('paragraph');
 const currentFont = ref('');
 const currentColor = ref('#000000');
 const currentBg = ref('#ffff00');
+const showTablePicker = ref(false);
+const tablePickerRows = ref(6);
+const tablePickerCols = ref(6);
+const tableToolbar = reactive({
+  visible: false,
+  top: 0,
+  left: 0,
+});
 
 const DEFAULT_IMAGE_SCALE = '100%';
 const MIN_IMAGE_SCALE_PERCENT = 10;
 const MAX_IMAGE_SCALE_PERCENT = 300;
+const TABLE_PICKER_ROWS = 8;
+const TABLE_PICKER_COLS = 10;
+const TABLE_PICKER_DEFAULT_ROWS = 6;
+const TABLE_PICKER_DEFAULT_COLS = 6;
+const TABLE_TOOLBAR_WIDTH = 322;
+const TABLE_TOOLBAR_OFFSET = 8;
+
+const tablePickerCells = computed(() =>
+  Array.from({ length: TABLE_PICKER_ROWS * TABLE_PICKER_COLS }, (_, index) => ({
+    row: Math.floor(index / TABLE_PICKER_COLS) + 1,
+    col: (index % TABLE_PICKER_COLS) + 1,
+  }))
+);
 
 const imageToolbarOptions = [
   { label: '50%', value: '50%' },
@@ -545,6 +627,76 @@ const syncToolbarState = (targetEditor?: any) => {
 
 };
 
+const hideTableToolbar = () => {
+  tableToolbar.visible = false;
+};
+
+const getSelectedTableElement = () => {
+  if (!editor.value?.isActive('table')) return null;
+
+  const proseMirror = rootRef.value?.querySelector<HTMLElement>('.ProseMirror');
+  const selectionNode = editor.value.view.domAtPos(editor.value.state.selection.from).node;
+  const startElement =
+    selectionNode.nodeType === globalThis.Node.ELEMENT_NODE
+      ? (selectionNode as HTMLElement)
+      : selectionNode.parentElement;
+
+  return startElement?.closest?.('.tableWrapper') as HTMLElement | null
+    || startElement?.closest?.('table')?.parentElement as HTMLElement | null
+    || proseMirror?.querySelector<HTMLElement>('.selectedCell')?.closest?.('.tableWrapper')
+    || null;
+};
+
+const updateTableToolbarPosition = () => {
+  if (!props.editable || !editor.value) {
+    hideTableToolbar();
+    return;
+  }
+
+  nextTick(() => {
+    const shell = rootRef.value?.querySelector<HTMLElement>('.re-editor-shell');
+    const tableElement = getSelectedTableElement();
+
+    if (!shell || !tableElement) {
+      hideTableToolbar();
+      return;
+    }
+
+    const shellRect = shell.getBoundingClientRect();
+    const tableRect = tableElement.getBoundingClientRect();
+    const maxLeft = Math.max(0, shell.clientWidth - TABLE_TOOLBAR_WIDTH - 12);
+
+    tableToolbar.left = Math.max(
+      8,
+      Math.min(maxLeft, tableRect.left - shellRect.left + shell.scrollLeft)
+    );
+    tableToolbar.top = Math.max(
+      8,
+      tableRect.top - shellRect.top + shell.scrollTop - 44 - TABLE_TOOLBAR_OFFSET
+    );
+    tableToolbar.visible = true;
+  });
+};
+
+const closeTablePicker = () => {
+  showTablePicker.value = false;
+  resetTablePickerPreview();
+};
+
+const onDocumentMouseDown = (event: MouseEvent) => {
+  if (!showTablePicker.value) return;
+
+  const target = event.target as globalThis.Node;
+  const tableInsert = rootRef.value?.querySelector('.re-table-insert');
+  if (tableInsert?.contains(target)) return;
+
+  closeTablePicker();
+};
+
+const onDocumentKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'Escape') closeTablePicker();
+};
+
 const createCodeBlockView = ({ node, view, getPos, HTMLAttributes }: NodeViewRendererProps) => {
   let currentNode = node;
   const pre = document.createElement('pre');
@@ -700,13 +852,16 @@ const editor = useEditor({
   ],
   onCreate: ({ editor }) => {
     syncToolbarState(editor);
+    updateTableToolbarPosition();
   },
   onUpdate: ({ editor }) => {
     emit('update:modelValue', editor.getHTML());
     syncToolbarState(editor);
+    updateTableToolbarPosition();
   },
   onSelectionUpdate: ({ editor }) => {
     syncToolbarState(editor);
+    updateTableToolbarPosition();
   },
   editorProps: {
     handlePaste: (view, event) => {
@@ -737,7 +892,16 @@ watch(
   }
 );
 
-onBeforeUnmount(() => editor.value?.destroy());
+onMounted(() => {
+  document.addEventListener('mousedown', onDocumentMouseDown);
+  document.addEventListener('keydown', onDocumentKeyDown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onDocumentMouseDown);
+  document.removeEventListener('keydown', onDocumentKeyDown);
+  editor.value?.destroy();
+});
 
 const onEditorBlankMouseDown = (event: MouseEvent) => {
   if (!props.editable || !editor.value) return;
@@ -845,8 +1009,47 @@ const onBg = (e: Event) => {
 
 const clearBgColor = () => run((c) => c.unsetHighlight());
 
-const insertTable = () =>
-  run((c) => c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }));
+const toggleTablePicker = () => {
+  showTablePicker.value = !showTablePicker.value;
+  resetTablePickerPreview();
+};
+
+const resetTablePickerPreview = () => {
+  tablePickerRows.value = TABLE_PICKER_DEFAULT_ROWS;
+  tablePickerCols.value = TABLE_PICKER_DEFAULT_COLS;
+};
+
+const previewTableSize = (rows: number, cols: number) => {
+  tablePickerRows.value = rows;
+  tablePickerCols.value = cols;
+};
+
+const insertTable = (rows = TABLE_PICKER_DEFAULT_ROWS, cols = TABLE_PICKER_DEFAULT_COLS) => {
+  showTablePicker.value = false;
+  resetTablePickerPreview();
+  run((c) => c.insertTable({ rows, cols, withHeaderRow: true }));
+  updateTableToolbarPosition();
+};
+
+const runTableCommand = (
+  command:
+    | 'addRowBefore'
+    | 'addRowAfter'
+    | 'addColumnBefore'
+    | 'addColumnAfter'
+    | 'deleteRow'
+    | 'deleteColumn'
+    | 'deleteTable'
+) => {
+  if (!editor.value) return;
+
+  editor.value.chain().focus()[command]().run();
+  if (command === 'deleteTable') {
+    hideTableToolbar();
+  } else {
+    updateTableToolbarPosition();
+  }
+};
 
 const pickImage = () => imageInput.value?.click();
 const pickVideo = () => videoInput.value?.click();
@@ -1066,10 +1269,117 @@ defineExpose({ getHTML });
   cursor: pointer;
 }
 
+.re-table-insert {
+  position: relative;
+  display: inline-flex;
+}
+
+.re-table-picker {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  width: max-content;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+  z-index: 20;
+}
+
+.re-table-picker-grid {
+  display: grid;
+  gap: 1px;
+  padding: 1px;
+  background: #e5e7eb;
+}
+
+.re-table-picker-cell {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.12s, box-shadow 0.12s;
+}
+
+.re-table-picker-cell.active {
+  background: #e8f3ff;
+  box-shadow: inset 0 0 0 1px #1677ff;
+}
+
+.re-table-picker-size {
+  height: 24px;
+  color: #374151;
+  font-size: 14px;
+  line-height: 24px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.re-editor-shell {
+  position: relative;
+  flex-grow: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.re-table-toolbar {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  min-height: 38px;
+  padding: 4px;
+  border: 1px solid #d9dfe8;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+  z-index: 15;
+}
+
+.re-table-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #4b5563;
+  cursor: pointer;
+  transition: background 0.16s, border-color 0.16s, color 0.16s;
+}
+
+.re-table-tool:hover {
+  border-color: #d7e8ff;
+  background: #eef6ff;
+  color: #1677ff;
+}
+
+.re-table-tool.danger:hover {
+  border-color: #ffd8d8;
+  background: #fff1f0;
+  color: #d9363e;
+}
+
+.re-table-tool-sep {
+  width: 1px;
+  height: 22px;
+  background: #e5e7eb;
+  margin: 0 2px;
+}
+
 .re-content {
   flex-grow: 1;
   overflow: auto;
   background: #fff;
+  min-height: 0;
 }
 
 .re-content::-webkit-scrollbar {
@@ -1318,11 +1628,12 @@ defineExpose({ getHTML });
   font-family: inherit;
 }
 .re-content :deep(.ProseMirror .tableWrapper) {
+  position: relative;
   display: inline-block;
   margin: 12px 0;
   border: 1px solid #c4e0ff;
   border-radius: 6px;
-  overflow: hidden;
+  overflow: auto;
   background: #ffffff;
 }
 .re-content :deep(.ProseMirror.resize-cursor) {
