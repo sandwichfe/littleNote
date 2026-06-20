@@ -41,22 +41,24 @@
 
         <!-- 文字颜色 -->
         <div class="re-color-wrapper">
-          <button class="re-btn re-color-btn" type="button" title="文字颜色">
+          <button class="re-btn re-color-btn" type="button" title="文字颜色" @click="applyTextColor">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11 3 5.5 17h2.25l1.12-3h6.25l1.12 3h2.25L13 3h-2zm-1.38 9L12 5.67 14.38 12H9.62z"/></svg>
             <span class="re-color-bar" :style="{ backgroundColor: currentColor }"></span>
           </button>
-          <label class="re-color-picker">
+          <label class="re-color-picker" title="选择文字颜色" aria-label="选择文字颜色">
+            <svg class="re-color-arrow" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
             <input type="color" :value="currentColor" @input="onColor" />
           </label>
         </div>
 
         <!-- 背景色 -->
         <div class="re-color-wrapper">
-          <button class="re-btn re-color-btn" type="button" title="背景色">
+          <button class="re-btn re-color-btn" type="button" title="背景色" @click="applyBgColor">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16.56 8.94 7.62 0 6.21 1.41l2.38 2.38-5.15 5.15c-.59.59-.59 1.54 0 2.12l5.5 5.5c.29.29.68.44 1.06.44s.77-.15 1.06-.44l5.5-5.5c.59-.58.59-1.53 0-2.12zM5.21 10 10 5.21 14.79 10H5.21zM19 11.5s-2 2.17-2 3.5c0 1.1.9 2 2 2s2-.9 2-2c0-1.33-2-3.5-2-3.5z"/></svg>
             <span class="re-color-bar" :style="{ backgroundColor: currentBg }"></span>
           </button>
-          <label class="re-color-picker">
+          <label class="re-color-picker" title="选择背景色" aria-label="选择背景色">
+            <svg class="re-color-arrow" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
             <input type="color" :value="currentBg" @input="onBg" />
           </label>
         </div>
@@ -1228,52 +1230,74 @@ defineExpose({ getHTML });
 .re-color-wrapper {
   position: relative;
   display: inline-flex;
+  align-items: stretch;
+  height: 32px;
   border: 1px solid #d9d9d9;
   border-radius: 6px;
   overflow: hidden;
   background: #fff;
-  transition: border-color 0.2s;
+  transition: border-color 0.16s, box-shadow 0.16s, background 0.16s;
 }
 .re-color-wrapper:hover {
   border-color: #4096ff;
 }
+.re-color-wrapper:focus-within {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+}
 
 .re-color-btn {
   position: relative;
-  min-width: 32px;
+  width: 36px;
+  min-width: 36px;
   height: 30px;
   border: none;
   border-radius: 0;
-  padding: 0 10px;
+  padding: 4px 9px 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
+}
+.re-color-btn:hover:not(:disabled) {
+  background: #f6f8fb;
 }
 .re-color-btn svg {
   flex-shrink: 0;
 }
 .re-color-bar {
-  width: 14px;
-  height: 3px;
-  border-radius: 1px;
-  transition: all 0.2s;
+  width: 18px;
+  height: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 2px;
+  box-sizing: border-box;
+  transition: border-color 0.16s, background-color 0.16s;
 }
 
 .re-color-picker {
   position: relative;
-  width: 24px;
+  width: 22px;
   height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-left: 1px solid #f0f0f0;
-  transition: background 0.2s;
+  border-left: 1px solid #edf0f4;
+  color: #7a7f86;
+  transition: background 0.16s, color 0.16s;
 }
 .re-color-picker:hover {
-  background: #f5f5f5;
+  background: #f6f8fb;
+  color: #1677ff;
+}
+.re-color-picker:focus-within {
+  background: #eef6ff;
+  color: #1677ff;
+}
+.re-color-arrow {
+  pointer-events: none;
+  flex-shrink: 0;
 }
 .re-color-picker input[type='color'] {
   position: absolute;
