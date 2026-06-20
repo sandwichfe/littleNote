@@ -46,7 +46,7 @@
             <span class="re-color-bar" :style="{ backgroundColor: currentColor }"></span>
           </button>
           <label class="re-color-picker" title="选择文字颜色" aria-label="选择文字颜色">
-            <svg class="re-color-arrow" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
+            <svg class="re-color-arrow" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
             <input type="color" :value="currentColor" @input="onColor" />
           </label>
         </div>
@@ -58,7 +58,7 @@
             <span class="re-color-bar" :style="{ backgroundColor: currentBg }"></span>
           </button>
           <label class="re-color-picker" title="选择背景色" aria-label="选择背景色">
-            <svg class="re-color-arrow" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
+            <svg class="re-color-arrow" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
             <input type="color" :value="currentBg" @input="onBg" />
           </label>
         </div>
@@ -1247,12 +1247,12 @@ defineExpose({ getHTML });
 
 .re-color-btn {
   position: relative;
-  width: 36px;
-  min-width: 36px;
+  width: 34px;
+  min-width: 34px;
   height: 32px;
   border: none;
   border-radius: 0;
-  padding: 3px 9px 4px;
+  padding: 3px 6px 4px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1276,13 +1276,12 @@ defineExpose({ getHTML });
 
 .re-color-picker {
   position: relative;
-  width: 22px;
+  width: 16px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-left: 1px solid rgba(0, 0, 0, 0.08);
   color: #7a7f86;
   transition: background 0.16s, color 0.16s;
 }
