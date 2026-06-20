@@ -42,7 +42,7 @@
         <!-- 文字颜色 -->
         <div class="re-color-wrapper">
           <button class="re-btn re-color-btn" type="button" title="文字颜色" @click="applyTextColor">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11 3 5.5 17h2.25l1.12-3h6.25l1.12 3h2.25L13 3h-2zm-1.38 9L12 5.67 14.38 12H9.62z"/></svg>
+            <svg class="re-text-color-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11 3 5.5 17h2.25l1.12-3h6.25l1.12 3h2.25L13 3h-2zm-1.38 9L12 5.67 14.38 12H9.62z"/></svg>
             <span class="re-color-bar" :style="{ backgroundColor: textColor }"></span>
           </button>
           <button
@@ -1388,6 +1388,9 @@ defineExpose({ getHTML });
 }
 .re-color-btn svg {
   flex-shrink: 0;
+}
+.re-text-color-icon {
+  transform: translateY(3px);
 }
 .re-color-bar {
   width: 19px;
