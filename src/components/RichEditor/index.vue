@@ -311,6 +311,7 @@ const TABLE_PICKER_DEFAULT_ROWS = 6;
 const TABLE_PICKER_DEFAULT_COLS = 6;
 const TABLE_TOOLBAR_WIDTH = 322;
 const TABLE_TOOLBAR_OFFSET = 8;
+const TABLE_TOOLBAR_RIGHT_SHIFT = 24;
 
 const tablePickerCells = computed(() =>
   Array.from({ length: TABLE_PICKER_ROWS * TABLE_PICKER_COLS }, (_, index) => ({
@@ -676,8 +677,9 @@ const updateTableToolbarPosition = () => {
 
     const shellRect = shell.getBoundingClientRect();
     const tableRect = tableElement.getBoundingClientRect();
-    const maxLeft = Math.max(0, shell.clientWidth - TABLE_TOOLBAR_WIDTH -0);
-    const toolbarLeft = tableRect.right - shellRect.left + shell.scrollLeft - TABLE_TOOLBAR_WIDTH;
+    const maxLeft = Math.max(0, shell.clientWidth - TABLE_TOOLBAR_WIDTH - 8);
+    const toolbarLeft =
+      tableRect.right - shellRect.left + shell.scrollLeft - TABLE_TOOLBAR_WIDTH + TABLE_TOOLBAR_RIGHT_SHIFT;
 
     tableToolbar.left = Math.max(
       8,
@@ -1646,7 +1648,7 @@ defineExpose({ getHTML });
   margin: 12px 0;
   border: 1px solid #c4e0ff;
   border-radius: 6px;
-  overflow: auto;
+  overflow: visible;
   background: #ffffff;
 }
 .re-content :deep(.ProseMirror.resize-cursor) {
