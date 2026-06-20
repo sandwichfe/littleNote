@@ -43,11 +43,11 @@
         <div class="re-color-wrapper">
           <button class="re-btn re-color-btn" type="button" title="文字颜色" @click="applyTextColor">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11 3 5.5 17h2.25l1.12-3h6.25l1.12 3h2.25L13 3h-2zm-1.38 9L12 5.67 14.38 12H9.62z"/></svg>
-            <span class="re-color-bar" :style="{ backgroundColor: currentColor }"></span>
+            <span class="re-color-bar" :style="{ backgroundColor: textColor }"></span>
           </button>
           <label class="re-color-picker" title="选择文字颜色" aria-label="选择文字颜色">
             <svg class="re-color-arrow" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
-            <input type="color" :value="currentColor" @input="onColor" />
+            <input type="color" :value="textColor" @input="onColor" />
           </label>
         </div>
 
@@ -55,11 +55,11 @@
         <div class="re-color-wrapper">
           <button class="re-btn re-color-btn" type="button" title="背景色" @click="applyBgColor">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m15.5 4.5 4 4-8.25 8.25H7.25l-2.75 2.75-.9-.9 2.75-2.75v-4L15.5 4.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m13.75 6.25 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 21h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            <span class="re-color-bar" :style="{ backgroundColor: currentBg }"></span>
+            <span class="re-color-bar" :style="{ backgroundColor: backgroundColor }"></span>
           </button>
           <label class="re-color-picker" title="选择背景色" aria-label="选择背景色">
             <svg class="re-color-arrow" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
-            <input type="color" :value="currentBg" @input="onBg" />
+            <input type="color" :value="backgroundColor" @input="onBg" />
           </label>
         </div>
 
@@ -294,8 +294,10 @@ const videoInput = ref<HTMLInputElement>();
 const tableToolbarRef = ref<HTMLElement>();
 const currentBlock = ref('paragraph');
 const currentFont = ref('');
-const currentColor = ref('#000000');
-const currentBg = ref('#ffff00');
+const DEFAULT_TEXT_COLOR = '#000000';
+const DEFAULT_BACKGROUND_COLOR = '#ffffff';
+const textColor = ref(DEFAULT_TEXT_COLOR);
+const backgroundColor = ref(DEFAULT_BACKGROUND_COLOR);
 const showTablePicker = ref(false);
 const isSelectionInTable = ref(false);
 const tablePickerRows = ref(6);
@@ -628,12 +630,6 @@ const syncToolbarState = (targetEditor?: any) => {
   currentBlock.value = heading?.value ?? 'paragraph';
 
   currentFont.value = targetEditor.getAttributes('textStyle').fontFamily || '';
-
-  const activeColor = targetEditor.getAttributes('textStyle').color;
-  if (isHexColor(activeColor)) currentColor.value = activeColor;
-
-  const activeBg = targetEditor.getAttributes('highlight').color;
-  if (isHexColor(activeBg)) currentBg.value = activeBg;
 
   isSelectionInTable.value = targetEditor.isActive('table');
   if (isSelectionInTable.value) {
@@ -1008,19 +1004,21 @@ const onFontChange = (e: Event) => {
   else run((c) => c.unsetFontFamily());
 };
 
-const applyTextColor = () => run((c) => c.setColor(currentColor.value));
+const applyTextColor = () => run((c) => c.setColor(textColor.value));
 const onColor = (e: Event) => {
   const val = (e.target as HTMLInputElement).value;
-  currentColor.value = val;
+  if (!isHexColor(val)) return;
+  textColor.value = val;
   applyTextColor();
 };
 
 const clearTextColor = () => run((c) => c.unsetColor());
 
-const applyBgColor = () => run((c) => c.setHighlight({ color: currentBg.value }));
+const applyBgColor = () => run((c) => c.setHighlight({ color: backgroundColor.value }));
 const onBg = (e: Event) => {
   const val = (e.target as HTMLInputElement).value;
-  currentBg.value = val;
+  if (!isHexColor(val)) return;
+  backgroundColor.value = val;
   applyBgColor();
 };
 
