@@ -414,10 +414,12 @@ const tablePickerCells = computed(() =>
 
 const imageToolbarOptions = [
   { label: '50%', value: '50%' },
+  { label: '75%', value: '75%' },
   { label: '100%', value: '100%' },
   { label: '125%', value: '125%' },
   { label: '150%', value: '150%' },
   { label: '175%', value: '175%' },
+  { label: '200%', value: '200%' },
 ];
 
 const isHexColor = (value: unknown): value is string =>
@@ -475,29 +477,41 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
 
   const controls = document.createElement('span');
   controls.className = 're-image-controls';
-  controls.addEventListener('mousedown', (event) => {
+
+  const sizeLabel = document.createElement('span');
+  sizeLabel.className = 're-image-size-label';
+  sizeLabel.textContent = '尺寸';
+
+  const sizeSelect = document.createElement('select');
+  sizeSelect.className = 're-image-size-select';
+  sizeSelect.title = '图片尺寸';
+  imageToolbarOptions.forEach((item) => {
+    const option = document.createElement('option');
+    option.value = item.value;
+    option.textContent = item.label;
+    sizeSelect.appendChild(option);
+  });
+  const customSizeOption = document.createElement('option');
+  customSizeOption.hidden = true;
+  sizeSelect.appendChild(customSizeOption);
+  sizeSelect.addEventListener('change', () => {
+    updateScale(sizeSelect.value);
+    view.focus();
+  });
+
+  const keepControlsFromSelectingEditor = (event: MouseEvent | PointerEvent) => {
+    if (sizeSelect.contains(event.target as globalThis.Node)) {
+      event.stopPropagation();
+      return;
+    }
+
     event.preventDefault();
     event.stopPropagation();
-  });
+  };
+  controls.addEventListener('pointerdown', keepControlsFromSelectingEditor);
+  controls.addEventListener('mousedown', keepControlsFromSelectingEditor);
 
-  const toolbarButtons = imageToolbarOptions.map((item) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 're-image-control-btn';
-    button.textContent = item.label;
-    button.title = `图片缩放 ${item.label}`;
-    button.addEventListener('click', () => {
-      updateScale(item.value);
-      view.focus();
-    });
-
-    controls.appendChild(button);
-    return { ...item, button };
-  });
-
-  const customSize = document.createElement('span');
-  customSize.className = 're-image-custom-size';
-  controls.appendChild(customSize);
+  controls.append(sizeLabel, sizeSelect);
 
   const handle = document.createElement('span');
   handle.className = 're-image-resize-handle';
@@ -507,10 +521,16 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
 
   const updateScaleControls = (scale: string | null) => {
     const hasPresetScale = imageToolbarOptions.some((item) => item.value === scale);
-    customSize.textContent = scale && !hasPresetScale ? scale : '';
-    toolbarButtons.forEach((item) => {
-      item.button.classList.toggle('active', item.value === scale);
-    });
+    if (scale && hasPresetScale) {
+      sizeSelect.value = scale;
+      customSizeOption.value = '';
+      customSizeOption.textContent = '';
+    } else if (scale) {
+      customSizeOption.value = scale;
+      customSizeOption.textContent = scale;
+      sizeSelect.value = scale;
+    }
+    sizeSelect.classList.toggle('has-custom-size', Boolean(scale && !hasPresetScale));
   };
 
   const updateImage = () => {
@@ -548,6 +568,7 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
       resizeFrame = 0;
       applyImageScale(pendingResizeScale);
       updateScaleControls(pendingResizeScale);
+      wrapper.dataset.resizeLabel = pendingResizeScale || '';
     });
   }
 
@@ -568,11 +589,13 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
     );
   }
 
-  handle.addEventListener('mousedown', (event) => {
+  handle.addEventListener('pointerdown', (event) => {
     if (!editor.isEditable) return;
 
     event.preventDefault();
     event.stopPropagation();
+    handle.setPointerCapture?.(event.pointerId);
+    wrapper.classList.add('resizing');
 
     const startX = event.clientX;
     const naturalWidth = getImageNaturalWidth(image) || 1;
@@ -581,8 +604,9 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
       Number.parseFloat(DEFAULT_IMAGE_SCALE);
     let lastPercent = startPercent;
     let finalPercent = startPercent;
+    wrapper.dataset.resizeLabel = `${startPercent}%`;
 
-    const onMouseMove = (moveEvent: MouseEvent) => {
+    const onPointerMove = (moveEvent: PointerEvent) => {
       const deltaPercent = ((moveEvent.clientX - startX) / naturalWidth) * 100;
       const nextPercent = Math.max(
         MIN_IMAGE_SCALE_PERCENT,
@@ -595,9 +619,12 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
       previewScale(`${nextPercent}%`);
     };
 
-    const onMouseUp = () => {
+    const onPointerUp = (upEvent: PointerEvent) => {
       cleanupResizeListeners?.();
       cleanupResizeListeners = null;
+      handle.releasePointerCapture?.(upEvent.pointerId);
+      wrapper.classList.remove('resizing');
+      delete wrapper.dataset.resizeLabel;
       if (resizeFrame) {
         cancelAnimationFrame(resizeFrame);
         resizeFrame = 0;
@@ -608,11 +635,13 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
       view.focus();
     };
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('pointercancel', onPointerUp);
     cleanupResizeListeners = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+      document.removeEventListener('pointercancel', onPointerUp);
     };
   });
 
@@ -1740,24 +1769,66 @@ defineExpose({ getHTML });
   outline: 2px solid #1677ff;
   outline-offset: 2px;
 }
+.re-content :deep(.ProseMirror .re-image-node.resizing img) {
+  outline-color: #0958d9;
+  box-shadow: 0 6px 18px rgba(22, 119, 255, 0.2);
+}
 .re-content :deep(.ProseMirror .re-image-controls) {
   position: absolute;
-  left: 0;
-  bottom: -34px;
+  left: 50%;
+  top: -42px;
   display: none;
   align-items: center;
-  gap: 0;
-  height: 32px;
-  padding: 0 6px;
-  border: 1px solid #e5e5e5;
-  border-radius: 6px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  gap: 6px;
+  min-height: 34px;
+  padding: 4px 6px;
+  border: 1px solid rgba(22, 119, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(8px);
+  transform: translateX(-50%);
   line-height: 1;
-  z-index: 2;
+  white-space: nowrap;
+  z-index: 4;
 }
 .re-content :deep(.ProseMirror .re-image-node.selected .re-image-controls) {
   display: inline-flex;
+}
+.re-content :deep(.ProseMirror .re-image-size-label) {
+  padding: 0 2px 0 4px;
+  color: #595959;
+  font-size: 12px;
+  line-height: 24px;
+}
+.re-content :deep(.ProseMirror .re-image-size-select) {
+  height: 26px;
+  min-width: 76px;
+  padding: 0 24px 0 9px;
+  border: 1px solid #d9e8ff;
+  border-radius: 6px;
+  background:
+    linear-gradient(45deg, transparent 50%, #4b5563 50%) right 10px center / 5px 5px no-repeat,
+    linear-gradient(135deg, #4b5563 50%, transparent 50%) right 6px center / 5px 5px no-repeat,
+    #f8fbff;
+  color: #1f2937;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+.re-content :deep(.ProseMirror .re-image-size-select:hover) {
+  border-color: #69b1ff;
+  background-color: #fff;
+}
+.re-content :deep(.ProseMirror .re-image-size-select:focus) {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.12);
+}
+.re-content :deep(.ProseMirror .re-image-size-select.has-custom-size) {
+  color: #1677ff;
+  border-color: #91caff;
 }
 .re-content :deep(.ProseMirror .re-image-control-btn) {
   height: 30px;
@@ -1776,20 +1847,13 @@ defineExpose({ getHTML });
   color: #1677ff;
   background: #f0f7ff;
 }
-.re-content :deep(.ProseMirror .re-image-custom-size) {
-  min-width: 44px;
-  padding: 0 8px;
-  color: #1677ff;
-  font-size: 13px;
-  line-height: 30px;
-}
 .re-content :deep(.ProseMirror .re-image-resize-handle) {
   position: absolute;
-  right: -9px;
-  bottom: -9px;
+  right: -12px;
+  bottom: -12px;
   display: none;
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   border: 0;
   background: transparent;
   box-sizing: border-box;
@@ -1800,38 +1864,58 @@ defineExpose({ getHTML });
 .re-content :deep(.ProseMirror .re-image-resize-handle::before) {
   content: '';
   position: absolute;
-  right: 3px;
-  bottom: 3px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #1677ff;
-  box-shadow:
-    0 0 0 2px #fff,
-    0 4px 10px rgba(22, 119, 255, 0.28);
-  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  right: 5px;
+  bottom: 5px;
+  width: 13px;
+  height: 13px;
+  border-right: 3px solid #1677ff;
+  border-bottom: 3px solid #1677ff;
+  border-radius: 0 0 4px 0;
+  filter: drop-shadow(0 1px 0 #fff) drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
+  transition: border-color 0.18s ease, transform 0.18s ease, filter 0.18s ease;
 }
 .re-content :deep(.ProseMirror .re-image-resize-handle::after) {
   content: '';
   position: absolute;
-  right: 6px;
-  bottom: 6px;
-  width: 5px;
-  height: 5px;
-  border-right: 2px solid rgba(255, 255, 255, 0.9);
-  border-bottom: 2px solid rgba(255, 255, 255, 0.9);
-  border-radius: 1px;
+  right: 10px;
+  bottom: 10px;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid #1677ff;
+  border-bottom: 2px solid #1677ff;
+  opacity: 0.72;
   pointer-events: none;
+  transition: border-color 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
 }
 .re-content :deep(.ProseMirror .re-image-node.selected .re-image-resize-handle) {
   display: block;
 }
-.re-content :deep(.ProseMirror .re-image-node.selected .re-image-resize-handle:hover::before) {
-  background: #0958d9;
-  box-shadow:
-    0 0 0 2px #fff,
-    0 6px 14px rgba(22, 119, 255, 0.36);
-  transform: scale(1.08);
+.re-content :deep(.ProseMirror .re-image-node.selected .re-image-resize-handle:hover::before),
+.re-content :deep(.ProseMirror .re-image-node.resizing .re-image-resize-handle::before) {
+  border-color: #0958d9;
+  filter: drop-shadow(0 1px 0 #fff) drop-shadow(0 0 4px rgba(22, 119, 255, 0.42));
+  transform: translate(1px, 1px);
+}
+.re-content :deep(.ProseMirror .re-image-node.selected .re-image-resize-handle:hover::after),
+.re-content :deep(.ProseMirror .re-image-node.resizing .re-image-resize-handle::after) {
+  border-color: #0958d9;
+  opacity: 1;
+  transform: translate(1px, 1px);
+}
+.re-content :deep(.ProseMirror .re-image-node.resizing::after) {
+  content: attr(data-resize-label);
+  position: absolute;
+  right: 0;
+  bottom: -32px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 4;
 }
 .re-content :deep(.ProseMirror video) {
   max-width: 100%;
