@@ -166,6 +166,7 @@
     <div class="re-editor-shell">
       <div
         v-if="editable && editor && tableToolbar.visible"
+        ref="tableToolbarRef"
         class="re-table-toolbar"
         :style="{ top: `${tableToolbar.top}px`, left: `${tableToolbar.left}px` }"
         @mousedown.prevent
@@ -288,6 +289,7 @@ const codeLanguages = [
 const rootRef = ref<HTMLElement>();
 const imageInput = ref<HTMLInputElement>();
 const videoInput = ref<HTMLInputElement>();
+const tableToolbarRef = ref<HTMLElement>();
 const currentBlock = ref('paragraph');
 const currentFont = ref('');
 const currentColor = ref('#000000');
@@ -309,9 +311,8 @@ const TABLE_PICKER_ROWS = 8;
 const TABLE_PICKER_COLS = 10;
 const TABLE_PICKER_DEFAULT_ROWS = 6;
 const TABLE_PICKER_DEFAULT_COLS = 6;
-const TABLE_TOOLBAR_WIDTH = 322;
+const TABLE_TOOLBAR_FALLBACK_WIDTH = 322;
 const TABLE_TOOLBAR_OFFSET = 8;
-const TABLE_TOOLBAR_RIGHT_SHIFT = 24;
 
 const tablePickerCells = computed(() =>
   Array.from({ length: TABLE_PICKER_ROWS * TABLE_PICKER_COLS }, (_, index) => ({
@@ -677,19 +678,18 @@ const updateTableToolbarPosition = () => {
 
     const shellRect = shell.getBoundingClientRect();
     const tableRect = tableElement.getBoundingClientRect();
-    const maxLeft = Math.max(0, shell.clientWidth - TABLE_TOOLBAR_WIDTH - 8);
+    const measuredToolbarWidth = tableToolbarRef.value?.offsetWidth;
+    const toolbarWidth = measuredToolbarWidth || TABLE_TOOLBAR_FALLBACK_WIDTH;
     const toolbarLeft =
-      tableRect.right - shellRect.left + shell.scrollLeft - TABLE_TOOLBAR_WIDTH + TABLE_TOOLBAR_RIGHT_SHIFT;
+      tableRect.right - shellRect.left + shell.scrollLeft - toolbarWidth;
 
-    tableToolbar.left = Math.max(
-      8,
-      Math.min(maxLeft, toolbarLeft)
-    );
+    tableToolbar.left = Math.max(8, toolbarLeft);
     tableToolbar.top = Math.max(
       8,
       tableRect.top - shellRect.top + shell.scrollTop - 44 - TABLE_TOOLBAR_OFFSET
     );
     tableToolbar.visible = true;
+    if (!measuredToolbarWidth) nextTick(updateTableToolbarPosition);
   });
 };
 
