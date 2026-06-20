@@ -45,10 +45,46 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11 3 5.5 17h2.25l1.12-3h6.25l1.12 3h2.25L13 3h-2zm-1.38 9L12 5.67 14.38 12H9.62z"/></svg>
             <span class="re-color-bar" :style="{ backgroundColor: textColor }"></span>
           </button>
-          <label class="re-color-picker" title="选择文字颜色" aria-label="选择文字颜色">
+          <button
+            class="re-color-picker"
+            :class="{ active: showColorPalette === 'text' }"
+            type="button"
+            title="选择文字颜色"
+            aria-label="选择文字颜色"
+            :aria-expanded="showColorPalette === 'text'"
+            @click="toggleColorPalette('text')"
+          >
             <svg class="re-color-arrow" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
-            <input type="color" :value="textColor" @input="onColor" />
-          </label>
+          </button>
+          <div v-if="showColorPalette === 'text'" class="re-color-palette" @mousedown.prevent>
+            <button class="re-color-none" type="button" title="取消文字颜色" @click="clearTextColor">
+              <span class="re-color-none-icon" aria-hidden="true"></span>
+              <span>无</span>
+            </button>
+            <div class="re-color-grid" role="grid" aria-label="常用文字颜色">
+              <button
+                v-for="color in commonColors"
+                :key="`text-${color}`"
+                class="re-color-swatch"
+                :class="{ active: color === textColor }"
+                type="button"
+                :title="color"
+                :style="{ backgroundColor: color }"
+                @click="selectTextColor(color)"
+              ></button>
+            </div>
+            <label class="re-color-custom-picker" title="打开调色板" aria-label="打开调色板">
+              <span class="re-color-custom-swatch" :style="{ backgroundColor: textColor }"></span>
+              <svg class="re-color-custom-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3a9 9 0 0 0 0 18h1.5a1.7 1.7 0 0 0 .9-3.15 1.7 1.7 0 0 1 .9-3.15H17a4 4 0 0 0 4-4C21 6.45 17.15 3 12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <circle cx="7.5" cy="10" r="1.2" fill="currentColor"/>
+                <circle cx="10.5" cy="7" r="1.2" fill="currentColor"/>
+                <circle cx="14.5" cy="7.5" r="1.2" fill="currentColor"/>
+                <circle cx="16.5" cy="11" r="1.2" fill="currentColor"/>
+              </svg>
+              <input type="color" :value="textColor" @input="onColor" />
+            </label>
+          </div>
         </div>
 
         <!-- 背景色 -->
@@ -57,10 +93,46 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m15.5 4.5 4 4-8.25 8.25H7.25l-2.75 2.75-.9-.9 2.75-2.75v-4L15.5 4.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m13.75 6.25 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 21h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <span class="re-color-bar" :style="{ backgroundColor: backgroundColor }"></span>
           </button>
-          <label class="re-color-picker" title="选择背景色" aria-label="选择背景色">
+          <button
+            class="re-color-picker"
+            :class="{ active: showColorPalette === 'background' }"
+            type="button"
+            title="选择背景色"
+            aria-label="选择背景色"
+            :aria-expanded="showColorPalette === 'background'"
+            @click="toggleColorPalette('background')"
+          >
             <svg class="re-color-arrow" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
-            <input type="color" :value="backgroundColor" @input="onBg" />
-          </label>
+          </button>
+          <div v-if="showColorPalette === 'background'" class="re-color-palette" @mousedown.prevent>
+            <button class="re-color-none" type="button" title="取消背景色" @click="clearBgColor">
+              <span class="re-color-none-icon" aria-hidden="true"></span>
+              <span>无</span>
+            </button>
+            <div class="re-color-grid" role="grid" aria-label="常用背景色">
+              <button
+                v-for="color in commonColors"
+                :key="`background-${color}`"
+                class="re-color-swatch"
+                :class="{ active: color === backgroundColor }"
+                type="button"
+                :title="color"
+                :style="{ backgroundColor: color }"
+                @click="selectBgColor(color)"
+              ></button>
+            </div>
+            <label class="re-color-custom-picker" title="打开调色板" aria-label="打开调色板">
+              <span class="re-color-custom-swatch" :style="{ backgroundColor: backgroundColor }"></span>
+              <svg class="re-color-custom-icon" width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3a9 9 0 0 0 0 18h1.5a1.7 1.7 0 0 0 .9-3.15 1.7 1.7 0 0 1 .9-3.15H17a4 4 0 0 0 4-4C21 6.45 17.15 3 12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <circle cx="7.5" cy="10" r="1.2" fill="currentColor"/>
+                <circle cx="10.5" cy="7" r="1.2" fill="currentColor"/>
+                <circle cx="14.5" cy="7.5" r="1.2" fill="currentColor"/>
+                <circle cx="16.5" cy="11" r="1.2" fill="currentColor"/>
+              </svg>
+              <input type="color" :value="backgroundColor" @input="onBg" />
+            </label>
+          </div>
         </div>
 
         <span class="re-sep"></span>
@@ -296,8 +368,28 @@ const currentBlock = ref('paragraph');
 const currentFont = ref('');
 const DEFAULT_TEXT_COLOR = '#000000';
 const DEFAULT_BACKGROUND_COLOR = '#ffffff';
+const commonColors = [
+  '#ff0000',
+  '#ffff00',
+  '#00b050',
+  '#00b0f0',
+  '#7030a0',
+  '#0000ff',
+  '#c00000',
+  '#0070c0',
+  '#002060',
+  '#008000',
+  '#800080',
+  '#000000',
+  '#843c0c',
+  '#808080',
+  '#d9ead3',
+  '#d9d9d9',
+  '#ffffff',
+];
 const textColor = ref(DEFAULT_TEXT_COLOR);
 const backgroundColor = ref(DEFAULT_BACKGROUND_COLOR);
+const showColorPalette = ref<'text' | 'background' | null>(null);
 const showTablePicker = ref(false);
 const isSelectionInTable = ref(false);
 const tablePickerRows = ref(6);
@@ -634,6 +726,7 @@ const syncToolbarState = (targetEditor?: any) => {
   isSelectionInTable.value = targetEditor.isActive('table');
   if (isSelectionInTable.value) {
     showTablePicker.value = false;
+    showColorPalette.value = null;
     tablePickerRows.value = TABLE_PICKER_DEFAULT_ROWS;
     tablePickerCols.value = TABLE_PICKER_DEFAULT_COLS;
   }
@@ -696,18 +789,28 @@ const closeTablePicker = () => {
   resetTablePickerPreview();
 };
 
+const closeColorPalette = () => {
+  showColorPalette.value = null;
+};
+
 const onDocumentMouseDown = (event: MouseEvent) => {
-  if (!showTablePicker.value) return;
-
   const target = event.target as globalThis.Node;
-  const tableInsert = rootRef.value?.querySelector('.re-table-insert');
-  if (tableInsert?.contains(target)) return;
+  if (showTablePicker.value) {
+    const tableInsert = rootRef.value?.querySelector('.re-table-insert');
+    if (!tableInsert?.contains(target)) closeTablePicker();
+  }
 
-  closeTablePicker();
+  if (showColorPalette.value) {
+    const colorWrapper = (target as Element | null)?.closest?.('.re-color-wrapper');
+    if (!colorWrapper || !rootRef.value?.contains(colorWrapper)) closeColorPalette();
+  }
 };
 
 const onDocumentKeyDown = (event: KeyboardEvent) => {
-  if (event.key === 'Escape') closeTablePicker();
+  if (event.key === 'Escape') {
+    closeTablePicker();
+    closeColorPalette();
+  }
 };
 
 const createCodeBlockView = ({ node, view, getPos, HTMLAttributes }: NodeViewRendererProps) => {
@@ -1004,7 +1107,19 @@ const onFontChange = (e: Event) => {
   else run((c) => c.unsetFontFamily());
 };
 
+const toggleColorPalette = (type: 'text' | 'background') => {
+  showColorPalette.value = showColorPalette.value === type ? null : type;
+  closeTablePicker();
+};
+
 const applyTextColor = () => run((c) => c.setColor(textColor.value));
+const selectTextColor = (color: string) => {
+  if (!isHexColor(color)) return;
+  textColor.value = color;
+  applyTextColor();
+  closeColorPalette();
+};
+
 const onColor = (e: Event) => {
   const val = (e.target as HTMLInputElement).value;
   if (!isHexColor(val)) return;
@@ -1012,9 +1127,20 @@ const onColor = (e: Event) => {
   applyTextColor();
 };
 
-const clearTextColor = () => run((c) => c.unsetColor());
+const clearTextColor = () => {
+  textColor.value = DEFAULT_TEXT_COLOR;
+  run((c) => c.unsetColor());
+  closeColorPalette();
+};
 
 const applyBgColor = () => run((c) => c.setHighlight({ color: backgroundColor.value }));
+const selectBgColor = (color: string) => {
+  if (!isHexColor(color)) return;
+  backgroundColor.value = color;
+  applyBgColor();
+  closeColorPalette();
+};
+
 const onBg = (e: Event) => {
   const val = (e.target as HTMLInputElement).value;
   if (!isHexColor(val)) return;
@@ -1022,10 +1148,15 @@ const onBg = (e: Event) => {
   applyBgColor();
 };
 
-const clearBgColor = () => run((c) => c.unsetHighlight());
+const clearBgColor = () => {
+  backgroundColor.value = DEFAULT_BACKGROUND_COLOR;
+  run((c) => c.unsetHighlight());
+  closeColorPalette();
+};
 
 const toggleTablePicker = () => {
   showTablePicker.value = !showTablePicker.value;
+  closeColorPalette();
   resetTablePickerPreview();
 };
 
@@ -1231,7 +1362,7 @@ defineExpose({ getHTML });
   align-items: stretch;
   height: 32px;
   border-radius: 6px;
-  overflow: hidden;
+  overflow: visible;
   background: transparent;
   transition: background 0.16s, box-shadow 0.16s;
 }
@@ -1273,9 +1404,12 @@ defineExpose({ getHTML });
 }
 
 .re-color-picker {
-  position: relative;
   width: 16px;
   height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1283,11 +1417,13 @@ defineExpose({ getHTML });
   color: #7a7f86;
   transition: background 0.16s, color 0.16s;
 }
-.re-color-picker:hover {
+.re-color-picker:hover,
+.re-color-picker.active {
   background: rgba(0, 0, 0, 0.04);
   color: #1677ff;
 }
-.re-color-picker:focus-within {
+.re-color-picker:focus-visible {
+  outline: none;
   background: rgba(22, 119, 255, 0.08);
   color: #1677ff;
 }
@@ -1295,12 +1431,119 @@ defineExpose({ getHTML });
   pointer-events: none;
   flex-shrink: 0;
 }
-.re-color-picker input[type='color'] {
+
+.re-color-palette {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  width: 138px;
+  padding: 8px;
+  border: 1px solid #d9dfe8;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16);
+  z-index: 25;
+}
+
+.re-color-none,
+.re-color-custom-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 30px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #262626;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.16s, border-color 0.16s, color 0.16s;
+}
+
+.re-color-none:hover,
+.re-color-custom-picker:hover {
+  border-color: #d7e8ff;
+  background: #eef6ff;
+  color: #1677ff;
+}
+
+.re-color-none-icon {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #b8c1cc;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.re-color-none-icon::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  top: 7px;
+  height: 2px;
+  background: #ff4d4f;
+  transform: rotate(-45deg);
+  transform-origin: center;
+}
+
+.re-color-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 16px);
+  gap: 5px;
+  padding: 8px 4px;
+}
+
+.re-color-swatch {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s;
+}
+
+.re-color-swatch:hover,
+.re-color-swatch.active {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.18);
+}
+
+.re-color-swatch:active {
+  transform: scale(0.92);
+}
+
+.re-color-custom-picker {
+  position: relative;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.re-color-custom-swatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  border-radius: 2px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.re-color-custom-icon {
+  color: #5f6b7a;
+  flex-shrink: 0;
+}
+
+.re-color-custom-picker input[type='color'] {
   position: absolute;
   inset: 0;
-  opacity: 0;
   width: 100%;
   height: 100%;
+  opacity: 0;
   cursor: pointer;
 }
 
