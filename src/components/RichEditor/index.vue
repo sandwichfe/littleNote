@@ -1785,19 +1785,53 @@ defineExpose({ getHTML });
 }
 .re-content :deep(.ProseMirror .re-image-resize-handle) {
   position: absolute;
-  right: -4px;
-  bottom: -4px;
+  right: -9px;
+  bottom: -9px;
   display: none;
-  width: 10px;
-  height: 10px;
-  border: 2px solid #1677ff;
-  background: #fff;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  background: transparent;
   box-sizing: border-box;
   cursor: nwse-resize;
+  touch-action: none;
   z-index: 3;
+}
+.re-content :deep(.ProseMirror .re-image-resize-handle::before) {
+  content: '';
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #1677ff;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 4px 10px rgba(22, 119, 255, 0.28);
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+.re-content :deep(.ProseMirror .re-image-resize-handle::after) {
+  content: '';
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 5px;
+  height: 5px;
+  border-right: 2px solid rgba(255, 255, 255, 0.9);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 1px;
+  pointer-events: none;
 }
 .re-content :deep(.ProseMirror .re-image-node.selected .re-image-resize-handle) {
   display: block;
+}
+.re-content :deep(.ProseMirror .re-image-node.selected .re-image-resize-handle:hover::before) {
+  background: #0958d9;
+  box-shadow:
+    0 0 0 2px #fff,
+    0 6px 14px rgba(22, 119, 255, 0.36);
+  transform: scale(1.08);
 }
 .re-content :deep(.ProseMirror video) {
   max-width: 100%;
