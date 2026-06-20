@@ -1232,25 +1232,24 @@ defineExpose({ getHTML });
   display: inline-flex;
   align-items: stretch;
   height: 32px;
-  border: 1px solid #d9d9d9;
   border-radius: 6px;
   overflow: hidden;
-  background: #fff;
-  transition: border-color 0.16s, box-shadow 0.16s, background 0.16s;
+  background: transparent;
+  transition: background 0.16s, box-shadow 0.16s;
 }
 .re-color-wrapper:hover {
-  border-color: #4096ff;
+  background: #f0f0f0;
 }
 .re-color-wrapper:focus-within {
-  border-color: #1677ff;
-  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1);
+  background: #eef6ff;
+  box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.08);
 }
 
 .re-color-btn {
   position: relative;
   width: 36px;
   min-width: 36px;
-  height: 30px;
+  height: 32px;
   border: none;
   border-radius: 0;
   padding: 3px 9px 4px;
@@ -1261,7 +1260,7 @@ defineExpose({ getHTML });
   gap: 1px;
 }
 .re-color-btn:hover:not(:disabled) {
-  background: #f6f8fb;
+  background: rgba(0, 0, 0, 0.04);
 }
 .re-color-btn svg {
   flex-shrink: 0;
@@ -1278,21 +1277,21 @@ defineExpose({ getHTML });
 .re-color-picker {
   position: relative;
   width: 22px;
-  height: 30px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-left: 1px solid #edf0f4;
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
   color: #7a7f86;
   transition: background 0.16s, color 0.16s;
 }
 .re-color-picker:hover {
-  background: #f6f8fb;
+  background: rgba(0, 0, 0, 0.04);
   color: #1677ff;
 }
 .re-color-picker:focus-within {
-  background: #eef6ff;
+  background: rgba(22, 119, 255, 0.08);
   color: #1677ff;
 }
 .re-color-arrow {
