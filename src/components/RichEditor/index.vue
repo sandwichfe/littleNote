@@ -1864,43 +1864,22 @@ defineExpose({ getHTML });
 .re-content :deep(.ProseMirror .re-image-resize-handle::before) {
   content: '';
   position: absolute;
-  right: 5px;
-  bottom: 5px;
-  width: 13px;
-  height: 13px;
-  border-right: 3px solid #1677ff;
-  border-bottom: 3px solid #1677ff;
-  border-radius: 0 0 4px 0;
-  filter: drop-shadow(0 1px 0 #fff) drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
-  transition: border-color 0.18s ease, transform 0.18s ease, filter 0.18s ease;
-}
-.re-content :deep(.ProseMirror .re-image-resize-handle::after) {
-  content: '';
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  width: 6px;
-  height: 6px;
-  border-right: 2px solid #1677ff;
-  border-bottom: 2px solid #1677ff;
-  opacity: 0.72;
+  right: 6px;
+  bottom: 6px;
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid #8c8c8c;
+  border-bottom: 2px solid #8c8c8c;
+  border-radius: 0 0 2px 0;
   pointer-events: none;
-  transition: border-color 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+  transition: border-color 0.18s ease;
 }
 .re-content :deep(.ProseMirror .re-image-node.selected .re-image-resize-handle) {
   display: block;
 }
 .re-content :deep(.ProseMirror .re-image-node.selected .re-image-resize-handle:hover::before),
 .re-content :deep(.ProseMirror .re-image-node.resizing .re-image-resize-handle::before) {
-  border-color: #0958d9;
-  filter: drop-shadow(0 1px 0 #fff) drop-shadow(0 0 4px rgba(22, 119, 255, 0.42));
-  transform: translate(1px, 1px);
-}
-.re-content :deep(.ProseMirror .re-image-node.selected .re-image-resize-handle:hover::after),
-.re-content :deep(.ProseMirror .re-image-node.resizing .re-image-resize-handle::after) {
-  border-color: #0958d9;
-  opacity: 1;
-  transform: translate(1px, 1px);
+  border-color: #1677ff;
 }
 .re-content :deep(.ProseMirror .re-image-node.resizing::after) {
   content: attr(data-resize-label);
