@@ -42,7 +42,7 @@
         <!-- 文字颜色 -->
         <div class="re-color-wrapper">
           <button class="re-btn re-color-btn" type="button" title="文字颜色" @click="applyTextColor">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M11 3 5.5 17h2.25l1.12-3h6.25l1.12 3h2.25L13 3h-2zm-1.38 9L12 5.67 14.38 12H9.62z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11 3 5.5 17h2.25l1.12-3h6.25l1.12 3h2.25L13 3h-2zm-1.38 9L12 5.67 14.38 12H9.62z"/></svg>
             <span class="re-color-bar" :style="{ backgroundColor: currentColor }"></span>
           </button>
           <label class="re-color-picker" title="选择文字颜色" aria-label="选择文字颜色">
@@ -54,7 +54,7 @@
         <!-- 背景色 -->
         <div class="re-color-wrapper">
           <button class="re-btn re-color-btn" type="button" title="背景色" @click="applyBgColor">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M16.56 8.94 7.62 0 6.21 1.41l2.38 2.38-5.15 5.15c-.59.59-.59 1.54 0 2.12l5.5 5.5c.29.29.68.44 1.06.44s.77-.15 1.06-.44l5.5-5.5c.59-.58.59-1.53 0-2.12zM5.21 10 10 5.21 14.79 10H5.21zM19 11.5s-2 2.17-2 3.5c0 1.1.9 2 2 2s2-.9 2-2c0-1.33-2-3.5-2-3.5z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m15.5 4.5 4 4-8.25 8.25H7.25l-2.75 2.75-.9-.9 2.75-2.75v-4L15.5 4.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m13.75 6.25 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 21h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <span class="re-color-bar" :style="{ backgroundColor: currentBg }"></span>
           </button>
           <label class="re-color-picker" title="选择背景色" aria-label="选择背景色">
@@ -1253,12 +1253,12 @@ defineExpose({ getHTML });
   height: 30px;
   border: none;
   border-radius: 0;
-  padding: 4px 9px 5px;
+  padding: 3px 9px 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 1px;
 }
 .re-color-btn:hover:not(:disabled) {
   background: #f6f8fb;
@@ -1267,7 +1267,7 @@ defineExpose({ getHTML });
   flex-shrink: 0;
 }
 .re-color-bar {
-  width: 18px;
+  width: 19px;
   height: 4px;
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 2px;
