@@ -370,16 +370,11 @@ const DEFAULT_TEXT_COLOR = '#000000';
 const DEFAULT_BACKGROUND_COLOR = '#ffffff';
 const commonColors = [
   '#ff0000',
-  '#ffff00',
+  '#eded0f',
   '#00b050',
   '#00b0f0',
   '#7030a0',
   '#0000ff',
-  '#c00000',
-  '#0070c0',
-  '#002060',
-  '#008000',
-  '#800080',
   '#000000',
   '#843c0c',
   '#808080',
@@ -1486,7 +1481,7 @@ defineExpose({ getHTML });
   right: 1px;
   top: 7px;
   height: 2px;
-  background: #ff4d4f;
+  background: #86878d;
   transform: rotate(-45deg);
   transform-origin: center;
 }
