@@ -1766,8 +1766,7 @@ defineExpose({ getHTML });
   max-width: 100%;
 }
 .re-content :deep(.ProseMirror .re-image-node.selected img) {
-  outline: 2px solid #1677ff;
-  outline-offset: 2px;
+  outline: none;
 }
 .re-content :deep(.ProseMirror .re-image-node.resizing img) {
   outline-color: #0958d9;
@@ -1849,8 +1848,8 @@ defineExpose({ getHTML });
 }
 .re-content :deep(.ProseMirror .re-image-resize-handle) {
   position: absolute;
-  right: -12px;
-  bottom: -12px;
+  right: -8px;
+  bottom: -8px;
   display: none;
   width: 24px;
   height: 24px;
@@ -1870,7 +1869,7 @@ defineExpose({ getHTML });
   height: 12px;
   border-right: 2px solid #8c8c8c;
   border-bottom: 2px solid #8c8c8c;
-  border-radius: 0 0 2px 0;
+  border-radius: 0 0 6px 0;
   pointer-events: none;
   transition: border-color 0.18s ease;
 }
