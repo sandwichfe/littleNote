@@ -65,11 +65,11 @@
 
         <!-- 列表 -->
         <button class="re-btn" :class="{ active: editor.isActive('bulletList') }"
-                @click="run(c => c.toggleBulletList())" title="无序列表">
+                @click="toggleListKeepingBlockStyle('bulletList')" title="无序列表">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
         </button>
         <button class="re-btn" :class="{ active: editor.isActive('orderedList') }"
-                @click="run(c => c.toggleOrderedList())" title="有序列表">
+                @click="toggleListKeepingBlockStyle('orderedList')" title="有序列表">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
         </button>
 
@@ -775,6 +775,39 @@ const run = (fn: (chain: any) => any) => {
   fn(editor.value.chain().focus()).run();
 };
 
+const getActiveHeadingLevel = () => {
+  if (!editor.value) return null;
+
+  for (const item of blockTypes) {
+    if (item.value === 'paragraph') continue;
+
+    const level = Number(item.value.replace('heading-', ''));
+    if (editor.value.isActive('heading', { level })) return level;
+  }
+
+  return null;
+};
+
+const toggleListKeepingBlockStyle = (listType: 'bulletList' | 'orderedList') => {
+  if (!editor.value) return;
+
+  const shouldRestoreHeading = editor.value.isActive(listType);
+  const headingLevel = shouldRestoreHeading ? getActiveHeadingLevel() : null;
+  const chain = editor.value.chain().focus();
+
+  if (listType === 'bulletList') {
+    chain.toggleBulletList();
+  } else {
+    chain.toggleOrderedList();
+  }
+
+  if (headingLevel) {
+    chain.setHeading({ level: headingLevel });
+  }
+
+  chain.run();
+};
+
 const onBlockChange = (e: Event) => {
   const val = (e.target as HTMLSelectElement).value;
   currentBlock.value = val;
@@ -1355,7 +1388,7 @@ defineExpose({ getHTML });
 .re-content :deep(.ProseMirror li > h4),
 .re-content :deep(.ProseMirror li > h5),
 .re-content :deep(.ProseMirror li > h6) {
-  margin: 4px 0;
+  margin: 24px 0 12px;
 }
 .re-content :deep(.ProseMirror code) {
   background: #f5f5f5;
