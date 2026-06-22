@@ -1389,7 +1389,7 @@ const deleteCurrentLine = () => {
   const tr = isOnlyBlock ? state.tr.replaceWith(range.from, range.to, paragraph) : state.tr.delete(range.from, range.to);
   const nextPos = Math.min(range.from, tr.doc.content.size);
 
-  tr.setSelection(Selection.near(tr.doc.resolve(nextPos), -1));
+  tr.setSelection(Selection.near(tr.doc.resolve(nextPos), 1));
   view.dispatch(tr.scrollIntoView());
   view.focus();
   return true;
