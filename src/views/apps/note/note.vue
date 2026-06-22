@@ -25,9 +25,18 @@
       </div>
 
       <!-- 添加 -->
-      <div class="add-btn" @click="addOrUpdateNote(-1, 'edit')">
-        <svg-icon iconClass="add" className="add-btn-svg" />
-      </div>
+      <el-tooltip content="新建笔记" placement="bottom" :show-after="300">
+        <el-button
+          size="large"
+          class="add-btn"
+          aria-label="新建笔记"
+          @click="addOrUpdateNote(-1, 'edit')"
+        >
+          <el-icon class="add-btn-icon">
+            <DocumentAdd />
+          </el-icon>
+        </el-button>
+      </el-tooltip>
 
     </div>
 
@@ -63,6 +72,7 @@ import { ref, watch, onMounted, nextTick, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNoteGroupStore } from "@/store/noteGroup";
 import { useNoteScroll } from "@/composables/useNoteScroll";
+import { DocumentAdd } from '@element-plus/icons-vue';
 
 // 定义查询对象接口
 interface QueryParams {
@@ -320,54 +330,78 @@ const addOrUpdateNote = (id: number, viewMode: NoteViewMode = 'preview') => {
   }
 }
 
-.top-box div {
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
 .add-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.3s ease;
-  width: 50px;
+  min-width: 44px;
+  width: 44px;
+  height: 42px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  color: #64748b;
+  background: rgba(248, 250, 252, 0.7);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
   flex-shrink: 0;
   z-index: 1;
+  transition: all 0.2s ease;
+}
+
+.add-btn :deep(.el-icon) {
+  font-size: 22px;
+}
+
+.add-btn:hover,
+.add-btn:focus-visible {
+  color: #475569;
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(148, 163, 184, 0.3);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1), 0 2px 4px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.add-btn:active {
+  background: rgba(241, 245, 249, 0.9);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+  transform: translateY(0);
+}
+
+.add-btn:focus-visible {
+  outline: 2px solid rgba(100, 116, 139, 0.4);
+  outline-offset: 2px;
+}
+
+.add-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .add-btn {
+    min-width: 40px;
     width: 40px;
+    height: 40px;
+    padding: 0;
     margin-left: 5px;
+  }
+
+  .add-btn :deep(.el-icon) {
+    font-size: 21px;
   }
 }
 
 /* 极小屏幕适配 */
 @media screen and (max-width: 500px) {
   .add-btn {
-    width: 35px;
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
     margin-left: 3px;
   }
-}
 
-@keyframes rotateEffect {
-  0% {
-    transform: rotate(0deg) scale(1);
+  .add-btn :deep(.el-icon) {
+    font-size: 20px;
   }
-  33% {
-    transform: rotate(-7.5deg) scale(1.1);
-  }
-  66% {
-    transform: rotate(7.5deg) scale(1.1);
-  }
-  100% {
-    transform: rotate(0deg) scale(1.1);
-  }
-}
-
-.add-btn:hover {
-  animation: rotateEffect 0.8s ease forwards;
 }
 
 .el-select {
