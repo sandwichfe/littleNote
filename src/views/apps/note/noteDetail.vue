@@ -132,6 +132,14 @@ import {listNoteGroup} from "@/network/noteGroup";
 
 const router = useRouter();
 
+type ViewMode = 'edit' | 'preview';
+
+const props = withDefaults(defineProps<{
+  initialViewMode?: ViewMode;
+}>(), {
+  initialViewMode: 'preview'
+});
+
 const noteData = ref({
   noteId: -1,
   groupId: null as number | null
@@ -155,7 +163,7 @@ const editorRef = shallowRef();
 const valueHtml = ref("");
 
 // 视图模式：edit（编辑）、preview（预览）
-const viewMode = ref('preview');
+const viewMode = ref<ViewMode>(props.initialViewMode);
 
 // 监听视图模式变化
 watch(viewMode, (newMode) => {

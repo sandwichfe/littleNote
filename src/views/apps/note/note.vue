@@ -25,7 +25,7 @@
       </div>
 
       <!-- 添加 -->
-      <div class="add-btn" @click="addOrUpdateNote(-1)">
+      <div class="add-btn" @click="addOrUpdateNote(-1, 'edit')">
         <svg-icon iconClass="add" className="add-btn-svg" />
       </div>
 
@@ -191,8 +191,13 @@ const initList = async () => {
   }
 };
 
-const addOrUpdateNote = (id: number) => {
-  const url = router.resolve({ path: `/noteDetail/${id}` }).href;
+type NoteViewMode = 'edit' | 'preview';
+
+const addOrUpdateNote = (id: number, viewMode: NoteViewMode = 'preview') => {
+  const url = router.resolve({
+    path: `/noteDetail/${id}`,
+    query: viewMode === 'edit' ? { viewMode } : undefined
+  }).href;
   window.open(url, '_blank');
 };
 </script>

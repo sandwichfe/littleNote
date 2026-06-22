@@ -33,6 +33,9 @@ const constantRoutes: RouteRecordRaw[] = [
         path: 'noteDetail/:id',
         component: () => import('../views/apps/note/noteDetail.vue'),
         name: 'NoteDetail',
+        props: route => ({
+          initialViewMode: route.query.viewMode === 'edit' ? 'edit' : 'preview'
+        }),
       },
       {
         path: 'todo/:section?',
