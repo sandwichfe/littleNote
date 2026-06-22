@@ -68,21 +68,15 @@
         </button>
 
         <!-- 删除按钮 -->
-        <el-popconfirm
-            title="确定删除这篇笔记吗？"
-            confirm-button-text="确定"
-            cancel-button-text="取消"
-            @confirm="delNote"
+        <button
+            class="toolbar-btn toolbar-btn-delete"
+            @click="deleteDialogVisible = true"
         >
-          <template #reference>
-            <button class="toolbar-btn toolbar-btn-delete">
-              <el-icon>
-                <Delete/>
-              </el-icon>
-              <span class="btn-text">删除</span>
-            </button>
-          </template>
-        </el-popconfirm>
+          <el-icon>
+            <Delete/>
+          </el-icon>
+          <span class="btn-text">删除</span>
+        </button>
       </div>
     </div>
 
@@ -90,6 +84,36 @@
         style="border: 1px solid #ccc; margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
       <RichEditor ref="editorRef" v-model="valueHtml" :editable="viewMode === 'edit'"/>
     </div>
+
+    <el-dialog
+        v-model="deleteDialogVisible"
+        align-center
+        width="360px"
+        :show-close="false"
+        class="delete-confirm-dialog"
+    >
+      <div class="delete-dialog-content">
+        <div class="delete-dialog-icon">
+          <el-icon>
+            <Delete/>
+          </el-icon>
+        </div>
+        <div class="delete-dialog-text">
+          <h3>确定删除这篇笔记吗？</h3>
+          <p>删除后无法恢复，请确认是否继续。</p>
+        </div>
+      </div>
+      <template #footer>
+        <div class="delete-dialog-footer">
+          <button class="delete-dialog-btn delete-dialog-btn-cancel" @click="deleteDialogVisible = false">
+            取消
+          </button>
+          <button class="delete-dialog-btn delete-dialog-btn-confirm" @click="confirmDeleteNote">
+            确定删除
+          </button>
+        </div>
+      </template>
+    </el-dialog>
 
   </div>
 </template>
@@ -114,6 +138,7 @@ const noteData = ref({
 
 const groupValue = ref('');
 const groups = ref<any[]>([]);
+const deleteDialogVisible = ref(false);
 
 const changeGroup = (newValue: string) => {
   noteData.value.groupId = newValue ? Number(newValue) : null;
@@ -213,6 +238,11 @@ const delNote = () => {
     ElMessage.success('删除成功！');
     router.push(`/note`);
   });
+};
+
+const confirmDeleteNote = () => {
+  deleteDialogVisible.value = false;
+  delNote();
 };
 
 
@@ -460,6 +490,109 @@ function handleEvent(event: KeyboardEvent) {
   background-color: #f9dedc;
 }
 
+#note-detail-page :deep(.delete-confirm-dialog) {
+  --el-dialog-padding-primary: 0;
+  border: 1px solid #f3c4bf;
+  border-radius: 8px;
+  box-shadow: 0 18px 44px rgba(32, 33, 36, 0.2), 0 4px 14px rgba(217, 48, 37, 0.12);
+}
+
+#note-detail-page :deep(.delete-confirm-dialog .el-dialog__header) {
+  display: none;
+}
+
+#note-detail-page :deep(.delete-confirm-dialog .el-dialog__body) {
+  padding: 20px 20px 0;
+}
+
+#note-detail-page :deep(.delete-confirm-dialog .el-dialog__footer) {
+  padding: 18px 20px 20px;
+}
+
+.delete-dialog-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.delete-dialog-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fce8e6;
+  color: #d93025;
+  font-size: 18px;
+}
+
+.delete-dialog-text h3 {
+  margin: 0;
+  color: #202124;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.delete-dialog-text p {
+  margin: 6px 0 0;
+  color: #5f6368;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.delete-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.delete-dialog-btn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 30px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delete-dialog-btn-cancel {
+  border-color: #dadce0;
+  background: #fff;
+  color: #5f6368;
+}
+
+.delete-dialog-btn-cancel:hover {
+  background: #f8f9fa;
+  border-color: #c7c9cc;
+  color: #202124;
+}
+
+.delete-dialog-btn-confirm {
+  background: #d93025;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(217, 48, 37, 0.22);
+}
+
+.delete-dialog-btn-confirm:hover {
+  background: #c5221f;
+  box-shadow: 0 2px 6px rgba(217, 48, 37, 0.28);
+}
+
+.delete-dialog-btn:active {
+  transform: scale(0.98);
+}
+
+.delete-dialog-btn:focus-visible {
+  outline: 2px solid rgba(217, 48, 37, 0.28);
+  outline-offset: 2px;
+}
+
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   #note-detail-page {
@@ -527,6 +660,11 @@ function handleEvent(event: KeyboardEvent) {
 
   .mode-switch-item .el-icon {
     font-size: 14px;
+  }
+
+  #note-detail-page :deep(.delete-confirm-dialog) {
+    width: calc(100vw - 32px) !important;
+    max-width: 360px;
   }
 }
 
