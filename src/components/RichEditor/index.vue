@@ -295,7 +295,8 @@ import TableCell from '@tiptap/extension-table-cell';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import ListItem from '@tiptap/extension-list-item';
 import type { NodeViewRendererProps } from '@tiptap/core';
-import { TextSelection } from '@tiptap/pm/state';
+import type { ResolvedPos } from '@tiptap/pm/model';
+import { Selection, TextSelection } from '@tiptap/pm/state';
 import { columnResizing, tableEditing } from '@tiptap/pm/tables';
 import type { ViewMutationRecord } from '@tiptap/pm/view';
 import { common, createLowlight } from 'lowlight';
@@ -1278,7 +1279,123 @@ const onVideoChange = async (e: Event) => {
 };
 
 const getHTML = () => editor.value?.getHTML() ?? '';
-defineExpose({ getHTML });
+
+type DeleteLineRange = {
+  from: number;
+  to: number;
+  parentListFrom?: number;
+  parentListTo?: number;
+  parentListContentFrom?: number;
+  parentListContentTo?: number;
+};
+
+const getDeleteLineRange = ($pos: ResolvedPos): DeleteLineRange | null => {
+  let blockDepth = 0;
+
+  for (let depth = $pos.depth; depth > 0; depth -= 1) {
+    const node = $pos.node(depth);
+
+    if (node.type.name === 'listItem') {
+      const parentListDepth = depth - 1;
+      const parentList = $pos.node(parentListDepth);
+      const parentListFrom = $pos.before(parentListDepth);
+      const parentListTo = $pos.after(parentListDepth);
+
+      if (parentList.childCount === 1) {
+        return { from: parentListFrom, to: parentListTo };
+      }
+
+      return {
+        from: $pos.before(depth),
+        to: $pos.after(depth),
+        parentListFrom,
+        parentListTo,
+        parentListContentFrom: parentListFrom + 1,
+        parentListContentTo: parentListTo - 1,
+      };
+    }
+
+    if (node.isTextblock && !blockDepth) {
+      blockDepth = depth;
+    }
+  }
+
+  if (!blockDepth) return null;
+
+  return {
+    from: $pos.before(blockDepth),
+    to: $pos.after(blockDepth),
+  };
+};
+
+const expandFullListRange = (range: DeleteLineRange, itemRange: DeleteLineRange | null) => {
+  if (
+    itemRange?.parentListFrom === undefined ||
+    itemRange.parentListTo === undefined ||
+    itemRange.parentListContentFrom === undefined ||
+    itemRange.parentListContentTo === undefined
+  ) {
+    return range;
+  }
+
+  if (range.from <= itemRange.parentListContentFrom && range.to >= itemRange.parentListContentTo) {
+    return {
+      from: Math.min(range.from, itemRange.parentListFrom),
+      to: Math.max(range.to, itemRange.parentListTo),
+    };
+  }
+
+  return range;
+};
+
+const getSelectionDeleteLineRange = () => {
+  if (!editor.value) return null;
+
+  const { state } = editor.value;
+  const { selection } = state;
+  const selectionEnd = selection.empty ? selection.to : Math.max(selection.from, selection.to - 1);
+  const fromRange = getDeleteLineRange(state.doc.resolve(selection.from));
+  const toRange = getDeleteLineRange(state.doc.resolve(selectionEnd));
+
+  if (!fromRange || !toRange) return null;
+
+  let range = {
+    from: Math.min(fromRange.from, toRange.from),
+    to: Math.max(fromRange.to, toRange.to),
+  };
+
+  range = expandFullListRange(range, fromRange);
+  range = expandFullListRange(range, toRange);
+
+  return range;
+};
+
+const deleteCurrentLine = () => {
+  if (!props.editable || !editor.value) return false;
+
+  const { state, view } = editor.value;
+
+  if (editor.value.isActive('table')) {
+    editor.value.chain().focus().deleteRow().run();
+    updateTableToolbarPosition();
+    return true;
+  }
+
+  const range = getSelectionDeleteLineRange();
+  if (!range) return false;
+
+  const paragraph = state.schema.nodes.paragraph.create();
+  const isOnlyBlock = range.from === 0 && range.to === state.doc.content.size;
+  const tr = isOnlyBlock ? state.tr.replaceWith(range.from, range.to, paragraph) : state.tr.delete(range.from, range.to);
+  const nextPos = Math.min(range.from, tr.doc.content.size);
+
+  tr.setSelection(Selection.near(tr.doc.resolve(nextPos), -1));
+  view.dispatch(tr.scrollIntoView());
+  view.focus();
+  return true;
+};
+
+defineExpose({ getHTML, deleteCurrentLine });
 </script>
 
 <style scoped>

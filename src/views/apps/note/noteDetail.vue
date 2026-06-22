@@ -250,6 +250,12 @@ const confirmDeleteNote = () => {
 let ctrlS_timer: NodeJS.Timeout | null = null;
 
 function handleEvent(event: KeyboardEvent) {
+  if (event.ctrlKey && event.key.toLowerCase() === 'd' && viewMode.value === 'edit') {
+    event.preventDefault();
+    editorRef.value?.deleteCurrentLine();
+    return;
+  }
+
   if (event.ctrlKey && event.key === 's') {
     event.preventDefault();
     // 多次触发 给出提示
