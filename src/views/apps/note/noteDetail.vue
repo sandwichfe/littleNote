@@ -11,6 +11,7 @@
               size="large"
               clearable
               class="group-select"
+              popper-class="group-select-popper"
               @change="changeGroup"
               @clear="handleClear"
           >
@@ -298,20 +299,20 @@ function handleEvent(event: KeyboardEvent) {
 
 .filter-item {
   transition: all 0.3s ease;
-  width: 120px;
+  width: 148px;
   flex-shrink: 0;
   flex-grow: 0;
 }
 
 @media screen and (max-width: 768px) {
   .filter-item {
-    width: 100px;
+    width: 120px;
   }
 }
 
 @media screen and (max-width: 500px) {
   .filter-item {
-    width: 80px;
+    width: 104px;
   }
 }
 
@@ -378,44 +379,157 @@ function handleEvent(event: KeyboardEvent) {
 
 /* 分组选择器 */
 .group-select {
-  width: 140px;
+  width: 148px;
+  --el-select-input-focus-border-color: transparent;
+  --el-select-border-color-hover: #c7c9cc;
 }
 
+.group-select :deep(.el-select__wrapper),
 .group-select :deep(.el-input__wrapper) {
+  min-height: 36px;
   height: 36px;
   border-radius: 6px;
-  box-shadow: 0 0 0 1px #dcdfe6 inset;
-  transition: all 0.2s;
   background-color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  padding: 0 10px;
+  gap: 7px;
+  cursor: pointer;
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+  box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.group-select:hover :deep(.el-select__wrapper),
+.group-select :deep(.el-select__wrapper.is-hovering),
 .group-select :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #c0c4cc inset;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 0 0 1px #c0c4cc inset;
+  background-color: #f8f9fa;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
+.group-select :deep(.el-select__wrapper.is-focused),
 .group-select :deep(.el-input__wrapper.is-focus) {
-  box-shadow: 0 0 0 1px #409eff inset;
+  background-color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.group-select :deep(.el-select__prefix) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-right: 1px;
+  border-radius: 50%;
+  background: #f1f3f4;
+  color: #5f6368;
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+  color 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.group-select:hover :deep(.el-select__prefix),
+.group-select :deep(.el-select__wrapper.is-focused .el-select__prefix) {
+  background: #e8eaed;
+  color: #202124;
+}
+
+.group-select :deep(.el-select__selection) {
+  min-width: 0;
+}
+
+.group-select :deep(.el-select__placeholder) {
+  color: #5f6368;
+  font-weight: 500;
+}
+
+.group-select :deep(.el-select__placeholder.is-transparent) {
+  color: #80868b;
+  font-weight: 500;
+}
+
+.group-select :deep(.el-select__caret) {
+  color: #80868b;
+  font-size: 14px;
+}
+
+.group-select:hover :deep(.el-select__caret),
+.group-select :deep(.el-select__wrapper.is-focused .el-select__caret) {
+  color: #5f6368;
+}
+
+.group-select :deep(.el-select__suffix) {
+  margin-left: 0;
+}
+
+.group-select :deep(.el-select__selected-item) {
+  min-width: 0;
 }
 
 .group-select :deep(.el-input__inner) {
   height: 34px;
   line-height: 34px;
-  font-size: 14px;
+  color: #202124;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .filter-icon {
-  color: #909399;
-  margin-right: 5px;
+  width: 14px;
+  height: 14px;
+  color: currentColor;
 }
 
 .el-select {
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .el-select:focus-within {
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+  border-radius: 6px;
+}
+
+.group-select:focus,
+.group-select:focus-visible,
+.group-select:focus-within,
+.group-select :deep(.el-select__wrapper:focus),
+.group-select :deep(.el-select__wrapper:focus-visible),
+.group-select :deep(.el-input__wrapper:focus),
+.group-select :deep(.el-input__wrapper:focus-visible) {
+  outline: none;
+}
+
+:global(.group-select-popper.el-select__popper.el-popper) {
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(32, 33, 36, 0.16), 0 2px 8px rgba(32, 33, 36, 0.08);
+}
+
+:global(.group-select-popper.el-select__popper.el-popper .el-popper__arrow::before) {
+  border-color: #dadce0;
+  background: #fff;
+}
+
+:global(.group-select-popper .el-select-dropdown__list) {
+  padding: 6px;
+}
+
+:global(.group-select-popper .el-select-dropdown__item) {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: #5f6368;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 32px;
+}
+
+:global(.group-select-popper .el-select-dropdown__item.is-hovering) {
+  background: #f1f3f4;
+  color: #202124;
+}
+
+:global(.group-select-popper .el-select-dropdown__item.is-selected) {
+  background: #e8eaed;
+  color: #202124;
+  font-weight: 600;
 }
 
 /* 工具栏按钮 */
@@ -623,11 +737,24 @@ function handleEvent(event: KeyboardEvent) {
   }
 
   .group-select {
-    width: 100px;
+    width: 120px;
   }
 
+  .group-select :deep(.el-select__wrapper),
   .group-select :deep(.el-input__wrapper) {
+    min-height: 30px;
     height: 30px;
+    padding: 0 8px;
+    gap: 5px;
+  }
+
+  .group-select :deep(.el-select__prefix) {
+    width: 20px;
+    height: 20px;
+  }
+
+  .group-select :deep(.el-select__caret) {
+    font-size: 12px;
   }
 
   .group-select :deep(.el-input__inner) {
