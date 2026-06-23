@@ -70,12 +70,6 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     const data = response.data
-    const code = getResponseCode(data)
-
-    if (isUnauthorized(code)) {
-      handleUnauthorized(getResponseMessage(data))
-    }
-
     return data
   },
   (error) => {
@@ -83,10 +77,12 @@ service.interceptors.response.use(
     const data = response?.data
     const code = getResponseCode(data)
 
-    if (isUnauthorized(response?.status) || isUnauthorized(code)) {
+    // 处理未认证
+    if (isUnauthorized(response?.status)) {
       handleUnauthorized(getResponseMessage(data) || UNAUTHORIZED_MESSAGE)
     }
 
+    // 错误提示
     if (isSysWarn(code)) {
       ElMessage.warning(getResponseMessage(data))
     }
