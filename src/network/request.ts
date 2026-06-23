@@ -24,6 +24,7 @@ type ResolvedRequestUrl = {
 const REQUEST_TIMEOUT = 60000
 const LOGIN_TOKEN_KEY = 'loginToken'
 const UNAUTHORIZED_CODE = 401
+const SYS_WARN_CODE = 0
 const UNAUTHORIZED_MESSAGE = '登录已过期，请重新登录'
 
 const MODULE_CONFIGS: ModuleConfig[] = [
@@ -51,6 +52,7 @@ const service = axios.create({
   timeout: REQUEST_TIMEOUT,
 })
 
+// 请求拦截器
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const accessToken = Cookies.get(LOGIN_TOKEN_KEY)
@@ -64,11 +66,13 @@ service.interceptors.request.use(
   (error) => Promise.reject(error),
 )
 
+// 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     const data = response.data
+    const code = getResponseCode(data)
 
-    if (isUnauthorized(getResponseCode(data))) {
+    if (isUnauthorized(code)) {
       handleUnauthorized(getResponseMessage(data))
     }
 
@@ -77,9 +81,14 @@ service.interceptors.response.use(
   (error) => {
     const response = error?.response
     const data = response?.data
+    const code = getResponseCode(data)
 
-    if (isUnauthorized(response?.status) || isUnauthorized(getResponseCode(data))) {
+    if (isUnauthorized(response?.status) || isUnauthorized(code)) {
       handleUnauthorized(getResponseMessage(data) || UNAUTHORIZED_MESSAGE)
+    }
+
+    if (isSysWarn(code)) {
+      ElMessage.warning(getResponseMessage(data))
     }
 
     console.error(error)
@@ -100,8 +109,6 @@ export function request<T = unknown>(config: RequestConfig = {}): Promise<T> {
 
   return service(requestConfig) as Promise<T>
 }
-
-export const LoginRequest = request
 
 export function LittleNoteRequest<T = unknown>(config: RequestConfig): Promise<T> {
   return requestWithModule('/api/little-note', config)
@@ -155,6 +162,10 @@ function isUnauthorized(code: unknown): boolean {
   return Number(code) === UNAUTHORIZED_CODE
 }
 
+function isSysWarn(code: unknown): boolean {
+  return Number(code) === SYS_WARN_CODE
+}
+
 function getResponseCode(data: unknown): unknown {
   return isRecord(data) ? data.code : undefined
 }
@@ -162,7 +173,10 @@ function getResponseCode(data: unknown): unknown {
 function getResponseMessage(data: unknown): string | undefined {
   if (!isRecord(data)) return undefined
 
-  return typeof data.msg === 'string' ? data.msg : undefined
+  if (typeof data.msg === 'string') return data.msg
+  if (typeof data.message === 'string') return data.message
+
+  return undefined
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
