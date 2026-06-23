@@ -13,7 +13,7 @@ import SvgIcon from '@/components/SvgIcon.vue';
 
 import App from './App.vue'
 import router from './router'
-import axios from 'axios'
+
 const app = createApp(App)
 
 app.use(createPinia())
