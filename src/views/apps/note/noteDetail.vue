@@ -122,13 +122,13 @@
 <script setup lang="ts">
 import {onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
 import RichEditor from '@/components/RichEditor/index.vue';
-import {addNote, deleteNoteItem, editNote, getNote} from "@/network/note";
+import {addNote, deleteNoteItem, editNote, getNote} from "@/network/note/note";
 import {useRouter} from 'vue-router';
 import {ElMessage} from 'element-plus'
 import {Delete, DocumentChecked, Edit, View} from '@element-plus/icons-vue'
 import {cipherText, decrypted} from "@/utils/aesUtil";
 import {closeLoading} from "@/utils/loadingUtil";
-import {listNoteGroup} from "@/network/noteGroup";
+import {listNoteGroup} from "@/network/note/noteGroup";
 
 const router = useRouter();
 

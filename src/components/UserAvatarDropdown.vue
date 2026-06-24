@@ -12,7 +12,7 @@ import {
   getCurrentUser,
   updateCurrentUser,
   changePassword
-} from '@/network/user'
+} from '@/network/manage/user'
 import { useMenuStore } from '@/store/menu'
 
 const router = useRouter()

@@ -166,7 +166,7 @@ import {
   User,
   WarningFilled
 } from '@element-plus/icons-vue'
-import { createDept, deleteDept, getDeptById, getTreeDepts, updateDept } from '@/network/dept'
+import { createDept, deleteDept, getDeptById, getTreeDepts, updateDept } from '@/network/manage/dept'
 import { countTreeNodes, formatDateTime } from './manage-utils'
 
 const createDefaultForm = () => ({

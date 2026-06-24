@@ -149,7 +149,7 @@ import {
   Plus,
   Refresh
 } from '@element-plus/icons-vue'
-import { createMenu, deleteMenu, getMenuById, getTreeMenus, updateMenu } from '@/network/menu'
+import { createMenu, deleteMenu, getMenuById, getTreeMenus, updateMenu } from '@/network/manage/menu'
 import { countTreeNodes } from './manage-utils'
 
 const createDefaultForm = () => ({

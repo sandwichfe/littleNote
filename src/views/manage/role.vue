@@ -137,9 +137,9 @@ import {
   Plus,
   Refresh
 } from '@element-plus/icons-vue'
-import { createRole, deleteRole, getAllRoles, getRoleById, updateRole } from '@/network/role'
-import { getTreeMenus } from '@/network/menu'
-import { assignMenusToRole, getMenusByRoleId } from '@/network/roleMenu'
+import { createRole, deleteRole, getAllRoles, getRoleById, updateRole } from '@/network/manage/role'
+import { getTreeMenus } from '@/network/manage/menu'
+import { assignMenusToRole, getMenusByRoleId } from '@/network/manage/roleMenu'
 import { countTreeNodes, formatDateTime, getInitial } from './manage-utils'
 
 const createDefaultForm = () => ({

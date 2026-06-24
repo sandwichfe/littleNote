@@ -218,7 +218,7 @@ import {
   listDictTypes,
   updateDictItem,
   updateDictType
-} from '@/network/dict'
+} from '@/network/manage/dict'
 import { formatDateTime } from './manage-utils'
 
 const typeList = ref<any[]>([])

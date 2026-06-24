@@ -66,8 +66,8 @@
 <script setup lang="ts">
 defineOptions({ name: 'note' })
 
-import { listNote, type Note } from "@/network/note";
-import { listNoteGroup } from "@/network/noteGroup";
+import { listNote, type Note } from "@/network/note/note";
+import { listNoteGroup } from "@/network/note/noteGroup";
 import { ref, watch, onMounted, nextTick, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNoteGroupStore } from "@/store/noteGroup";

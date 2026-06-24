@@ -1,5 +1,5 @@
 // src/network/roleMenu.ts
-import { request } from './request'
+import { request } from '../request'
 
 export const getMenusByRoleId = (roleId: number) => request({ method: 'get', url: `/api/portal/sys/role-menu/getMenusByRoleId/${roleId}` })
 

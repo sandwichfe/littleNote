@@ -1,5 +1,5 @@
 // src/network/role.ts
-import { request } from './request'
+import { request } from '../request'
 
 interface Role {
   id?: number

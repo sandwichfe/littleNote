@@ -1,4 +1,4 @@
-import { request } from "./request";
+import { request } from "../request";
 
 // 定义NoteGroup接口
 export interface NoteGroup {

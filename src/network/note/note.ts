@@ -1,4 +1,4 @@
-import { request } from "./request";
+import { request } from "../request";
 
 const NOTE_API = "/api/little-note/note";
 

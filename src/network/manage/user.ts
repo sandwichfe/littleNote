@@ -1,5 +1,5 @@
 // src/network/user.ts
-import { request } from './request'
+import { request } from '../request'
 import { cipherText } from '@/utils/aesUtil'
 
 interface User {

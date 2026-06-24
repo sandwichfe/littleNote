@@ -212,10 +212,10 @@ import {
   User,
   UserFilled
 } from '@element-plus/icons-vue'
-import { createUser, deleteUser, getAllUsers, getUserById, updateUser } from '@/network/user'
-import { getAllRoles } from '@/network/role'
-import { getTreeDepts } from '@/network/dept'
-import { assignRolesToUser, getRolesByUserId } from '@/network/userRole'
+import { createUser, deleteUser, getAllUsers, getUserById, updateUser } from '@/network/manage/user'
+import { getAllRoles } from '@/network/manage/role'
+import { getTreeDepts } from '@/network/manage/dept'
+import { assignRolesToUser, getRolesByUserId } from '@/network/manage/userRole'
 import { formatDateTime, getInitial } from './manage-utils'
 
 const createDefaultForm = () => ({

@@ -152,7 +152,7 @@
 import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import { listOperationLogs } from '@/network/operationLog'
+import { listOperationLogs } from '@/network/manage/operationLog'
 import { formatDateTime } from './manage-utils'
 
 const loading = ref(false)

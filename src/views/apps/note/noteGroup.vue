@@ -74,7 +74,7 @@ export default {
 
 <!-- setup语法糖 -->
 <script setup lang="ts">
-import { listNoteGroup, addNoteGroup, editNoteGroup, getNoteGroup, deleteNoteGroup, type NoteGroup } from "@/network/noteGroup";
+import { listNoteGroup, addNoteGroup, editNoteGroup, getNoteGroup, deleteNoteGroup, type NoteGroup } from "@/network/note/noteGroup";
 import { ref, computed, watch, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 

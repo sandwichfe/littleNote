@@ -1,5 +1,5 @@
 // src/network/menu.ts
-import { request } from './request'
+import { request } from '../request'
 
 interface Menu {
   id?: number

@@ -1,5 +1,5 @@
 // src/network/userRole.ts
-import { request } from './request'
+import { request } from '../request'
 
 export const getRolesByUserId = (userId: number) => request({ method: 'get', url: `/api/portal/sys/user-role/getRolesByUserId/${userId}` })
 
