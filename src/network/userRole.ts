@@ -1,6 +1,6 @@
 // src/network/userRole.ts
-import { SysRequest } from './request'
+import { request } from './request'
 
-export const getRolesByUserId = (userId: number) => SysRequest({ method: 'get', url: `/user-role/getRolesByUserId/${userId}` })
+export const getRolesByUserId = (userId: number) => request({ method: 'get', url: `/api/portal/sys/user-role/getRolesByUserId/${userId}` })
 
-export const assignRolesToUser = (userId: number, roleIds: number[]) => SysRequest({ method: 'post', url: '/user-role/assignRolesToUser', data: { userId, roleIds } })
+export const assignRolesToUser = (userId: number, roleIds: number[]) => request({ method: 'post', url: '/api/portal/sys/user-role/assignRolesToUser', data: { userId, roleIds } })

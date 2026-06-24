@@ -7,18 +7,8 @@ import Cookies from 'js-cookie'
 import { ElMessage } from 'element-plus'
 import router from '../router'
 
-type ModuleConfig = {
-  prefix: string
-  baseURL?: string
-}
-
 type RequestConfig = AxiosRequestConfig & {
   url?: string
-}
-
-type ResolvedRequestUrl = {
-  baseURL?: string
-  url: string
 }
 
 const REQUEST_TIMEOUT = 60000
@@ -27,32 +17,13 @@ const UNAUTHORIZED_CODE = 401
 const SYS_WARN_CODE = 0
 const UNAUTHORIZED_MESSAGE = '登录已过期，请重新登录'
 
-const MODULE_CONFIGS: ModuleConfig[] = [
-  {
-    prefix: '/api/little-note',
-    baseURL: import.meta.env.VITE_API_URL,
-  },
-  {
-    prefix: '/api/user-center',
-    baseURL: import.meta.env.VITE_USER_CENTER_API_BASE_URL,
-  },
-  {
-    prefix: '/api/sys',
-    baseURL: import.meta.env.VITE_SYS_API_URL,
-  },
-  {
-    prefix: '/api/oss',
-    baseURL: import.meta.env.VITE_UPLOAD_BASE_URL,
-  },
-]
-
 let isRedirecting = false
 
 const service = axios.create({
   timeout: REQUEST_TIMEOUT,
 })
 
-// 请求拦截器
+// 请求拦截器：统一携带登录 token
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const accessToken = Cookies.get(LOGIN_TOKEN_KEY)
@@ -66,7 +37,7 @@ service.interceptors.request.use(
   (error) => Promise.reject(error),
 )
 
-// 响应拦截器
+// 响应拦截器：统一返回业务数据并处理登录失效
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     const data = response.data
@@ -93,65 +64,7 @@ service.interceptors.response.use(
 )
 
 export function request<T = unknown>(config: RequestConfig = {}): Promise<T> {
-  const { baseURL, url } = resolveRequestUrl(config.url)
-  const requestConfig: RequestConfig = {
-    ...config,
-    url,
-  }
-
-  if (baseURL !== undefined) {
-    requestConfig.baseURL = baseURL
-  }
-
-  return service(requestConfig) as Promise<T>
-}
-
-export function LittleNoteRequest<T = unknown>(config: RequestConfig): Promise<T> {
-  return requestWithModule('/api/little-note', config)
-}
-
-export function UserCenterRequest<T = unknown>(config: RequestConfig): Promise<T> {
-  return requestWithModule('/api/user-center', config)
-}
-
-export function SysRequest<T = unknown>(config: RequestConfig): Promise<T> {
-  return requestWithModule('/api/sys', config)
-}
-
-export function OssRequest<T = unknown>(config: RequestConfig): Promise<T> {
-  return requestWithModule('/api/oss', config)
-}
-
-function requestWithModule<T = unknown>(prefix: string, config: RequestConfig = {}): Promise<T> {
-  return request<T>({
-    ...config,
-    url: `${prefix}${ensureLeadingSlash(config.url || '/')}`,
-  })
-}
-
-function resolveRequestUrl(rawUrl = ''): ResolvedRequestUrl {
-  const target = MODULE_CONFIGS.find(({ prefix }) => rawUrl.startsWith(prefix))
-
-  if (!target) {
-    return {
-      baseURL: undefined,
-      url: rawUrl,
-    }
-  }
-
-  return {
-    baseURL: target.baseURL || '',
-    url: normalizeRelativeUrl(rawUrl.slice(target.prefix.length)),
-  }
-}
-
-function normalizeRelativeUrl(url: string): string {
-  if (!url) return '/'
-  return ensureLeadingSlash(url)
-}
-
-function ensureLeadingSlash(url: string): string {
-  return url.startsWith('/') ? url : `/${url}`
+  return service(config) as Promise<T>
 }
 
 function isUnauthorized(code: unknown): boolean {

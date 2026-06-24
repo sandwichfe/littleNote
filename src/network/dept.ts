@@ -1,4 +1,4 @@
-import { SysRequest } from './request'
+import { request } from './request'
 
 interface Dept {
   id?: number
@@ -18,29 +18,29 @@ interface PageVo {
   pageSize: number
 }
 
-export const createDept = (dept: Dept) => SysRequest({ 
+export const createDept = (dept: Dept) => request({ 
   method: 'post', 
-  url: '/dept/create', 
+  url: '/api/portal/sys/dept/create', 
   data: dept 
 })
 
-export const getDeptById = (id: number) => SysRequest({ method: 'get', url: `/dept/get/${id}` })
+export const getDeptById = (id: number) => request({ method: 'get', url: `/api/portal/sys/dept/get/${id}` })
 
-export const getAllDepts = (pageVo: PageVo) => SysRequest({ 
+export const getAllDepts = (pageVo: PageVo) => request({ 
   method: 'post', 
-  url: '/dept/list', 
+  url: '/api/portal/sys/dept/list', 
   data: pageVo 
 })
 
-export const getTreeDepts = () => SysRequest({ 
+export const getTreeDepts = () => request({ 
   method: 'get', 
-  url: '/dept/tree'
+  url: '/api/portal/sys/dept/tree'
 })
 
-export const updateDept = (dept: Dept) => SysRequest({ 
+export const updateDept = (dept: Dept) => request({ 
   method: 'post', 
-  url: '/dept/update', 
+  url: '/api/portal/sys/dept/update', 
   data: dept 
 })
 
-export const deleteDept = (id: number) => SysRequest({ method: 'delete', url: `/dept/delete/${id}` })
+export const deleteDept = (id: number) => request({ method: 'delete', url: `/api/portal/sys/dept/delete/${id}` })

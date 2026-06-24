@@ -1,5 +1,4 @@
-import { SysRequest } from './request'
+import { request } from './request'
 
 export const listOperationLogs = (data: any) =>
-  SysRequest({ method: 'post', url: '/operation-log/list', data })
-
+  request({ method: 'post', url: '/api/portal/sys/operation-log/list', data })

@@ -29,16 +29,22 @@ export default defineConfig({
     //   cert: fs.readFileSync('D:\\certs\\localhost\\server.crt')
     // },
     proxy: {
-      // /assets/oss 代理到 https://littlenote.yun.yiruserene.top/assets/oss
+      '/api/little-note': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
+      '/api/portal': {
+        target: 'http://localhost:9088',
+        changeOrigin: true
+      },
+      '/api/oss': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      },
       '/assets/oss': {
         target: 'https://yiruserene.top:58888',
         changeOrigin: true
       },
-      // /api/oss 代理到 https://littlenote.yun.yiruserene.top/api/oss
-      '/api/oss': {
-        target: 'https://yiruserene.top:58888',
-        changeOrigin: true
-      }
     }
   },
   resolve: {

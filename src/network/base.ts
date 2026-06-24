@@ -1,4 +1,4 @@
-import { LittleNoteRequest, UserCenterRequest, OssRequest } from "./request";
+import { request } from "./request";
 import { cipherText } from "../utils/aesUtil";
 
 
@@ -12,9 +12,9 @@ export interface Note {
 
 // 这里为列表和分页功能添加类型
 export function listNote(pageNum: number, pageSize: number,groupId?:number,keyword?:string): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: "post",
-    url: "/note/listNote",
+    url: "/api/little-note/note/listNote",
     params: {
       pageNum: pageNum,
       pageSize: pageSize,
@@ -26,9 +26,9 @@ export function listNote(pageNum: number, pageSize: number,groupId?:number,keywo
 
 // 获取单个笔记，返回类型为 NoteResponse
 export function getNote(id: number): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: "get",
-    url: "/note/getNote",
+    url: "/api/little-note/note/getNote",
     params: {
       id: id,
     }
@@ -37,9 +37,9 @@ export function getNote(id: number): Promise<any> {
 
 // 编辑笔记，返回类型仍然为 NoteResponse 或 void，取决于实际需求
 export function editNote(id: number, content: string, title: string,groupId?: number): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: "post",
-    url: "/note/editNote",
+    url: "/api/little-note/note/editNote",
     data: {
       id: id,
       content: content,
@@ -51,9 +51,9 @@ export function editNote(id: number, content: string, title: string,groupId?: nu
 
 // 添加新笔记
 export function addNote(id: number, content: string, title: string,groupId?: number): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: "post",
-    url: "/note/addNote",
+    url: "/api/little-note/note/addNote",
     data: {
       id: id,
       content: content,
@@ -65,9 +65,9 @@ export function addNote(id: number, content: string, title: string,groupId?: num
 
 // 删除笔记
 export function deleteNoteItem(id: number): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: "get",
-    url: "/note/deleteNote",
+    url: "/api/little-note/note/deleteNote",
     params: {
       id: id,
     }
@@ -88,8 +88,8 @@ export interface LoginResponse {
 
 export function userLogin(username: string, password: string): Promise<any> {
   const encryptedPassword = cipherText(password);
-  return UserCenterRequest({
-    url: '/user/login',
+  return request({
+    url: '/api/portal/user/login',
     method: 'post',
     params: {
       username,
@@ -98,32 +98,13 @@ export function userLogin(username: string, password: string): Promise<any> {
   });
 }
 
-// 新增生成滑块验证数据的方法
-export function generateSlider(): Promise<any> {
-  return UserCenterRequest({
-    method: "get",
-    url: "/user/slider/generate",
-  });
-}
-
-// 新增验证滑块位置的方法
-export function verifySlider(sliderId: string, userX: number): Promise<any> {
-  return UserCenterRequest({
-    method: "post",
-    url: "/user/slider/verify",
-    params: {
-      sliderId,
-      userX
-    }
-  });
-}
 
 
 // 新增生成滑块验证数据的方法
 export function generateQrCode(): Promise<any> {
-  return UserCenterRequest({
+  return request({
     method: "get",
-    url: "/user/qrCode/login/generateQrCode",
+    url: "/api/portal/user/qrCode/login/generateQrCode",
     params: {
     }
   });
@@ -132,7 +113,7 @@ export function generateQrCode(): Promise<any> {
 
 
 // 修改检查二维码状态接口
-export const qrCoderStatus = (qrCodeId: string) => UserCenterRequest({ method: 'get', url: `/user/qrCode/login/fetch/${qrCodeId}`})
+export const qrCoderStatus = (qrCodeId: string) => request({ method: 'get', url: `/api/portal/user/qrCode/login/fetch/${qrCodeId}`})
 
 
 // 新增用户注册接口
@@ -143,8 +124,8 @@ interface RegisterParams {
 }
 
 export function userRegister(params: RegisterParams): Promise<any> {
-  return UserCenterRequest({
-    url: '/user/register',
+  return request({
+    url: '/api/portal/user/register',
     method: 'post',
     data: params
   });
@@ -153,9 +134,9 @@ export function userRegister(params: RegisterParams): Promise<any> {
 export function uploadImage(file: File): Promise<any> {
   const formData = new FormData();
   formData.append('uploadFile', file);
-  return OssRequest({
+  return request({
     method: 'post',
-    url: '/upload',
+    url: '/api/oss/upload',
     data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'

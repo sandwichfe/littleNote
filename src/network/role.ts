@@ -1,5 +1,5 @@
 // src/network/role.ts
-import { SysRequest } from './request'
+import { request } from './request'
 
 interface Role {
   id?: number
@@ -16,9 +16,9 @@ interface PageVo {
   pageSize: number
 }
 
-export const createRole = (role: { id?: number, roleName: string, description?: string }) => SysRequest({ 
+export const createRole = (role: { id?: number, roleName: string, description?: string }) => request({ 
   method: 'post', 
-  url: '/role/create', 
+  url: '/api/portal/sys/role/create', 
   data: { 
     id: role.id, 
     roleName: role.roleName,
@@ -26,13 +26,13 @@ export const createRole = (role: { id?: number, roleName: string, description?: 
   } 
 })
 
-export const getRoleById = (id: number) => SysRequest({ method: 'get', url: `/role/get/${id}` })
+export const getRoleById = (id: number) => request({ method: 'get', url: `/api/portal/sys/role/get/${id}` })
 
-export const getAllRoles = (pageVo: PageVo) => SysRequest({ method: 'post', url: '/role/list', data: pageVo })
+export const getAllRoles = (pageVo: PageVo) => request({ method: 'post', url: '/api/portal/sys/role/list', data: pageVo })
 
-export const updateRole = (role: { id?: number, roleName: string, description?: string }) => SysRequest({ 
+export const updateRole = (role: { id?: number, roleName: string, description?: string }) => request({ 
   method: 'post', 
-  url: '/role/update', 
+  url: '/api/portal/sys/role/update', 
   data: { 
     id: role.id, 
     roleName: role.roleName,
@@ -40,4 +40,4 @@ export const updateRole = (role: { id?: number, roleName: string, description?: 
   } 
 })
 
-export const deleteRole = (id: number) => SysRequest({ method: 'delete', url: `/role/delete/${id}` })
+export const deleteRole = (id: number) => request({ method: 'delete', url: `/api/portal/sys/role/delete/${id}` })

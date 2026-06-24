@@ -1,4 +1,4 @@
-import { LittleNoteRequest } from "./request";
+import { request } from "./request";
 
 export interface Task {
   id?: number;
@@ -35,61 +35,61 @@ export function getTasks(params: any = {}): Promise<any> {
     category: 'global',
     ...params
   };
-  return LittleNoteRequest({
+  return request({
     method: 'post',
-    url: '/todo/tasks/list',
+    url: '/api/little-note/todo/tasks/list',
     data: defaultParams
   });
 }
 
 export function getTaskCounts(): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: 'get',
-    url: '/todo/tasks/counts'
+    url: '/api/little-note/todo/tasks/counts'
   });
 }
 
 export function addTask(task: Partial<Task>): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: 'post',
-    url: '/todo/tasks',
+    url: '/api/little-note/todo/tasks',
     data: task
   });
 }
 
 export function updateTask(id: number, task: Partial<Task>): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: 'put',
-    url: `/todo/tasks/${id}`,
+    url: `/api/little-note/todo/tasks/${id}`,
     data: task
   });
 }
 
 export function deleteTask(id: number): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: 'delete',
-    url: `/todo/tasks/${id}`
+    url: `/api/little-note/todo/tasks/${id}`
   });
 }
 
 export function completeTask(id: number): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: 'post',
-    url: `/todo/tasks/${id}/complete`
+    url: `/api/little-note/todo/tasks/${id}/complete`
   });
 }
 
 export function getTaskCompletionRecords(id: number): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: 'get',
-    url: `/todo/tasks/${id}/completion-records`
+    url: `/api/little-note/todo/tasks/${id}/completion-records`
   });
 }
 
 export function updateTaskCompletionRecord(taskId: number, recordId: number, completedAt: string): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: 'post',
-    url: '/todo/tasks/completion-record/update',
+    url: '/api/little-note/todo/tasks/completion-record/update',
     data: {
       taskId,
       id: recordId,
@@ -99,25 +99,25 @@ export function updateTaskCompletionRecord(taskId: number, recordId: number, com
 }
 
 export function getDayView(date: string): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: 'post',
-    url: '/todo/tasks/day-view',
+    url: '/api/little-note/todo/tasks/day-view',
     data: { date }
   });
 }
 
 export function getWeekView(year: number, week: number): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: 'post',
-    url: '/todo/tasks/week-view',
+    url: '/api/little-note/todo/tasks/week-view',
     data: { year, week }
   });
 }
 
 export function getMonthView(year: number, month: number): Promise<any> {
-  return LittleNoteRequest({
+  return request({
     method: 'post',
-    url: '/todo/tasks/month-view',
+    url: '/api/little-note/todo/tasks/month-view',
     data: { year, month }
   });
 }

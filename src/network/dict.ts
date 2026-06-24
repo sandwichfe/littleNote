@@ -1,4 +1,4 @@
-import { SysRequest } from './request'
+import { request } from './request'
 
 export interface DictType {
   id?: number
@@ -33,32 +33,32 @@ export interface DictItemPageQuery {
 }
 
 export const createDictType = (payload: DictType) =>
-  SysRequest({ method: 'post', url: '/dict-type/create', data: payload })
+  request({ method: 'post', url: '/api/portal/sys/dict-type/create', data: payload })
 
 export const updateDictType = (payload: DictType) =>
-  SysRequest({ method: 'post', url: '/dict-type/update', data: payload })
+  request({ method: 'post', url: '/api/portal/sys/dict-type/update', data: payload })
 
 export const deleteDictType = (id: number) =>
-  SysRequest({ method: 'delete', url: `/dict-type/delete/${id}` })
+  request({ method: 'delete', url: `/api/portal/sys/dict-type/delete/${id}` })
 
 export const listDictTypes = (query: DictTypePageQuery) =>
-  SysRequest({ method: 'post', url: '/dict-type/list', data: query })
+  request({ method: 'post', url: '/api/portal/sys/dict-type/list', data: query })
 
 export const getAllDictTypes = () =>
-  SysRequest({ method: 'get', url: '/dict-type/all' })
+  request({ method: 'get', url: '/api/portal/sys/dict-type/all' })
 
 export const createDictItem = (payload: DictItem) =>
-  SysRequest({ method: 'post', url: '/dict-item/create', data: payload })
+  request({ method: 'post', url: '/api/portal/sys/dict-item/create', data: payload })
 
 export const updateDictItem = (payload: DictItem) =>
-  SysRequest({ method: 'post', url: '/dict-item/update', data: payload })
+  request({ method: 'post', url: '/api/portal/sys/dict-item/update', data: payload })
 
 export const deleteDictItem = (id: number) =>
-  SysRequest({ method: 'delete', url: `/dict-item/delete/${id}` })
+  request({ method: 'delete', url: `/api/portal/sys/dict-item/delete/${id}` })
 
 export const listDictItems = (query: DictItemPageQuery) =>
-  SysRequest({ method: 'post', url: '/dict-item/list', data: query })
+  request({ method: 'post', url: '/api/portal/sys/dict-item/list', data: query })
 
 export const getAllDictItems = (dictTypeId: number) =>
-  SysRequest({ method: 'get', url: `/dict-item/all/${dictTypeId}` })
+  request({ method: 'get', url: `/api/portal/sys/dict-item/all/${dictTypeId}` })
 

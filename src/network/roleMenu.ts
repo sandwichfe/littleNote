@@ -1,6 +1,6 @@
 // src/network/roleMenu.ts
-import { SysRequest } from './request'
+import { request } from './request'
 
-export const getMenusByRoleId = (roleId: number) => SysRequest({ method: 'get', url: `/role-menu/getMenusByRoleId/${roleId}` })
+export const getMenusByRoleId = (roleId: number) => request({ method: 'get', url: `/api/portal/sys/role-menu/getMenusByRoleId/${roleId}` })
 
-export const assignMenusToRole = (roleId: number, menuIds: number[]) => SysRequest({ method: 'post', url: '/role-menu/assignMenusToRole', data: { roleId, menuIds } })
+export const assignMenusToRole = (roleId: number, menuIds: number[]) => request({ method: 'post', url: '/api/portal/sys/role-menu/assignMenusToRole', data: { roleId, menuIds } })
