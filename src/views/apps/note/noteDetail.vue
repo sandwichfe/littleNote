@@ -122,7 +122,7 @@
 <script setup lang="ts">
 import {onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
 import RichEditor from '@/components/RichEditor/index.vue';
-import {addNote, deleteNoteItem, editNote, getNote} from "@/network/base";
+import {addNote, deleteNoteItem, editNote, getNote} from "@/network/note";
 import {useRouter} from 'vue-router';
 import {ElMessage} from 'element-plus'
 import {Delete, DocumentChecked, Edit, View} from '@element-plus/icons-vue'

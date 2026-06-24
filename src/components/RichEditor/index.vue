@@ -301,7 +301,7 @@ import { columnResizing, tableEditing } from '@tiptap/pm/tables';
 import type { ViewMutationRecord } from '@tiptap/pm/view';
 import { common, createLowlight } from 'lowlight';
 import { ElMessage } from 'element-plus';
-import { uploadImage } from '@/network/base';
+import { uploadImage } from '@/network/file';
 import { Video } from './VideoNode';
 import 'highlight.js/styles/github.css';
 

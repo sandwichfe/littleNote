@@ -1,96 +1,23 @@
 import { request } from "./request";
 import { cipherText } from "../utils/aesUtil";
 
+const USER_API = "/api/portal/user";
+const QR_CODE_LOGIN_API = `${USER_API}/qrCode/login`;
 
-export interface Note {
-  id: number;
-  title: string;
-  content: string;
-  createTime?: string;
-  updateTime?: string;
+
+interface RegisterParams {
+  username: string;
+  password: string;
+  email?: string;
 }
 
-// 这里为列表和分页功能添加类型
-export function listNote(pageNum: number, pageSize: number,groupId?:number,keyword?:string): Promise<any> {
-  return request({
-    method: "post",
-    url: "/api/little-note/note/listNote",
-    params: {
-      pageNum: pageNum,
-      pageSize: pageSize,
-      groupId:groupId,
-      keyword:keyword
-    }
-  });
-}
-
-// 获取单个笔记，返回类型为 NoteResponse
-export function getNote(id: number): Promise<any> {
-  return request({
-    method: "get",
-    url: "/api/little-note/note/getNote",
-    params: {
-      id: id,
-    }
-  });
-}
-
-// 编辑笔记，返回类型仍然为 NoteResponse 或 void，取决于实际需求
-export function editNote(id: number, content: string, title: string,groupId?: number): Promise<any> {
-  return request({
-    method: "post",
-    url: "/api/little-note/note/editNote",
-    data: {
-      id: id,
-      content: content,
-      title: title,
-      groupId:groupId
-    }
-  });
-}
-
-// 添加新笔记
-export function addNote(id: number, content: string, title: string,groupId?: number): Promise<any> {
-  return request({
-    method: "post",
-    url: "/api/little-note/note/addNote",
-    data: {
-      id: id,
-      content: content,
-      title: title,
-      groupId:groupId
-    }
-  });
-}
-
-// 删除笔记
-export function deleteNoteItem(id: number): Promise<any> {
-  return request({
-    method: "get",
-    url: "/api/little-note/note/deleteNote",
-    params: {
-      id: id,
-    }
-  });
-}
-
-// 登录函数，返回类型可以为登录请求的响应结构
-interface LoginResponseData {
-  token: string;
-  // 可以添加其他字段，如用户信息等
-}
-
-export interface LoginResponse {
-  code: number;
-  msg?: string;
-  data: LoginResponseData;
-}
-
+// 用户登录
 export function userLogin(username: string, password: string): Promise<any> {
   const encryptedPassword = cipherText(password);
+
   return request({
-    url: '/api/portal/user/login',
-    method: 'post',
+    url: `${USER_API}/login`,
+    method: "post",
     params: {
       username,
       password: encryptedPassword
@@ -98,48 +25,24 @@ export function userLogin(username: string, password: string): Promise<any> {
   });
 }
 
-
-
-// 新增生成滑块验证数据的方法
-export function generateQrCode(): Promise<any> {
-  return request({
-    method: "get",
-    url: "/api/portal/user/qrCode/login/generateQrCode",
-    params: {
-    }
-  });
-}
-
-
-
-// 修改检查二维码状态接口
-export const qrCoderStatus = (qrCodeId: string) => request({ method: 'get', url: `/api/portal/user/qrCode/login/fetch/${qrCodeId}`})
-
-
-// 新增用户注册接口
-interface RegisterParams {
-  username: string;
-  password: string;
-  email?: string;
-}
-
+// 用户注册
 export function userRegister(params: RegisterParams): Promise<any> {
   return request({
-    url: '/api/portal/user/register',
-    method: 'post',
+    url: `${USER_API}/register`,
+    method: "post",
     data: params
   });
 }
 
-export function uploadImage(file: File): Promise<any> {
-  const formData = new FormData();
-  formData.append('uploadFile', file);
+// 二维码登录接口
+export function generateQrCode(): Promise<any> {
   return request({
-    method: 'post',
-    url: '/api/oss/upload',
-    data: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
+    method: "get",
+    url: `${QR_CODE_LOGIN_API}/generateQrCode`
   });
 }
+
+// 二维码登录状态查询接口
+export const qrCoderStatus = (qrCodeId: string) => request({ method: "get", url: `${QR_CODE_LOGIN_API}/fetch/${qrCodeId}` });
+
+

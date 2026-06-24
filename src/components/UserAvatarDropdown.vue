@@ -6,7 +6,7 @@ import { ElMessage } from 'element-plus'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
 import Cookies from 'js-cookie'
-import { uploadImage } from '@/network/base'
+import { uploadImage } from '@/network/file'
 import defaultAvatar from "@/assets/img/default_avatar.jpg";
 import {
   getCurrentUser,
