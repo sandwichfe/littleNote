@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getCurrentUserMenus } from '@/network/menu'
+import { getCurrentUserMenus } from '@/network/manage/menu'
 import { generateRoutes } from '@/router'
 import router from '@/router'
 
