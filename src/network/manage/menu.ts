@@ -1,17 +1,28 @@
 // src/network/menu.ts
 import { request } from '../request'
 
-interface Menu {
+export interface Menu {
   id?: number
   name: string
   menuPid?: number // 父级菜单ID
   url?: string
+  path?: string
+  title?: string
+  icon?: string
+  permission?: string
+  children?: Menu[]
   authority?: string
   sort?: number
   type?: number
   deleted?: boolean
   createTime?: string
   createUserId?: number
+}
+
+interface ApiResponse<T> {
+  code: number
+  data: T
+  msg?: string
 }
 
 interface PageVo {
@@ -49,7 +60,7 @@ export const updateMenu = (menu: Menu) => request({
 export const deleteMenu = (id: number) => request({ method: 'delete', url: `/api/portal/sys/menu/delete/${id}` })
 
 // 获取当前用户菜单
-export const getCurrentUserMenus = () => request({ 
+export const getCurrentUserMenus = () => request<ApiResponse<Menu[]>>({
   method: 'get', 
   url: '/api/portal/userCenter/currentUserMenu'
 })

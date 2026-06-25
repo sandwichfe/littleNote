@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { getCurrentUserMenus } from '@/network/manage/menu'
+import { getCurrentUserMenus, type Menu } from '@/network/manage/menu'
 import { generateRoutes } from '@/router'
 import router from '@/router'
 
 export const useMenuStore = defineStore('menu', () => {
-  const menuData = ref([])
+  // Menus used to generate dynamic manage routes.
+  const menuData = ref<Menu[]>([])
   const areRoutesAdded = ref(false)
 
   const fetchAndSetMenus = async () => {
