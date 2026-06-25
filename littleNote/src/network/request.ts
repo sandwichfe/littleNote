@@ -100,9 +100,7 @@ function handleUnauthorized(message?: string): void {
   isRedirecting = true
   ElMessage.error(message || UNAUTHORIZED_MESSAGE)
 
-  router
-    .push('/login')
-    .finally(() => {
-      isRedirecting = false
-    })
+  // 跳转到Portal登录
+  const currentUrl = encodeURIComponent(window.location.href)
+  window.location.href = `http://localhost:9000/login?redirect=${currentUrl}`
 }

@@ -60,21 +60,32 @@ userLogin(loginForm.value.username, loginForm.value.password)
       // 登录成功处理
       loginToken.value = res.data;
       Cookies.set("loginToken", loginToken.value, { expires: 7 });
-      // 获取菜单和路由
-      const { success, message } = await menuStore.fetchAndSetMenus();
-      if (success) {
-        router.push('/');
-        ElMessage.success("登录成功");
+
+      // 检查是否有redirect参数
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirect = urlParams.get('redirect');
+
+      if (redirect) {
+        // 从其他应用跳转来的,带token跳回去
+        const redirectUrl = decodeURIComponent(redirect);
+        const separator = redirectUrl.includes('?') ? '&' : '?';
+        window.location.href = `${redirectUrl}${separator}token=${loginToken.value}`;
       } else {
-        ElMessage.error(message || '菜单加载失败');
-        // 清除token
-        Cookies.remove("loginToken");
+        // Portal自身登录,正常流程
+        const { success, message } = await menuStore.fetchAndSetMenus();
+        if (success) {
+          router.push('/');
+          ElMessage.success("登录成功");
+        } else {
+          ElMessage.error(message || '菜单加载失败');
+          Cookies.remove("loginToken");
+        }
       }
     } else {
       // 登录失败处理（业务错误）
       const errorMessage = res?.msg || '登录失败';
       ElMessage.error(errorMessage);
-      
+
       // 清除可能存在的旧token
       Cookies.remove("loginToken");
     }

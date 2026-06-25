@@ -121,7 +121,10 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.path.startsWith('/manage')) {
     if (!token) {
-      handleUnauthenticatedUser(to, next, menuStore, '/manage/login')
+      // 跳转到Portal登录,携带当前页面地址
+      const currentUrl = encodeURIComponent(window.location.href)
+      window.location.href = `http://localhost:9000/login?redirect=${currentUrl}`
+      return
     } else {
       await handleMenuAndRoutes(to, next, menuStore)
     }
