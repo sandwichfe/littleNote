@@ -100,7 +100,33 @@ function handleUnauthorized(message?: string): void {
   isRedirecting = true
   ElMessage.error(message || UNAUTHORIZED_MESSAGE)
 
-  // 跳转到Portal登录
-  const currentUrl = encodeURIComponent(window.location.href)
-  window.location.href = `http://localhost:9000/login?redirect=${currentUrl}`
+  // 创建iframe加载Portal登录页
+  const iframe = document.createElement('iframe')
+  iframe.id = 'portal-login-iframe'
+  iframe.src = 'http://localhost:9000/login?mode=iframe'
+  iframe.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:9999;background:#fff;'
+  document.body.appendChild(iframe)
+
+  // 监听Portal回传的token
+  const handleMessage = (event: MessageEvent) => {
+    if (event.origin !== 'http://localhost:9000') return
+
+    if (event.data.type === 'LOGIN_SUCCESS') {
+      const token = event.data.token
+      Cookies.set(LOGIN_TOKEN_KEY, token, { expires: 7 })
+
+      // 移除iframe和监听器
+      const iframeEl = document.getElementById('portal-login-iframe')
+      if (iframeEl) {
+        document.body.removeChild(iframeEl)
+      }
+      window.removeEventListener('message', handleMessage)
+      isRedirecting = false
+
+      // 刷新页面
+      window.location.reload()
+    }
+  }
+
+  window.addEventListener('message', handleMessage)
 }

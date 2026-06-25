@@ -9,6 +9,11 @@ const routes: RouteRecordRaw[] = [
     name: 'Login'
   },
   {
+    path: '/logout',
+    component: () => import('@/views/logout.vue'),
+    name: 'Logout'
+  },
+  {
     path: '/',
     component: () => import('@/views/layout/ManageLayout.vue'),
     name: 'ManageLayout',
@@ -58,8 +63,8 @@ router.beforeEach(async (to, _from, next) => {
   const token = Cookies.get('loginToken')
   const menuStore = useMenuStore()
 
-  // 登录页直接放行
-  if (to.path === '/login') {
+  // 登录页和登出页直接放行
+  if (to.path === '/login' || to.path === '/logout') {
     next()
     return
   }

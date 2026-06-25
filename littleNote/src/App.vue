@@ -4,15 +4,6 @@ import { RouterView } from 'vue-router'
 import Cookies from 'js-cookie'
 
 onMounted(() => {
-  // 接收从Portal传来的token
-  const urlParams = new URLSearchParams(window.location.search)
-  const tokenFromUrl = urlParams.get('token')
-
-  if (tokenFromUrl) {
-    Cookies.set('loginToken', tokenFromUrl, { expires: 7 })
-    // 清理URL中的token参数
-    window.history.replaceState({}, '', window.location.pathname + window.location.hash)
-  }
 })
 
 onUnmounted(() => {

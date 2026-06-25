@@ -103,8 +103,8 @@ const updateCurrentUserInfo = async () => {
 const logout = () => {
   menuStore.resetMenuState()
   Cookies.remove('loginToken')
-  const redirectPath = router.currentRoute.value.path.startsWith('/manage') ? '/manage/login' : '/login'
-  router.push(redirectPath)
+  // 跳转到Portal统一登出
+  window.location.href = `http://localhost:9000/logout`
 }
 
 const openDialog = () => {

@@ -61,15 +61,17 @@ userLogin(loginForm.value.username, loginForm.value.password)
       loginToken.value = res.data;
       Cookies.set("loginToken", loginToken.value, { expires: 7 });
 
-      // 检查是否有redirect参数
+      // 检查登录模式
       const urlParams = new URLSearchParams(window.location.search);
-      const redirect = urlParams.get('redirect');
+      const mode = urlParams.get('mode');
 
-      if (redirect) {
-        // 从其他应用跳转来的,带token跳回去
-        const redirectUrl = decodeURIComponent(redirect);
-        const separator = redirectUrl.includes('?') ? '&' : '?';
-        window.location.href = `${redirectUrl}${separator}token=${loginToken.value}`;
+      if (mode === 'iframe' && window.parent !== window) {
+        // iframe模式,通过postMessage回传token
+        window.parent.postMessage(
+          { type: 'LOGIN_SUCCESS', token: loginToken.value },
+          '*' // 生产环境应改为具体的子应用域名
+        );
+        ElMessage.success("登录成功");
       } else {
         // Portal自身登录,正常流程
         const { success, message } = await menuStore.fetchAndSetMenus();

@@ -36,7 +36,6 @@ const constantRoutes: RouteRecordRaw[] = [
 ]
 
 const componentMap: Record<string, () => Promise<any>> = {
-  '/qrcode': () => import('../views/apps/qrcode/qrcodeView.vue'),
   '/noteGroup': () => import('../views/apps/note/noteGroup.vue'),
   '/todo': () => import('../views/apps/todo/todo.vue'),
   '/note': () => import('../views/apps/note/note.vue'),
@@ -101,6 +100,43 @@ async function handleMenuAndRoutes(to, next, menuStore) {
   }
 }
 
+// 使用iframe加载Portal登录页的标记
+let loginIframeCreated = false
+
+function createLoginIframe() {
+  if (loginIframeCreated) return
+  loginIframeCreated = true
+
+  const iframe = document.createElement('iframe')
+  iframe.id = 'portal-login-iframe'
+  iframe.src = 'http://localhost:9000/login?mode=iframe'
+  iframe.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:9999;background:#fff;'
+  document.body.appendChild(iframe)
+
+  // 监听Portal回传的token
+  const handleMessage = (event: MessageEvent) => {
+    if (event.origin !== 'http://localhost:9000') return
+
+    if (event.data.type === 'LOGIN_SUCCESS') {
+      const token = event.data.token
+      Cookies.set('loginToken', token, { expires: 7 })
+
+      // 移除iframe和监听器
+      const iframeEl = document.getElementById('portal-login-iframe')
+      if (iframeEl) {
+        document.body.removeChild(iframeEl)
+      }
+      window.removeEventListener('message', handleMessage)
+      loginIframeCreated = false
+
+      // 刷新页面以重新进入路由守卫
+      window.location.reload()
+    }
+  }
+
+  window.addEventListener('message', handleMessage)
+}
+
 router.beforeEach(async (to, from, next) => {
   const token = Cookies.get('loginToken')
   const menuStore = useMenuStore()
@@ -121,9 +157,8 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.path.startsWith('/manage')) {
     if (!token) {
-      // 跳转到Portal登录,携带当前页面地址
-      const currentUrl = encodeURIComponent(window.location.href)
-      window.location.href = `http://localhost:9000/login?redirect=${currentUrl}`
+      // 创建iframe加载Portal登录页
+      createLoginIframe()
       return
     } else {
       await handleMenuAndRoutes(to, next, menuStore)
