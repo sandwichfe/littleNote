@@ -8,6 +8,10 @@ import fs from 'fs';
 
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons';
 
+// 本地后端服务地址前缀，避免多个 proxy target 重复书写。
+// const baseUrl = 'http://localhost';
+const baseUrl = 'https://yiruserene.top';
+
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -30,15 +34,15 @@ export default defineConfig({
     // },
     proxy: {
       '/api/little-note': {
-        target: 'http://localhost:8000',
+        target: `${baseUrl}:8000`,
         changeOrigin: true
       },
       '/api/portal': {
-        target: 'http://localhost:9088',
+        target: `${baseUrl}:9088`,
         changeOrigin: true
       },
       '/api/oss': {
-        target: 'http://localhost:8000',
+        target: `${baseUrl}:8000`,
         changeOrigin: true
       },
       '/assets/oss': {
