@@ -2,19 +2,8 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import Cookies from 'js-cookie'
 import { useMenuStore } from '@/store/menu'
 import AppLayout from '../views/apps/AppLayout.vue'
-import ManageLayout from '../views/manage/ManageLayout.vue'
 
 const constantRoutes: RouteRecordRaw[] = [
-  {
-    path: '/login',
-    component: () => import('../views/login/login.vue'),
-    name: 'Login',
-  },
-  {
-    path: '/manage/login',
-    component: () => import('../views/manage/login.vue'),
-    name: 'ManageLogin',
-  },
   {
     path: '/',
     component: AppLayout,
@@ -44,63 +33,9 @@ const constantRoutes: RouteRecordRaw[] = [
       },
     ],
   },
-  {
-    path: '/manage',
-    component: ManageLayout,
-    name: 'ManageLayout',
-    redirect: '/manage/user',
-    children: [
-      {
-        path: 'qrcode',
-        component: () => import('../views/apps/qrcode/qrcodeView.vue'),
-        name: 'QRCode',
-      },
-      {
-        path: 'user',
-        component: () => import('../views/manage/user.vue'),
-        name: 'User',
-      },
-      {
-        path: 'role',
-        component: () => import('../views/manage/role.vue'),
-        name: 'Role',
-      },
-      {
-        path: 'menu',
-        component: () => import('../views/manage/menu.vue'),
-        name: 'Menu',
-      },
-      {
-        path: 'dept',
-        component: () => import('../views/manage/dept.vue'),
-        name: 'Dept',
-      },
-      {
-        path: 'dict',
-        component: () => import('../views/manage/dict.vue'),
-        name: 'Dict',
-      },
-      {
-        path: 'operationLog',
-        component: () => import('../views/manage/operationLog.vue'),
-        name: 'OperationLog',
-      },
-      {
-        path: 'noteGroup',
-        component: () => import('../views/apps/note/noteGroup.vue'),
-        name: 'NoteGroup',
-      },
-    ],
-  },
 ]
 
 const componentMap: Record<string, () => Promise<any>> = {
-  '/user': () => import('../views/manage/user.vue'),
-  '/role': () => import('../views/manage/role.vue'),
-  '/menu': () => import('../views/manage/menu.vue'),
-  '/dict': () => import('../views/manage/dict.vue'),
-  '/operationLog': () => import('../views/manage/operationLog.vue'),
-  '/operation-log': () => import('../views/manage/operationLog.vue'),
   '/qrcode': () => import('../views/apps/qrcode/qrcodeView.vue'),
   '/noteGroup': () => import('../views/apps/note/noteGroup.vue'),
   '/todo': () => import('../views/apps/todo/todo.vue'),
