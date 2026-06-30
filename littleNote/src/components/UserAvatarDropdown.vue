@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, nextTick, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Plus, Close } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { Cropper } from 'vue-advanced-cropper'
@@ -16,9 +16,17 @@ import {
 import { useMenuStore } from '@/store/menu'
 
 const router = useRouter()
+const route = useRoute()
 const menuStore = useMenuStore()
 const userInfoContainer = ref(null)
 const dropdownWidth = ref('auto')
+
+// 计算属性：检查是否已登录
+const isLoggedIn = computed(() => {
+  // 监听route变化以触发重新计算
+  void route.fullPath
+  return Boolean(Cookies.get('loginToken'))
+})
 
 const ossLoadBaseUrl = import.meta.env.VITE_OSS_LOAD_BASE_URL;
 
@@ -65,6 +73,11 @@ const passwordRules = {
 
 // 获取当前用户信息
 const fetchUserInfo = async () => {
+  // 如果未登录，不获取用户信息
+  if (!isLoggedIn.value) {
+    return
+  }
+
   try {
     const response = await getCurrentUser()
     const userData = response.data
@@ -100,12 +113,25 @@ const updateCurrentUserInfo = async () => {
   }
 }
 
-import { logout as authLogout } from '@/utils/auth'
+import { logout as authLogout, redirectToLogin } from '@/utils/auth'
 
+// 退出登录 - 仅清除token，停留在当前页面
 const logout = () => {
   menuStore.resetMenuState()
-  // 调用统一登出方法，跳转到Portal统一登出
   authLogout()
+  // 清除用户信息
+  userForm.value = {
+    nickname: '',
+    avatar: '',
+    gender: '',
+    signature: ''
+  }
+  ElMessage.success('已退出登录')
+}
+
+// 跳转到登录页
+const handleLogin = () => {
+  redirectToLogin()
 }
 
 const openDialog = () => {
@@ -194,7 +220,13 @@ onMounted(() => {
 
 <template>
   <div class="user-avatar-dropdown">
-    <el-dropdown trigger="hover" @command="handleCommand" popper-class="user-dropdown">
+    <!-- 未登录状态：显示登录按钮 -->
+    <el-button v-if="!isLoggedIn" type="primary" size="default" @click="handleLogin">
+      登录
+    </el-button>
+
+    <!-- 已登录状态：显示用户头像下拉菜单 -->
+    <el-dropdown v-else trigger="hover" @command="handleCommand" popper-class="user-dropdown">
       <div class="user-info-container" ref="userInfoContainer">
         <el-avatar :size="36" :src="userForm.avatar" class="avatar"></el-avatar>
         <span class="nickname" :title="userForm.nickname">{{ userForm.nickname }}</span>

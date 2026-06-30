@@ -144,10 +144,10 @@ function cleanAuthParams() {
 }
 
 /**
- * 退出登录
+ * 退出登录 - 仅清除本地token,不跳转
  */
 export function logout() {
   Cookies.remove('loginToken')
-  // 跳转到Portal统一登出
-  window.location.href = 'http://localhost:9000/logout'
+  // 清除sessionStorage中的state
+  sessionStorage.removeItem('auth_state')
 }
