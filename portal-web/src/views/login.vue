@@ -18,9 +18,54 @@ import {closeLoading, openLoading} from "@/utils/loadingUtil";
 import {ArrowLeft, RefreshRight} from '@element-plus/icons-vue';
 
 
-onMounted(() => {
-  // 访问登录页面  清除token
-  Cookies.remove("loginToken");
+onMounted(async () => {
+  // 检查是否是子应用授权请求
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirectUri = urlParams.get('redirect_uri');
+  const state = urlParams.get('state');
+  const clientId = urlParams.get('client_id');
+  const existingToken = Cookies.get("loginToken");
+
+  // 如果是子应用授权请求且portal已有token，直接生成授权码跳转
+  if (redirectUri && state && clientId && existingToken) {
+    console.log('=== 检测到已登录，直接授权跳转 ===');
+    console.log('existingToken:', existingToken);
+    console.log('redirectUri:', redirectUri);
+    console.log('state:', state);
+    console.log('clientId:', clientId);
+
+    try {
+      openLoading('正在授权...');
+      const codeRes = await generateAuthCode({
+        clientId,
+        loginToken: existingToken,
+        redirectUri,
+        state
+      });
+      const authCode = codeRes.data.code;
+
+      // 重定向回子应用，携带授权码和state
+      const redirectUrl = new URL(redirectUri);
+      redirectUrl.searchParams.set('code', authCode);
+      redirectUrl.searchParams.set('state', state);
+
+      console.log('生成授权码成功:', authCode);
+      console.log('即将跳转到:', redirectUrl.toString());
+
+      closeLoading();
+      window.location.href = redirectUrl.toString();
+      return; // 直接返回，不继续执行后续逻辑
+    } catch (error) {
+      console.error('自动授权失败:', error);
+      closeLoading();
+      ElMessage.error('授权失败，请重新登录');
+      // 授权失败，清除token，让用户重新登录
+      Cookies.remove("loginToken");
+    }
+  } else {
+    // 普通登录页面访问，清除token
+    Cookies.remove("loginToken");
+  }
 });
 
 const router = useRouter();
