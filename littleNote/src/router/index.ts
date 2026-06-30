@@ -110,11 +110,21 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  // 【认证流程优先】如果是OAuth回调，必须等待认证初始化完成
-  if (isAuthCallback()) {
-    console.log('===== [路由守卫] 检测到OAuth回调，等待认证初始化完成 =====')
+  // 【认证流程优先】如果URL带有OAuth回调参数
+  const hasAuthCallbackParams = to.query.code && to.query.state
+
+  if (hasAuthCallbackParams) {
+    console.log('===== [路由守卫] 检测到OAuth回调参数，等待认证初始化完成 =====')
     await waitForAuthInit()
-    console.log('===== [路由守卫] 认证初始化完成，继续路由处理 =====')
+    console.log('===== [路由守卫] 认证初始化完成，清理URL参数 =====')
+
+    // 认证完成后，清理URL参数并重新导航（仅保留路径，移除 code 和 state）
+    const cleanQuery = { ...to.query }
+    delete cleanQuery.code
+    delete cleanQuery.state
+
+    next({ path: to.path, query: cleanQuery, replace: true })
+    return
   }
 
   // 定义不需要登录的公开路由（如果需要所有页面都登录，将此数组清空）

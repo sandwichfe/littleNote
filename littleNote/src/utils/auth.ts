@@ -121,8 +121,7 @@ async function processAuthCallback(code: string, state: string): Promise<boolean
   if (state !== savedState) {
     console.error('===== [阶段6] state校验失败 =====');
     ElMessage.error('登录校验失败，请重试')
-    // 清理URL参数，避免死循环
-    cleanAuthParams()
+    // 清理sessionStorage
     sessionStorage.removeItem('auth_state')
     sessionStorage.removeItem('auth_redirect_uri')
     throw new Error('State validation failed')
@@ -148,16 +147,12 @@ async function processAuthCallback(code: string, state: string): Promise<boolean
       Cookies.set('loginToken', response.data.token, { expires: 7 })
       console.log('===== [阶段11] token已保存到Cookie =====')
 
-      // 清理URL中的授权码参数
-      cleanAuthParams()
-      console.log('===== [阶段12] 已清理URL参数 =====')
-
       // 清理sessionStorage
       sessionStorage.removeItem('auth_state')
       sessionStorage.removeItem('auth_redirect_uri')
-      console.log('===== [阶段13] 已清理sessionStorage =====')
+      console.log('===== [阶段12] 已清理sessionStorage =====')
 
-      console.log('===== [阶段14] 登录流程完成，返回true =====')
+      console.log('===== [阶段13] 登录流程完成，URL参数将由路由守卫清理 =====')
       return true
     } else {
       console.error('===== [阶段15] exchange接口返回失败 =====', response)
@@ -165,7 +160,6 @@ async function processAuthCallback(code: string, state: string): Promise<boolean
       // exchange接口调用失败，直接抛出异常阻止后续代码执行
       const errorMsg = response?.msg || '登录失败'
       ElMessage.error(errorMsg)
-      cleanAuthParams()
       sessionStorage.removeItem('auth_state')
       sessionStorage.removeItem('auth_redirect_uri')
       throw new Error(errorMsg)
@@ -180,11 +174,10 @@ async function processAuthCallback(code: string, state: string): Promise<boolean
       response: error?.response
     })
 
-    // exchange接口调用异常，清理URL参数避免死循环
-    cleanAuthParams()
+    // exchange接口调用异常，清理存储避免状态混乱
     sessionStorage.removeItem('auth_state')
     sessionStorage.removeItem('auth_redirect_uri')
-    console.log('===== [阶段18] 已清理参数和存储 =====')
+    console.log('===== [阶段18] 已清理sessionStorage =====')
 
     // 判断是否是超时错误
     if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
