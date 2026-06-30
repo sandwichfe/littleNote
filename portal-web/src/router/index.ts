@@ -59,7 +59,7 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to, from, next) => {
   const token = Cookies.get('loginToken')
   const menuStore = useMenuStore()
 
@@ -69,10 +69,15 @@ router.beforeEach(async (to, _from, next) => {
     return
   }
 
-  // 未登录跳转登录页
+  // 未登录跳转登录页，保留原始URL参数
   if (!token) {
     menuStore.resetMenuState()
-    next('/login')
+    // 如果当前路由有参数，保留这些参数传递给登录页
+    if (Object.keys(to.query).length > 0) {
+      next({ path: '/login', query: to.query })
+    } else {
+      next('/login')
+    }
     return
   }
 
