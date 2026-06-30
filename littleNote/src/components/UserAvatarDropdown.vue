@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Plus, Close } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -21,11 +21,12 @@ const menuStore = useMenuStore()
 const userInfoContainer = ref(null)
 const dropdownWidth = ref('auto')
 
+// 登录状态响应式变量
+const loginStatus = ref(Boolean(Cookies.get('loginToken')))
+
 // 计算属性：检查是否已登录
 const isLoggedIn = computed(() => {
-  // 监听route变化以触发重新计算
-  void route.fullPath
-  return Boolean(Cookies.get('loginToken'))
+  return loginStatus.value
 })
 
 const ossLoadBaseUrl = import.meta.env.VITE_OSS_LOAD_BASE_URL;
@@ -126,6 +127,8 @@ const logout = () => {
     gender: '',
     signature: ''
   }
+  // 更新登录状态
+  loginStatus.value = false
   ElMessage.success('已退出登录')
 }
 
@@ -214,7 +217,24 @@ const cropAndUpload = () => {
 }
 
 onMounted(() => {
-  fetchUserInfo()
+  // 更新登录状态
+  loginStatus.value = Boolean(Cookies.get('loginToken'))
+  // 如果已登录，获取用户信息
+  if (loginStatus.value) {
+    fetchUserInfo()
+  }
+})
+
+// 监听路由变化，检测登录状态（用于处理登录回调后的状态更新）
+watch(() => route.fullPath, () => {
+  const hasToken = Boolean(Cookies.get('loginToken'))
+  if (hasToken !== loginStatus.value) {
+    loginStatus.value = hasToken
+    if (hasToken) {
+      // 登录成功，获取用户信息
+      fetchUserInfo()
+    }
+  }
 })
 </script>
 
