@@ -1,8 +1,8 @@
 import Cookies from 'js-cookie'
 import { ElMessage } from 'element-plus'
 
-const PORTAL_LOGIN_URL = 'http://localhost:9000/login'
-const CLIENT_ID = 'littleNote'
+const PORTAL_LOGIN_URL = import.meta.env.VITE_PORTAL_LOGIN_URL
+const CLIENT_ID = import.meta.env.VITE_CLIENT_ID
 
 /**
  * 检查用户是否已登录
@@ -48,11 +48,6 @@ export async function handleAuthCallback(): Promise<boolean> {
   const code = urlParams.get('code')
   const state = urlParams.get('state')
 
-  console.log('=== littleNote处理回调 ===');
-  console.log('当前URL:', window.location.href);
-  console.log('code:', code);
-  console.log('state:', state);
-
   // 没有授权码参数，不是回调页面
   if (!code || !state) {
     console.log('没有code或state，跳过处理');
@@ -71,17 +66,12 @@ export async function handleAuthCallback(): Promise<boolean> {
   }
 
   try {
-    console.log('开始用授权码换取token...');
     // 调用后端接口，用授权码换取token
     const response = await exchangeCodeForToken(code, CLIENT_ID)
-
-    console.log('换取token响应:', response);
 
     if (response && response.code === 200) {
       // 保存token到Cookie
       Cookies.set('loginToken', response.data.token, { expires: 7 })
-
-      console.log('token已保存到Cookie');
 
       // 清理URL中的授权码参数
       cleanAuthParams()
@@ -91,7 +81,6 @@ export async function handleAuthCallback(): Promise<boolean> {
 
       return true
     } else {
-      console.error('换取token失败:', response);
       ElMessage.error(response?.msg || '登录失败')
       return false
     }
