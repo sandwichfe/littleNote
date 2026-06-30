@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vue-tsc:*)",
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"romantic wedding soft pink gold admin panel glassmorphism\" --design-system -p \"LittleNote Admin\")",
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"romantic wedding soft pink gold\" --design-system -p \"LittleNote Admin\")",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(python -c \"import sys; print\\(sys.version\\)\")",
+      "Bash(/c/Users/lww/AppData/Local/Microsoft/WindowsApps/python3 --version)",
+      "Bash(echo \"RC=$?\")",
+      "Read(//c/Users/lww/AppData/Local/Programs/Python//**)",
+      "Bash(ls /c/Python*)",
+      "Bash(py --version)",
+      "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"romantic wedding soft pink gold admin panel\" --design-system -p \"LittleNote Admin\")",
+      "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"soft ui glassmorphism neumorphism\" --domain style)",
+      "Bash(py .claude/skills/ui-ux-pro-max/scripts/search.py \"admin dashboard panel\" --stack vue)",
+      "Bash(npx vite:*)",
+      "Bash(python3 .claude/skills/ui-ux-pro-max/scripts/search.py \"sidebar tree navigation panel clean\" --domain ux -n 3)",
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"sidebar tree navigation panel clean\" --domain ux -n 3)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(python -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(python .claude/skills/ui-ux-pro-max/scripts/search.py \"sidebar\" --domain ux)"
+    ]
+  }
+}
