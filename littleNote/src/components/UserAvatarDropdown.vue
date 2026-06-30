@@ -100,11 +100,12 @@ const updateCurrentUserInfo = async () => {
   }
 }
 
+import { logout as authLogout } from '@/utils/auth'
+
 const logout = () => {
   menuStore.resetMenuState()
-  Cookies.remove('loginToken')
-  // 跳转到Portal统一登出
-  window.location.href = `http://localhost:9000/logout`
+  // 调用统一登出方法，跳转到Portal统一登出
+  authLogout()
 }
 
 const openDialog = () => {

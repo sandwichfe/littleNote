@@ -2,8 +2,11 @@
 import { onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import Cookies from 'js-cookie'
+import { handleAuthCallback } from '@/utils/auth'
 
-onMounted(() => {
+onMounted(async () => {
+  // 处理Portal登录回跳，提取授权码并换取token
+  await handleAuthCallback()
 })
 
 onUnmounted(() => {

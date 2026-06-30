@@ -3,11 +3,19 @@ import { cipherText } from '@/utils/aesUtil'
 
 const USER_API = '/api/portal/user'
 const QR_CODE_LOGIN_API = `${USER_API}/qrCode/login`
+const AUTH_API = '/api/portal/auth'
 
 interface RegisterParams {
   username: string
   password: string
   email?: string
+}
+
+interface AuthCodeParams {
+  clientId: string
+  loginToken: string
+  redirectUri: string
+  state: string
 }
 
 export function userLogin(username: string, password: string): Promise<any> {
@@ -39,3 +47,15 @@ export function generateQrCode(): Promise<any> {
 
 export const qrCoderStatus = (qrCodeId: string) =>
   request({ method: 'get', url: `${QR_CODE_LOGIN_API}/fetch/${qrCodeId}` })
+
+/**
+ * 生成授权码（用于子应用授权登录）
+ * @param params - 授权码参数
+ */
+export function generateAuthCode(params: AuthCodeParams): Promise<any> {
+  return request({
+    url: `${AUTH_API}/code`,
+    method: 'post',
+    data: params
+  })
+}

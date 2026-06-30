@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import Cookies from 'js-cookie'
 import { useMenuStore } from '@/store/menu'
+import { redirectToLogin, isAuthenticated } from '@/utils/auth'
 import AppLayout from '../views/apps/AppLayout.vue'
 
 const constantRoutes: RouteRecordRaw[] = [
@@ -76,9 +77,9 @@ export function generateRoutes(menuData) {
   return routes
 }
 
-function handleUnauthenticatedUser(to, next, menuStore, redirectPath = '/login') {
-  menuStore.resetMenuState()
-  next(redirectPath)
+function handleUnauthenticatedUser() {
+  // 跳转到Portal统一登录（携带当前URL作为回跳地址）
+  redirectToLogin(window.location.href)
 }
 
 async function handleMenuAndRoutes(to, next, menuStore) {
@@ -100,54 +101,18 @@ async function handleMenuAndRoutes(to, next, menuStore) {
   }
 }
 
-// 使用iframe加载Portal登录页的标记
-let loginIframeCreated = false
-
-function createLoginIframe() {
-  if (loginIframeCreated) return
-  loginIframeCreated = true
-
-  const iframe = document.createElement('iframe')
-  iframe.id = 'portal-login-iframe'
-  iframe.src = 'http://localhost:9000/login?mode=iframe'
-  iframe.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;border:none;z-index:9999;background:#fff;'
-  document.body.appendChild(iframe)
-
-  // 监听Portal回传的token
-  const handleMessage = (event: MessageEvent) => {
-    if (event.origin !== 'http://localhost:9000') return
-
-    if (event.data.type === 'LOGIN_SUCCESS') {
-      const token = event.data.token
-      Cookies.set('loginToken', token, { expires: 7 })
-
-      // 移除iframe和监听器
-      const iframeEl = document.getElementById('portal-login-iframe')
-      if (iframeEl) {
-        document.body.removeChild(iframeEl)
-      }
-      window.removeEventListener('message', handleMessage)
-      loginIframeCreated = false
-
-      // 刷新页面以重新进入路由守卫
-      window.location.reload()
-    }
-  }
-
-  window.addEventListener('message', handleMessage)
-}
-
 router.beforeEach(async (to, from, next) => {
-  const token = Cookies.get('loginToken')
   const menuStore = useMenuStore()
 
-  // 排除登录页面
+  // 排除登录页面（虽然子应用不需要登录页）
   if (to.path === '/login' || to.path === '/manage/login') {
     next()
     return
   }
 
-  const publicRoutes = ['/note', '/noteDetail', '/todo', '/converter']
+  // 定义不需要登录的公开路由（如果需要所有页面都登录，将此数组清空）
+  const publicRoutes: string[] = []  // 修改为空数组，所有路由都需要登录
+  // const publicRoutes = ['/note', '/noteDetail', '/todo', '/converter']  // 原配置：这些路由无需登录
   const isPublicRoute = publicRoutes.some(route => to.path.startsWith(route)) || to.path === '/'
 
   if (isPublicRoute) {
@@ -155,17 +120,21 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  if (to.path.startsWith('/manage')) {
-    if (!token) {
-      // 创建iframe加载Portal登录页
-      createLoginIframe()
-      return
-    } else {
-      await handleMenuAndRoutes(to, next, menuStore)
-    }
+  // 所有非公开路由都需要登录
+  if (!isAuthenticated()) {
+    console.log('未登录，跳转到Portal登录');
+    handleUnauthenticatedUser()
     return
   }
 
+  // 已登录的路由处理
+  if (to.path.startsWith('/manage')) {
+    // 管理后台需要加载菜单
+    await handleMenuAndRoutes(to, next, menuStore)
+    return
+  }
+
+  // 其他已登录路由正常放行
   next()
 })
 

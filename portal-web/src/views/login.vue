@@ -12,7 +12,7 @@ import Img05 from "@/assets/img/wwnn_1.jpg";
 import Img06 from "@/assets/img/wwnn_2.jpg";
 
 import QRCode from '@/components/QRCode.vue';
-import {generateQrCode, qrCoderStatus, userLogin, userRegister} from '@/network/base';
+import {generateQrCode, qrCoderStatus, userLogin, userRegister, generateAuthCode} from '@/network/base';
 import {useMenuStore} from '@/store/menu';
 import {closeLoading, openLoading} from "@/utils/loadingUtil";
 import {ArrowLeft, RefreshRight} from '@element-plus/icons-vue';
@@ -53,55 +53,86 @@ const login = async () => {
 const success = (msg) => {
   isShow.value = false;
   openLoading('o(*≧▽≦)ツ加载中~');
-    // 登录请求
-userLogin(loginForm.value.username, loginForm.value.password)
-  .then(async (res) => {
-    if (res && res.code === 200) {
-      // 登录成功处理
-      loginToken.value = res.data;
-      Cookies.set("loginToken", loginToken.value, { expires: 7 });
+  // 登录请求
+  userLogin(loginForm.value.username, loginForm.value.password)
+    .then(async (res) => {
+      if (res && res.code === 200) {
+        // 登录成功处理
+        loginToken.value = res.data;
+        Cookies.set("loginToken", loginToken.value, { expires: 7 });
 
-      // 检查登录模式
-      const urlParams = new URLSearchParams(window.location.search);
-      const mode = urlParams.get('mode');
+        // 检查是否是子应用回跳登录（使用授权码模式）
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUri = urlParams.get('redirect_uri');
+        const state = urlParams.get('state');
+        const clientId = urlParams.get('client_id');
 
-      if (mode === 'iframe' && window.parent !== window) {
-        // iframe模式,通过postMessage回传token
-        window.parent.postMessage(
-          { type: 'LOGIN_SUCCESS', token: loginToken.value },
-          '*' // 生产环境应改为具体的子应用域名
-        );
-        ElMessage.success("登录成功");
-      } else {
-        // Portal自身登录,正常流程
-        const { success, message } = await menuStore.fetchAndSetMenus();
-        if (success) {
-          router.push('/');
-          ElMessage.success("登录成功");
+        // 调试日志：检查URL参数
+        console.log('=== 授权码登录调试 ===');
+        console.log('redirectUri:', redirectUri);
+        console.log('state:', state);
+        console.log('clientId:', clientId);
+        console.log('完整URL:', window.location.href);
+
+        if (redirectUri && state) {
+          // 子应用授权登录流程：调用后端生成一次性授权码
+          try {
+            const codeRes = await generateAuthCode({
+              clientId,
+              loginToken: loginToken.value,
+              redirectUri,
+              state
+            });
+            const authCode = codeRes.data.code;
+
+            // 重定向回子应用，携带授权码和state
+            const redirectUrl = new URL(redirectUri);
+            redirectUrl.searchParams.set('code', authCode);
+            redirectUrl.searchParams.set('state', state);
+
+            console.log('生成授权码成功:', authCode);
+            console.log('即将跳转到:', redirectUrl.toString());
+
+            ElMessage.success("登录成功，正在跳转...");
+            setTimeout(() => {
+              window.location.href = redirectUrl.toString();
+            }, 500);
+          } catch (error) {
+            console.error('授权码生成失败:', error);
+            ElMessage.error('授权失败，请重试');
+            Cookies.remove("loginToken");
+          }
         } else {
-          ElMessage.error(message || '菜单加载失败');
-          Cookies.remove("loginToken");
+          // Portal自身登录,正常流程
+          console.log('进入Portal自身登录流程');
+          const { success, message } = await menuStore.fetchAndSetMenus();
+          if (success) {
+            router.push('/');
+            ElMessage.success("登录成功");
+          } else {
+            ElMessage.error(message || '菜单加载失败');
+            Cookies.remove("loginToken");
+          }
         }
-      }
-    } else {
-      // 登录失败处理（业务错误）
-      const errorMessage = res?.msg || '登录失败';
-      ElMessage.error(errorMessage);
+      } else {
+        // 登录失败处理（业务错误）
+        const errorMessage = res?.msg || '登录失败';
+        ElMessage.error(errorMessage);
 
-      // 清除可能存在的旧token
-      Cookies.remove("loginToken");
-    }
-  })
-  .catch(error => {
-    // 处理请求错误
-    const errorMessage = error?.response?.data?.msg 
-      || error?.message 
-      || '登录请求失败，请稍后重试';
-    ElMessage.error(errorMessage);
-  })
-  .finally(() => {
-    closeLoading();
-  });
+        // 清除可能存在的旧token
+        Cookies.remove("loginToken");
+      }
+    })
+    .catch(error => {
+      // 处理请求错误
+      const errorMessage = error?.response?.data?.msg
+        || error?.message
+        || '登录请求失败，请稍后重试';
+      ElMessage.error(errorMessage);
+    })
+    .finally(() => {
+      closeLoading();
+    });
 
 };
 
