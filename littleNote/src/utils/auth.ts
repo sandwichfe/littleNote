@@ -97,20 +97,9 @@ export async function handleAuthCallback(): Promise<boolean> {
  * @param clientId - 客户端ID
  */
 async function exchangeCodeForToken(code: string, clientId: string) {
-  // TODO: 替换为实际后端接口
-  const response = await fetch('/api/portal/auth/exchange', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      code,
-      clientId: clientId,
-      redirectUri: window.location.origin + window.location.pathname
-    })
-  })
-
-  return await response.json()
+  const { exchangeCodeForToken: exchangeApi } = await import('../network/base')
+  const redirectUri = window.location.origin + window.location.pathname
+  return exchangeApi(code, clientId, redirectUri)
 }
 
 /**

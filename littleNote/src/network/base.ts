@@ -45,4 +45,17 @@ export function generateQrCode(): Promise<any> {
 // 二维码登录状态查询接口
 export const qrCoderStatus = (qrCodeId: string) => request({ method: "get", url: `${QR_CODE_LOGIN_API}/fetch/${qrCodeId}` });
 
+// 授权码换取token接口
+export function exchangeCodeForToken(code: string, clientId: string, redirectUri: string): Promise<any> {
+  return request({
+    url: "/api/portal/auth/exchange",
+    method: "post",
+    data: {
+      code,
+      clientId,
+      redirectUri
+    }
+  });
+}
+
 
