@@ -5,7 +5,7 @@ import axios, {
 } from 'axios'
 import Cookies from 'js-cookie'
 import { ElMessage } from 'element-plus'
-import { redirectToLogin } from '@/utils/auth'
+import { redirectToLogin, isAuthCallback } from '@/utils/auth'
 
 type RequestConfig = AxiosRequestConfig & {
   url?: string
@@ -98,10 +98,16 @@ function handleUnauthorized(message?: string): void {
 
   if (isRedirecting) return
 
+  // 【认证回调保护】如果正在处理OAuth回调，不跳转登录，避免打断认证流程
+  if (isAuthCallback()) {
+    console.log('===== [请求拦截器] 正在处理OAuth回调，不跳转登录 =====')
+    return
+  }
+
   isRedirecting = true
   ElMessage.error(message || UNAUTHORIZED_MESSAGE)
 
-  // 使用code授权码模式跳转到Portal登录页
+  // 使用OAuth授权码模式跳转到Portal登录页
   setTimeout(() => {
     redirectToLogin()
   }, 1000)

@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import Cookies from 'js-cookie'
 import { useMenuStore } from '@/store/menu'
-import { redirectToLogin, isAuthenticated } from '@/utils/auth'
+import { redirectToLogin, isAuthenticated, waitForAuthInit, isAuthCallback } from '@/utils/auth'
 import AppLayout from '../views/apps/AppLayout.vue'
 
 const constantRoutes: RouteRecordRaw[] = [
@@ -110,9 +110,15 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
+  // 【认证流程优先】如果是OAuth回调，必须等待认证初始化完成
+  if (isAuthCallback()) {
+    console.log('===== [路由守卫] 检测到OAuth回调，等待认证初始化完成 =====')
+    await waitForAuthInit()
+    console.log('===== [路由守卫] 认证初始化完成，继续路由处理 =====')
+  }
+
   // 定义不需要登录的公开路由（如果需要所有页面都登录，将此数组清空）
-  const publicRoutes: string[] = []  // 修改为空数组，所有路由都需要登录
-  // const publicRoutes = ['/note', '/noteDetail', '/todo', '/converter']  // 原配置：这些路由无需登录
+  const publicRoutes: string[] = []  // 所有路由都需要登录
   const isPublicRoute = publicRoutes.some(route => to.path.startsWith(route)) || to.path === '/'
 
   if (isPublicRoute) {
