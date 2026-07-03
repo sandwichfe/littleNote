@@ -204,13 +204,9 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleEvent);
 });
 
-// 将 html格式 提取为 只要正文
-const extractTitleFromHtml = (htmlString: string) => {
-  // 将内容转成标签
-  const doc = new DOMParser().parseFromString(htmlString, 'text/html');
-  // 提取标签里面的所有文字
-  let title = doc.body.textContent || "";
-  return title.replace(/\s+/g, ' ').trim().substring(0, 200);
+// 将编辑器纯文本整理为标题，回车和连续空白统一转为空格。
+const buildNoteTitle = (text: string) => {
+  return text.replace(/\s+/g, ' ').trim().substring(0, 100);
 };
 
 const saveNote = () => {
@@ -218,7 +214,7 @@ const saveNote = () => {
   if (!editor) return;
 
   let noteValue = editor.getHTML();
-  let title = extractTitleFromHtml(noteValue);
+  const title = buildNoteTitle(editor.getText());
   noteValue = cipherText(noteValue);
 
   if (noteData.value.noteId === -1) {

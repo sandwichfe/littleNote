@@ -1280,6 +1280,9 @@ const onVideoChange = async (e: Event) => {
 
 const getHTML = () => editor.value?.getHTML() ?? '';
 
+// 对外提供编辑器纯文本，避免调用方再从 HTML 中解析正文。
+const getText = () => editor.value?.getText({ blockSeparator: '\n' }) ?? '';
+
 type DeleteLineRange = {
   from: number;
   to: number;
@@ -1395,7 +1398,7 @@ const deleteCurrentLine = () => {
   return true;
 };
 
-defineExpose({ getHTML, deleteCurrentLine });
+defineExpose({ getHTML, getText, deleteCurrentLine });
 </script>
 
 <style scoped>

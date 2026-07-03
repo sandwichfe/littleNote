@@ -48,7 +48,8 @@
           <ul>
             <li v-for="(c, index) in contents" :key="index" class="line">
               <div class="file-li-item" @click="addOrUpdateNote(c.id)">
-                <div class="prename">{{ c.title }}</div>
+                <div class="prename note-highlight-html" v-html="getDisplayTitle(c)"></div>
+                <div v-if="getDisplayContent(c)" class="pcontent note-highlight-html" v-html="getDisplayContent(c)"></div>
                 <div class="ptime">{{ c.updateTime || c.createTime }}</div>
               </div>
             </li>
@@ -170,14 +171,8 @@ const loadNotes = async (groupId: number | null = null, keyword = '') => {
   try {
     const noteRes = await listNote(-1, -1, groupId, keyword);
 
-    if (keyword && keyword.trim() !== '') {
-      const lowerKeyword = keyword.toLowerCase();
-      contents.value = noteRes.data.records.filter(note =>
-          note.title.toLowerCase().includes(lowerKeyword)
-      );
-    } else {
-      contents.value = noteRes.data.records;
-    }
+    // 接口已按 ES 搜索返回结果，前端不再按标题二次过滤，避免正文命中被隐藏。
+    contents.value = noteRes.data.records;
 
     return true;
   } catch (error) {
@@ -199,6 +194,44 @@ const initList = async () => {
     loading.value = false;
     isInitializing.value = false;
   }
+};
+
+const getDisplayTitle = (note: Note) => {
+  // 高亮标题为空时回退到原始标题，保证列表始终有标题可展示。
+  return buildHighlightSnippet(note.highlightTitle || note.title || '');
+};
+
+const getDisplayContent = (note: Note) => {
+  return buildHighlightSnippet(note.highlightContent || '');
+};
+
+const escapeHtml = (value: string) => {
+  return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+};
+
+const buildHighlightSnippet = (value: string) => {
+  const highlightStart = '___NOTE_HIGHLIGHT_START___';
+  const highlightEnd = '___NOTE_HIGHLIGHT_END___';
+
+  // 列表只展示搜索摘要文本，避免富文本里的 p/div 等标签撑乱卡片排版。
+  const snippet = value
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<\/(p|div|li|h[1-6])>/gi, ' ')
+      .replace(/<(em|mark)\b[^>]*>/gi, highlightStart)
+      .replace(/<\/(em|mark)>/gi, highlightEnd)
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  return escapeHtml(snippet)
+      .split(highlightStart).join('<mark class="note-search-hit">')
+      .split(highlightEnd).join('</mark>');
 };
 
 type NoteViewMode = 'edit' | 'preview';
@@ -480,21 +513,23 @@ ul>i {
 
 .file-li-item {
   width: calc(100% - 40px);
-  height: 90px;
+  min-height: 90px;
+  height: auto;
   margin-left: 20px;
   display: flex;
   align-items: flex-start;
   flex-direction: column;
+  gap: 4px;
   justify-content: center;
-  padding: 10px 0;
+  padding: 12px 0;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .prename {
   text-align: left;
-  line-height: 1.4;
-  margin-top: 5px;
-  margin-bottom: 5px;
+  line-height: 1.35;
+  margin: 0;
   color: #333;
   font-size: 17px;
   font-weight: 500;
@@ -510,11 +545,35 @@ ul>i {
   color: #409EFF;
 }
 
+.pcontent {
+  text-align: left;
+  line-height: 1.45;
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  max-width: 100%;
+}
+
+.note-highlight-html :deep(em),
+.note-highlight-html :deep(mark),
+.note-highlight-html :deep(.highlight),
+.note-highlight-html :deep(.note-search-hit) {
+  color: #d97706;
+  font-style: normal;
+  background: #fff3cd;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
 .ptime {
   text-align: left;
   line-height: 1.4;
-  margin-top: 0px;
-  margin-bottom: 5px;
+  margin-top: 2px;
+  margin-bottom: 0;
   color: #888;
   font-size: 13px;
   overflow: hidden;

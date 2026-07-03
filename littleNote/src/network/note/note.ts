@@ -8,6 +8,8 @@ export interface Note {
   content: string;
   createTime?: string;
   updateTime?: string;
+  highlightTitle?: string | null;
+  highlightContent?: string | null;
 }
 
 // 笔记接口
