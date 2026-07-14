@@ -121,26 +121,44 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   padding: 0;
-  color: #475569;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08);
+  color: #6366f1;
+  background: linear-gradient(145deg, #ffffff 0%, #f5f7ff 100%);
+  border: 2px solid rgba(165, 180, 252, 0.3);
+  border-radius: 16px;
+  box-shadow:
+    0 10px 24px rgba(99, 102, 241, 0.11),
+    0 3px 0 rgba(99, 102, 241, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -8px 14px rgba(165, 180, 252, 0.08);
   backdrop-filter: blur(8px);
   cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  overflow: hidden;
+  transition: color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* 用伪元素做轻量贴纸感装饰，避免额外增加模板结构。 */
+.back-to-top::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  inset: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
 }
 
 .back-to-top:hover,
 .back-to-top:focus-visible {
-  color: #2563eb;
-  background: #ffffff;
-  border-color: rgba(37, 99, 235, 0.35);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18), 0 4px 10px rgba(37, 99, 235, 0.12);
-  transform: translateY(-2px);
+  color: #4f46e5;
+  border-color: rgba(129, 140, 248, 0.4);
+  box-shadow:
+    0 14px 30px rgba(99, 102, 241, 0.15),
+    0 4px 0 rgba(99, 102, 241, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -8px 14px rgba(165, 180, 252, 0.1);
+  transform: translateY(-1px);
 }
 
 .back-to-top:active {
@@ -148,11 +166,13 @@ onBeforeUnmount(() => {
 }
 
 .back-to-top:focus-visible {
-  outline: 2px solid rgba(37, 99, 235, 0.35);
+  outline: 2px solid rgba(129, 140, 248, 0.38);
   outline-offset: 2px;
 }
 
 .back-to-top-icon {
+  position: relative;
+  z-index: 1;
   width: 24px;
   height: 24px;
 }
@@ -173,9 +193,16 @@ onBeforeUnmount(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .back-to-top,
+  .back-to-top::before,
   .back-to-top-fade-enter-active,
   .back-to-top-fade-leave-active {
     transition: none;
+  }
+
+  .back-to-top:hover,
+  .back-to-top:focus-visible,
+  .back-to-top:active {
+    transform: none;
   }
 }
 
