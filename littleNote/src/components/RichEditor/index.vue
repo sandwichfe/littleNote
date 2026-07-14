@@ -171,7 +171,7 @@
 
         <!-- 插入 -->
         <button class="re-btn" :class="{ active: editor.isActive('codeBlock') }"
-                @click="run(c => c.toggleCodeBlock())" title="代码块">
+                @click="toggleCodeBlock" title="代码块">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
         </button>
         <button class="re-btn" @click="pickImage" title="插入图片">
@@ -295,7 +295,7 @@ import TableCell from '@tiptap/extension-table-cell';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import ListItem from '@tiptap/extension-list-item';
 import type { NodeViewRendererProps } from '@tiptap/core';
-import type { ResolvedPos } from '@tiptap/pm/model';
+import type { Node as ProseMirrorNode, ResolvedPos } from '@tiptap/pm/model';
 import { Selection, TextSelection } from '@tiptap/pm/state';
 import { columnResizing, tableEditing } from '@tiptap/pm/tables';
 import type { ViewMutationRecord } from '@tiptap/pm/view';
@@ -1078,6 +1078,64 @@ const onEditorBlankMouseDown = (event: MouseEvent) => {
 const run = (fn: (chain: any) => any) => {
   if (!editor.value) return;
   fn(editor.value.chain().focus()).run();
+};
+
+const collectTextBlockLines = (node: ProseMirrorNode): string[] => {
+  if (node.isTextblock) {
+    return [node.textBetween(0, node.content.size, '\n')];
+  }
+
+  const lines: string[] = [];
+  node.forEach((child) => {
+    lines.push(...collectTextBlockLines(child));
+  });
+  return lines;
+};
+
+const getSelectedTextWithBlockBreaks = () => {
+  if (!editor.value) return '';
+
+  const lines: string[] = [];
+  const fragment = editor.value.state.selection.content().content;
+
+  // 直接 textBetween 在部分浏览器选区下会丢段落分隔，这里按文本块显式补换行。
+  fragment.forEach((node) => {
+    lines.push(...collectTextBlockLines(node));
+  });
+
+  return lines.join('\n');
+};
+
+const toggleCodeBlock = () => {
+  if (!editor.value) return;
+
+  const { state, view } = editor.value;
+  const { from, to, empty } = state.selection;
+  const selectedText = getSelectedTextWithBlockBreaks();
+
+  if (empty || editor.value.isActive('codeBlock') || !selectedText) {
+    run((c) => c.toggleCodeBlock());
+    return;
+  }
+
+  // 多段文本选区应合并成一个代码块，符合 Notion、飞书文档、语雀等编辑器的常见交互。
+  const codeBlock = state.schema.nodes.codeBlock.create(null, state.schema.text(selectedText));
+  const tr = state.tr.replaceRangeWith(from, to, codeBlock);
+  let selectionPos = tr.selection.from;
+
+  tr.doc.nodesBetween(
+    Math.max(0, from - 2),
+    Math.min(tr.doc.content.size, from + codeBlock.nodeSize + 2),
+    (node, pos) => {
+      if (node.type.name !== 'codeBlock' || node.textContent !== selectedText) return true;
+      selectionPos = pos + node.nodeSize - 1;
+      return false;
+    }
+  );
+
+  tr.setSelection(Selection.near(tr.doc.resolve(selectionPos), -1));
+  view.dispatch(tr.scrollIntoView());
+  view.focus();
 };
 
 const getActiveHeadingLevel = () => {
