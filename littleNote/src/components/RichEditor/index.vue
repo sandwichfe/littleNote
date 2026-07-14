@@ -1106,6 +1106,25 @@ const getSelectedTextWithBlockBreaks = () => {
   return lines.join('\n');
 };
 
+const insertEmptyCodeBlockAfterCurrentTextBlock = () => {
+  if (!editor.value) return false;
+
+  const { state, view } = editor.value;
+  const { $from } = state.selection;
+  if (!$from.parent.isTextblock) return false;
+
+  // 没有选中文字时只在光标所在块后插入空代码块，不主动转换已有内容。
+  const insertPos = $from.after($from.depth);
+  const codeBlock = state.schema.nodes.codeBlock.create();
+  const tr = state.tr.insert(insertPos, codeBlock);
+  const selectionPos = insertPos + 1;
+
+  tr.setSelection(TextSelection.create(tr.doc, selectionPos));
+  view.dispatch(tr.scrollIntoView());
+  view.focus();
+  return true;
+};
+
 const toggleCodeBlock = () => {
   if (!editor.value) return;
 
@@ -1113,7 +1132,12 @@ const toggleCodeBlock = () => {
   const { from, to, empty } = state.selection;
   const selectedText = getSelectedTextWithBlockBreaks();
 
-  if (empty || editor.value.isActive('codeBlock') || !selectedText) {
+  if (empty || !selectedText) {
+    insertEmptyCodeBlockAfterCurrentTextBlock();
+    return;
+  }
+
+  if (editor.value.isActive('codeBlock')) {
     run((c) => c.toggleCodeBlock());
     return;
   }
