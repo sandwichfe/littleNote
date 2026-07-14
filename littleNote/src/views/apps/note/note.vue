@@ -61,6 +61,8 @@
       </div>
     </div>
 
+    <BackToTop :target="scrollContainer" :scroller="scroll" />
+
   </div>
 </template>
 
@@ -73,6 +75,7 @@ import { ref, watch, onMounted, nextTick, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNoteGroupStore } from "@/store/noteGroup";
 import { useNoteScroll } from "@/composables/useNoteScroll";
+import BackToTop from "@/components/BackToTop.vue";
 import { DocumentAdd } from '@element-plus/icons-vue';
 
 // 定义查询对象接口
@@ -110,7 +113,7 @@ const groups = ref<Array<{ id: number; groupName: string }>>([]);
 const scrollContainer = ref<HTMLElement | null>(null);
 const scrollWrapper = ref<HTMLElement | null>(null);
 
-const { refreshScroll } = useNoteScroll(scrollContainer);
+const { scroll, refreshScroll } = useNoteScroll(scrollContainer);
 
 const router = useRouter();
 
