@@ -1827,11 +1827,12 @@ defineExpose({ getHTML, getText, deleteCurrentLine });
   padding: 20px 24px;
   outline: none;
   font-size: 15px;
-  line-height: 1.7;
+  line-height: 1.6;
   color: #262626;
 }
 .re-content :deep(.ProseMirror p) {
-  margin: 0 0 12px;
+  /* 回车会生成新段落，正文段落不额外加间距，避免普通换行被拉得过开。 */
+  margin: 0;
 }
 .re-content :deep(.ProseMirror h1),
 .re-content :deep(.ProseMirror h2),
