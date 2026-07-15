@@ -303,7 +303,7 @@ import { common, createLowlight } from 'lowlight';
 import { ElMessage } from 'element-plus';
 import { uploadImage } from '@/network/file';
 import { Video } from './VideoNode';
-import 'highlight.js/styles/github.css';
+import 'highlight.js/styles/atom-one-light.css';
 
 const props = withDefaults(defineProps<{ modelValue: string; editable?: boolean }>(), {
   modelValue: '',
