@@ -2114,7 +2114,7 @@ defineExpose({ getHTML, getText, deleteCurrentLine });
 }
 .re-content :deep(.ProseMirror pre) {
   position: relative;
-  background: #f6f8fa;
+  background: #fafafa;
   border: 1px solid #e8e8e8;
   border-radius: 8px;
   padding: 0;
@@ -2278,7 +2278,7 @@ defineExpose({ getHTML, getText, deleteCurrentLine });
 }
 .re-content :deep(.ProseMirror code) {
   background: #f5f5f5;
-  border: 1px solid #e8e8e8;
+  border: 1px solid #f9f6f6;
   border-radius: 4px;
   padding: 2px 6px;
   font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
