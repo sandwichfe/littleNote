@@ -2120,7 +2120,7 @@ defineExpose({ getHTML, getText, deleteCurrentLine });
   padding: 0;
   overflow-x: auto;
   font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   margin: 12px 0;
 }
