@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Plus, Close } from '@element-plus/icons-vue'
+import { Plus, Close, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
@@ -354,9 +354,14 @@ watch(() => route.fullPath, () => {
     </el-dialog>
 
     <!-- 修改密码对话框 -->
-    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="450px" center append-to-body>
-      <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="90px" class="password-form">
-        <el-form-item label="原密码" prop="oldPassword">
+    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="500px" center append-to-body>
+      <!-- 安全提示区域，与个人资料弹框的头像区域保持一致的视觉重心 -->
+      <div class="password-security-section">
+        <p class="password-security-tip">密码长度不少于 6 位，建议使用字母与数字组合</p>
+      </div>
+
+      <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="80px" class="password-form">
+        <el-form-item label="原密码" prop="oldPassword" class="form-item-custom">
           <el-input
             v-model="passwordForm.oldPassword"
             type="password"
@@ -365,7 +370,7 @@ watch(() => route.fullPath, () => {
             clearable
           ></el-input>
         </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
+        <el-form-item label="新密码" prop="newPassword" class="form-item-custom">
           <el-input
             v-model="passwordForm.newPassword"
             type="password"
@@ -374,7 +379,7 @@ watch(() => route.fullPath, () => {
             clearable
           ></el-input>
         </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
+        <el-form-item label="确认密码" prop="confirmPassword" class="form-item-custom">
           <el-input
             v-model="passwordForm.confirmPassword"
             type="password"
@@ -385,7 +390,7 @@ watch(() => route.fullPath, () => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <span class="dialog-footer">
+        <span class="dialog-footer password-dialog-footer">
           <el-button @click="passwordDialogVisible = false">取 消</el-button>
           <el-button type="primary" @click="updatePassword">确认修改</el-button>
         </span>
@@ -450,24 +455,72 @@ watch(() => route.fullPath, () => {
   padding: 0;
 }
 
-.password-form .el-form-item {
-  margin-bottom: 20px;
+.password-security-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
 }
 
-.password-form .el-form-item:last-child {
-  margin-bottom: 0;
+.password-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #ecf5ff, #d9ecff);
+  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.16);
 }
 
-.password-form :deep(.el-form-item__label) {
-  font-weight: 500;
+.password-lock-icon {
+  font-size: 28px;
+  color: #409eff;
+}
+
+.password-security-title {
+  margin-bottom: 4px;
+  font-size: 16px;
+  font-weight: 600;
   color: #303133;
-  font-size: 14px;
 }
 
-.password-form :deep(.el-input__inner) {
+.password-security-tip {
+  margin: 0;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.password-form :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  background-color: #fafafa;
+  box-shadow: 0 0 0 1px #e4e7ed inset;
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.password-form :deep(.el-input__wrapper:hover) {
+  box-shadow: 0 0 0 1px #c0c4cc inset;
+}
+
+.password-form :deep(.el-input__wrapper.is-focus) {
+  background-color: #fff;
+  box-shadow: 0 0 0 1px #409eff inset, 0 0 0 3px rgba(64, 158, 255, 0.1);
+}
+
+.password-dialog-footer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.password-dialog-footer :deep(.el-button) {
+  min-width: 104px;
   height: 40px;
-  line-height: 40px;
-  font-size: 14px;
+  margin-left: 0;
+  border-radius: 8px;
 }
 
 /* Avatar Section - 居中显示 */
