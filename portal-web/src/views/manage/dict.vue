@@ -11,22 +11,30 @@
             <el-button text circle title="新建类型" @click="handleCreateType">
               <el-icon><Plus /></el-icon>
             </el-button>
-            <el-button text circle title="删除类型" :disabled="!currentTypeId" @click="handleDeleteCurrentType">
-              <el-icon><Delete /></el-icon>
-            </el-button>
           </div>
         </div>
 
-        <div class="manage-tree-panel__body">
+        <!-- 类型筛选 -->
+        <section class="manage-filter manage-filter--stack">
           <el-input
-            v-model="typeKeyword"
-            placeholder="搜索编码/名称"
+            v-model="typeQuery.keyword"
+            class="manage-filter__control manage-filter__control--fill"
             clearable
-            style="margin-bottom: 10px;"
-            @clear="fetchTypes"
-            @keyup.enter="fetchTypes"
+            placeholder="编码 / 名称"
+            @keyup.enter="handleTypeSearch"
           />
+          <div class="manage-filter__actions">
+            <el-button type="primary" class="manage-primary-button" @click="handleTypeSearch">
+              <el-icon><Search /></el-icon>
+              查询
+            </el-button>
+            <el-button class="manage-secondary-button" @click="handleTypeReset">
+              重置
+            </el-button>
+          </div>
+        </section>
 
+        <div class="manage-tree-panel__body">
           <el-table
             :data="typeList"
             v-loading="typeLoading"
@@ -34,18 +42,18 @@
             highlight-current-row
             @current-change="handleTypeCurrentChange"
           >
-            <el-table-column label="类型" min-width="220">
+            <el-table-column label="类型" min-width="160">
               <template #default="{ row }">
                 <div class="manage-entity">
                   <span class="manage-entity__text">
                     <span class="manage-entity__title">{{ row.typeName }}</span>
-                    <span class="manage-entity__subtitle">{{ row.typeCode }}</span>
+                    <span class="manage-entity__meta">{{ row.typeCode || '--' }}</span>
                   </span>
                 </div>
               </template>
             </el-table-column>
 
-            <el-table-column label="操作" width="140" align="right">
+            <el-table-column label="操作" width="120" align="right">
               <template #default="{ row }">
                 <div class="manage-row-actions">
                   <el-button text type="primary" @click.stop="handleEditType(row)">编辑</el-button>
@@ -58,17 +66,44 @@
       </aside>
 
       <div class="manage-page">
-        <header class="manage-page__hero">
-          <div class="manage-page__actions">
-            <el-button class="manage-secondary-button" @click="fetchItems" :disabled="!currentTypeId">
-              <el-icon><Refresh /></el-icon>
-              刷新字典项
-            </el-button>
+        <!-- 字典项查询 -->
+        <section class="manage-filter">
+          <el-input
+            v-model="itemQuery.keyword"
+            class="manage-filter__control"
+            clearable
+            placeholder="标签 / 值"
+            :disabled="!currentTypeId"
+            @keyup.enter="handleItemSearch"
+          />
+          <div class="manage-filter__actions">
             <el-button
               type="primary"
               class="manage-primary-button"
-              @click="handleCreateItem"
               :disabled="!currentTypeId"
+              @click="handleItemSearch"
+            >
+              <el-icon><Search /></el-icon>
+              查询
+            </el-button>
+            <el-button
+              class="manage-secondary-button"
+              :disabled="!currentTypeId"
+              @click="handleItemReset"
+            >
+              重置
+            </el-button>
+          </div>
+        </section>
+
+        <!-- 操作行：新建靠左 -->
+        <header class="manage-page__hero">
+          <div class="manage-page__actions is-start">
+            <el-button
+              type="primary"
+              class="manage-primary-button"
+              :disabled="!currentTypeId"
+              @click="handleCreateItem"
             >
               <el-icon><Plus /></el-icon>
               新建字典项
@@ -77,36 +112,20 @@
         </header>
 
         <section class="manage-surface manage-table">
-          <div class="manage-surface__header">
-            <div class="manage-surface__header-title">
-              <h2>{{ currentTypeName || '字典项列表' }}</h2>
-            </div>
-            <div style="display:flex; gap: 10px; align-items:center;">
-              <el-input
-                v-model="itemKeyword"
-                placeholder="搜索标签/值"
-                clearable
-                style="width: 260px;"
-                @clear="handleItemSearch"
-                @keyup.enter="handleItemSearch"
-              />
-            </div>
-          </div>
-
           <div class="manage-surface__body">
             <el-table :data="itemList" v-loading="itemLoading" height="100%">
-              <el-table-column label="标签" min-width="220">
+              <el-table-column label="标签" min-width="200">
                 <template #default="{ row }">
                   <div class="manage-subtle-stack">
-                    <span>{{ row.label }}</span>
+                    <span>{{ row.label || '--' }}</span>
                   </div>
                 </template>
               </el-table-column>
 
-              <el-table-column label="值" min-width="180">
+              <el-table-column label="值" min-width="160">
                 <template #default="{ row }">
                   <div class="manage-subtle-stack">
-                    <span>{{ row.value }}</span>
+                    <span>{{ row.value || '--' }}</span>
                   </div>
                 </template>
               </el-table-column>
@@ -123,7 +142,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="操作" width="220" align="right">
+              <el-table-column label="操作" width="180" align="right">
                 <template #default="{ row }">
                   <div class="manage-row-actions">
                     <el-button text type="primary" @click="handleEditItem(row)">编辑</el-button>
@@ -150,9 +169,10 @@
     <el-dialog
       v-model="typeDialogVisible"
       :title="typeDialogTitle"
-      width="640px"
+      width="560px"
       class="manage-dialog"
       destroy-on-close
+      @closed="handleTypeDialogClosed"
     >
       <el-form ref="typeFormRef" :model="typeForm" :rules="typeRules" label-position="top" class="manage-form-grid">
         <el-form-item label="类型编码" prop="typeCode">
@@ -161,8 +181,8 @@
         <el-form-item label="类型名称" prop="typeName">
           <el-input v-model="typeForm.typeName" placeholder="例如：用户状态" />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="typeForm.sort" :min="0" :max="999999" style="width: 100%;" />
+        <el-form-item class="manage-form-grid__full" label="排序" prop="sort">
+          <el-input-number v-model="typeForm.sort" :min="0" :max="999999" controls-position="right" />
         </el-form-item>
         <el-form-item class="manage-form-grid__full" label="备注" prop="remark">
           <el-input v-model="typeForm.remark" type="textarea" :rows="3" placeholder="可选" />
@@ -170,7 +190,7 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="typeDialogVisible = false">取消</el-button>
+        <el-button class="manage-secondary-button" @click="typeDialogVisible = false">取消</el-button>
         <el-button type="primary" class="manage-primary-button" @click="submitType">保存</el-button>
       </template>
     </el-dialog>
@@ -178,9 +198,10 @@
     <el-dialog
       v-model="itemDialogVisible"
       :title="itemDialogTitle"
-      width="660px"
+      width="560px"
       class="manage-dialog"
       destroy-on-close
+      @closed="handleItemDialogClosed"
     >
       <el-form ref="itemFormRef" :model="itemForm" :rules="itemRules" label-position="top" class="manage-form-grid">
         <el-form-item label="标签" prop="label">
@@ -189,8 +210,8 @@
         <el-form-item label="值" prop="value">
           <el-input v-model="itemForm.value" placeholder="例如：1" />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
-          <el-input-number v-model="itemForm.sort" :min="0" :max="999999" style="width: 100%;" />
+        <el-form-item class="manage-form-grid__full" label="排序" prop="sort">
+          <el-input-number v-model="itemForm.sort" :min="0" :max="999999" controls-position="right" />
         </el-form-item>
         <el-form-item class="manage-form-grid__full" label="备注" prop="remark">
           <el-input v-model="itemForm.remark" type="textarea" :rows="3" placeholder="可选" />
@@ -198,7 +219,7 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="itemDialogVisible = false">取消</el-button>
+        <el-button class="manage-secondary-button" @click="itemDialogVisible = false">取消</el-button>
         <el-button type="primary" class="manage-primary-button" @click="submitItem">保存</el-button>
       </template>
     </el-dialog>
@@ -208,7 +229,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete, Plus, Refresh } from '@element-plus/icons-vue'
+import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 import {
   createDictItem,
   createDictType,
@@ -223,11 +244,10 @@ import { formatDateTime } from './manage-utils'
 
 const typeList = ref<any[]>([])
 const typeLoading = ref(false)
-const typeKeyword = ref('')
 const currentType = ref<any | null>(null)
+const typeQuery = reactive({ keyword: '' })
 
 const currentTypeId = computed(() => currentType.value?.id ?? null)
-const currentTypeName = computed(() => currentType.value ? `${currentType.value.typeName}（${currentType.value.typeCode}）` : '')
 
 const typeDialogVisible = ref(false)
 const typeDialogTitle = ref('')
@@ -248,7 +268,7 @@ const typeRules = {
 
 const itemList = ref<any[]>([])
 const itemLoading = ref(false)
-const itemKeyword = ref('')
+const itemQuery = reactive({ keyword: '' })
 const itemPageSize = ref(10)
 const itemCurrentPage = ref(1)
 const itemTotal = ref(0)
@@ -288,10 +308,25 @@ const resetItemForm = () => {
   itemForm.remark = ''
 }
 
+const handleTypeDialogClosed = () => {
+  typeFormRef.value?.clearValidate?.()
+  resetTypeForm()
+}
+
+const handleItemDialogClosed = () => {
+  itemFormRef.value?.clearValidate?.()
+  resetItemForm()
+}
+
 const fetchTypes = async () => {
   typeLoading.value = true
   try {
-    const res = await listDictTypes({ pageNum: 1, pageSize: 200, keyword: typeKeyword.value || undefined })
+    const keyword = String(typeQuery.keyword || '').trim()
+    const res = await listDictTypes({
+      pageNum: 1,
+      pageSize: 200,
+      keyword: keyword || undefined
+    })
     if (res.code === 200) {
       typeList.value = res.data?.records || []
       if (typeList.value.length > 0) {
@@ -318,11 +353,12 @@ const fetchItems = async () => {
   }
   itemLoading.value = true
   try {
+    const keyword = String(itemQuery.keyword || '').trim()
     const res = await listDictItems({
       pageNum: itemCurrentPage.value,
       pageSize: itemPageSize.value,
       dictTypeId: currentTypeId.value,
-      keyword: itemKeyword.value || undefined
+      keyword: keyword || undefined
     })
     if (res.code === 200) {
       itemList.value = res.data?.records || []
@@ -340,11 +376,21 @@ const handleTypeCurrentChange = (row: any) => {
   currentType.value = row
 }
 
+// 切换类型时重置字典项查询并刷新
 watch(currentTypeId, () => {
   itemCurrentPage.value = 1
-  itemKeyword.value = ''
+  itemQuery.keyword = ''
   fetchItems()
 })
+
+const handleTypeSearch = () => {
+  fetchTypes()
+}
+
+const handleTypeReset = () => {
+  typeQuery.keyword = ''
+  fetchTypes()
+}
 
 const handleCreateType = async () => {
   typeIsCreate.value = true
@@ -398,11 +444,6 @@ const handleDeleteType = async (row: any) => {
   } else {
     ElMessage.error(res.msg || '删除失败')
   }
-}
-
-const handleDeleteCurrentType = async () => {
-  if (!currentType.value) return
-  await handleDeleteType(currentType.value)
 }
 
 const handleCreateItem = async () => {
@@ -462,6 +503,12 @@ const handleDeleteItem = async (row: any) => {
 }
 
 const handleItemSearch = () => {
+  itemCurrentPage.value = 1
+  fetchItems()
+}
+
+const handleItemReset = () => {
+  itemQuery.keyword = ''
   itemCurrentPage.value = 1
   fetchItems()
 }

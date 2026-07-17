@@ -739,6 +739,34 @@
   width: 140px;
 }
 
+/* 稍宽输入（关键词等） */
+.manage-filter__control--wide {
+  width: 240px;
+}
+
+/* 日期时间范围 */
+.manage-filter__control--range {
+  width: 360px;
+}
+
+/* 在窄面板内铺满 */
+.manage-filter__control--fill {
+  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 纵向堆叠查询（如字典左侧窄栏） */
+.manage-filter--stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.manage-filter--stack .manage-filter__actions {
+  width: 100%;
+}
+
 .manage-filter__actions {
   display: flex;
   flex-wrap: wrap;
@@ -748,20 +776,35 @@
 
 /* 查询输入与主题一致：细边框、6px 圆角、无 glow */
 .manage-filter .el-input__wrapper,
-.manage-filter .el-select__wrapper {
+.manage-filter .el-select__wrapper,
+.manage-filter .el-range-editor.el-input__wrapper {
   min-height: 36px;
   border-radius: var(--manage-radius-sm);
   box-shadow: 0 0 0 1px #d1d5db inset;
 }
 
 .manage-filter .el-input__wrapper:hover,
-.manage-filter .el-select__wrapper:hover {
+.manage-filter .el-select__wrapper:hover,
+.manage-filter .el-range-editor.el-input__wrapper:hover {
   box-shadow: 0 0 0 1px #9ca3af inset;
 }
 
 .manage-filter .el-input__wrapper.is-focus,
-.manage-filter .el-select__wrapper.is-focused {
+.manage-filter .el-select__wrapper.is-focused,
+.manage-filter .el-range-editor.el-input__wrapper.is-active {
   box-shadow: 0 0 0 1px var(--manage-accent) inset;
+}
+
+/* 详情弹窗内 pre 块：无装饰，仅换行 */
+.manage-pre {
+  margin: 0;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--manage-slate);
 }
 
 .manage-page__hint {
@@ -1539,7 +1582,9 @@
   }
 
   .manage-filter__control,
-  .manage-filter__control--status {
+  .manage-filter__control--status,
+  .manage-filter__control--wide,
+  .manage-filter__control--range {
     width: 100%;
   }
 

@@ -1,49 +1,42 @@
 <template>
   <section class="manage-page">
-    <header class="manage-page__hero">
-      <div class="manage-page__actions">
-        <el-button class="manage-secondary-button" @click="fetchLogs">
-          <el-icon><Refresh /></el-icon>
-          刷新日志
+    <!-- 查询区：条件 + 查询 / 重置 -->
+    <section class="manage-filter">
+      <el-input
+        v-model="queryForm.keyword"
+        class="manage-filter__control manage-filter__control--wide"
+        clearable
+        placeholder="描述 / URI / 参数"
+        @keyup.enter="handleSearch"
+      />
+      <el-input
+        v-model="queryForm.operatorName"
+        class="manage-filter__control"
+        clearable
+        placeholder="操作者"
+        @keyup.enter="handleSearch"
+      />
+      <el-date-picker
+        v-model="queryForm.timeRange"
+        class="manage-filter__control manage-filter__control--range"
+        type="datetimerange"
+        start-placeholder="开始时间"
+        end-placeholder="结束时间"
+        format="YYYY-MM-DD HH:mm:ss"
+        value-format="YYYY-MM-DD HH:mm:ss"
+      />
+      <div class="manage-filter__actions">
+        <el-button type="primary" class="manage-primary-button" @click="handleSearch">
+          <el-icon><Search /></el-icon>
+          查询
+        </el-button>
+        <el-button class="manage-secondary-button" @click="handleResetQuery">
+          重置
         </el-button>
       </div>
-    </header>
+    </section>
 
     <section class="manage-surface manage-table">
-      <div class="manage-surface__header">
-        <div class="manage-surface__header-title">
-          <h2>操作日志</h2>
-        </div>
-
-        <div style="display:flex; gap: 10px; align-items:center; flex-wrap: wrap;">
-          <el-input
-            v-model="keyword"
-            placeholder="搜索描述/URI/操作者/参数"
-            clearable
-            style="width: 280px;"
-            @clear="handleSearch"
-            @keyup.enter="handleSearch"
-          />
-          <el-input
-            v-model="operatorName"
-            placeholder="操作者"
-            clearable
-            style="width: 180px;"
-            @clear="handleSearch"
-            @keyup.enter="handleSearch"
-          />
-          <el-date-picker
-            v-model="timeRange"
-            type="datetimerange"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
-            format="YYYY-MM-DD HH:mm:ss"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            @change="handleSearch"
-          />
-        </div>
-      </div>
-
       <div class="manage-surface__body">
         <el-table :data="logList" v-loading="loading" height="100%">
           <el-table-column label="操作者" width="160">
@@ -64,26 +57,26 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="描述" min-width="320" show-overflow-tooltip>
+          <el-table-column label="描述" min-width="280" show-overflow-tooltip>
             <template #default="{ row }">
               <span>{{ row.description || '--' }}</span>
             </template>
           </el-table-column>
 
-          <el-table-column label="URI" min-width="260" show-overflow-tooltip>
+          <el-table-column label="URI" min-width="220" show-overflow-tooltip>
             <template #default="{ row }">
               <span>{{ row.requestUri || '--' }}</span>
             </template>
           </el-table-column>
 
-          <el-table-column label="IP/地区" min-width="240" show-overflow-tooltip>
+          <el-table-column label="IP/地区" min-width="200" show-overflow-tooltip>
             <template #default="{ row }">
               <span>{{ row.requestIp || '--' }}</span>
               <span v-if="row.requestRegion">（{{ row.requestRegion }}）</span>
             </template>
           </el-table-column>
 
-          <el-table-column label="耗时" width="110" align="right">
+          <el-table-column label="耗时" width="100" align="right">
             <template #default="{ row }">
               <span>{{ row.duration != null ? `${row.duration}ms` : '--' }}</span>
             </template>
@@ -95,9 +88,11 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" width="120" align="right">
+          <el-table-column label="操作" width="100" align="right">
             <template #default="{ row }">
-              <el-button text type="primary" @click="handleShowDetail(row)">详情</el-button>
+              <div class="manage-row-actions">
+                <el-button text type="primary" @click="handleShowDetail(row)">详情</el-button>
+              </div>
             </template>
           </el-table-column>
         </el-table>
@@ -114,8 +109,15 @@
       </div>
     </section>
 
-    <el-dialog v-model="detailDialogVisible" title="日志详情" width="860px" class="manage-dialog" destroy-on-close>
-      <el-descriptions :column="2" border>
+    <el-dialog
+      v-model="detailDialogVisible"
+      title="日志详情"
+      width="720px"
+      class="manage-dialog"
+      destroy-on-close
+      @closed="handleDetailClosed"
+    >
+      <el-descriptions :column="2" border class="manage-descriptions">
         <el-descriptions-item label="操作者">
           {{ currentLog?.operatorName || currentLog?.operatorId || '--' }}
         </el-descriptions-item>
@@ -126,7 +128,7 @@
           {{ currentLog?.requestUri || '--' }}
         </el-descriptions-item>
         <el-descriptions-item label="IP/地区" :span="2">
-          {{ currentLog?.requestIp || '--' }} {{ currentLog?.requestRegion ? `（${currentLog.requestRegion}）` : '' }}
+          {{ currentLog?.requestIp || '--' }}{{ currentLog?.requestRegion ? `（${currentLog.requestRegion}）` : '' }}
         </el-descriptions-item>
         <el-descriptions-item label="耗时">
           {{ currentLog?.duration != null ? `${currentLog.duration}ms` : '--' }}
@@ -138,47 +140,72 @@
           {{ currentLog?.description || '--' }}
         </el-descriptions-item>
         <el-descriptions-item label="参数" :span="2">
-          <pre style="margin: 0; white-space: pre-wrap;">{{ currentLog?.params || '--' }}</pre>
+          <pre class="manage-pre">{{ currentLog?.params || '--' }}</pre>
         </el-descriptions-item>
         <el-descriptions-item label="结果" :span="2">
-          <pre style="margin: 0; white-space: pre-wrap;">{{ currentLog?.result || '--' }}</pre>
+          <pre class="manage-pre">{{ currentLog?.result || '--' }}</pre>
         </el-descriptions-item>
       </el-descriptions>
+
+      <template #footer>
+        <el-button class="manage-secondary-button" @click="detailDialogVisible = false">关闭</el-button>
+      </template>
     </el-dialog>
   </section>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
 import { listOperationLogs } from '@/network/manage/operationLog'
 import { formatDateTime } from './manage-utils'
 
+// 查询条件（空值不传给接口）
+const createDefaultQuery = () => ({
+  keyword: '',
+  operatorName: '',
+  timeRange: [] as string[]
+})
+
 const loading = ref(false)
 const logList = ref<any[]>([])
-const keyword = ref('')
-const operatorName = ref('')
-const timeRange = ref<string[]>([])
-
+const queryForm = reactive(createDefaultQuery())
 const pageSize = ref(10)
 const currentPage = ref(1)
 const total = ref(0)
-
 const detailDialogVisible = ref(false)
 const currentLog = ref<any | null>(null)
+
+// 组装列表查询参数
+const buildListQuery = () => {
+  const params: Record<string, any> = {
+    pageNum: currentPage.value,
+    pageSize: pageSize.value
+  }
+  const keyword = String(queryForm.keyword || '').trim()
+  const operatorName = String(queryForm.operatorName || '').trim()
+
+  if (keyword) {
+    params.keyword = keyword
+  }
+  if (operatorName) {
+    params.operatorName = operatorName
+  }
+  if (queryForm.timeRange?.[0]) {
+    params.startTimeFrom = queryForm.timeRange[0]
+  }
+  if (queryForm.timeRange?.[1]) {
+    params.startTimeTo = queryForm.timeRange[1]
+  }
+
+  return params
+}
 
 const fetchLogs = async () => {
   loading.value = true
   try {
-    const res = await listOperationLogs({
-      pageNum: currentPage.value,
-      pageSize: pageSize.value,
-      keyword: keyword.value || undefined,
-      operatorName: operatorName.value || undefined,
-      startTimeFrom: timeRange.value?.[0] || undefined,
-      startTimeTo: timeRange.value?.[1] || undefined
-    })
+    const res = await listOperationLogs(buildListQuery())
     if (res.code === 200) {
       logList.value = res.data?.records || []
       total.value = res.data?.total || 0
@@ -190,7 +217,15 @@ const fetchLogs = async () => {
   }
 }
 
+// 查询：从第一页开始
 const handleSearch = () => {
+  currentPage.value = 1
+  fetchLogs()
+}
+
+// 重置查询条件并刷新
+const handleResetQuery = () => {
+  Object.assign(queryForm, createDefaultQuery())
   currentPage.value = 1
   fetchLogs()
 }
@@ -205,8 +240,11 @@ const handleShowDetail = (row: any) => {
   detailDialogVisible.value = true
 }
 
+const handleDetailClosed = () => {
+  currentLog.value = null
+}
+
 onMounted(() => {
   fetchLogs()
 })
 </script>
-
