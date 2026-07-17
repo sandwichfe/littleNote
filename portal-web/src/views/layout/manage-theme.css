@@ -76,7 +76,7 @@
   }
 }
 
-/* ---------- Sidebar：Apple Settings 风格 ---------- */
+/* ---------- Sidebar：Apple Settings / 系统偏好设置风格 ---------- */
 .manage-sidebar {
   min-height: 0;
   border-right: 1px solid var(--manage-border);
@@ -86,26 +86,25 @@
 .manage-sidebar__panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
   height: 100%;
-  /* 内边距 12 / 12，组间呼吸感 */
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-2);
   background: var(--manage-surface);
 }
 
-/* 标题区：底部分割，与菜单形成层级 */
+/* 标题区：底部分割 */
 .manage-sidebar__intro {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
   min-height: 40px;
-  padding: var(--space-2) var(--space-2) var(--space-3);
-  margin: 0 calc(var(--space-1) * -1) 0;
+  padding: var(--space-1) var(--space-2) var(--space-3);
+  margin-bottom: var(--space-1);
   border-bottom: 1px solid var(--manage-border);
 }
 
-/* 折叠态：标题区居中 */
+/* 折叠态：折叠按钮居中 */
 .manage-sidebar.is-collapsed .manage-sidebar__intro {
   justify-content: center;
   gap: 0;
@@ -115,14 +114,19 @@
 
 .manage-sidebar__title {
   margin: 0;
+  min-width: 0;
+  flex: 1;
   font-size: var(--text-sm);
   font-weight: 600;
   line-height: 1.25;
   color: var(--manage-slate);
   letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 折叠按钮：32×32 可点区域，圆角 6 */
+/* 折叠按钮：32×32，圆角 6 */
 .manage-sidebar__collapse-btn {
   display: inline-flex;
   align-items: center;
@@ -147,44 +151,15 @@
   outline-offset: 2px;
 }
 
-.manage-sidebar__badge {
-  width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: var(--manage-radius-sm);
-  background: var(--manage-accent-soft);
-  color: var(--manage-accent);
-  font-size: 16px;
-}
-
-.manage-sidebar__eyebrow {
-  font-size: var(--text-xs);
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: var(--manage-tertiary);
-}
-
-.manage-sidebar__section-label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  color: var(--manage-tertiary);
-}
-
-/* 导航滚动区：组间距 16px */
+/* 导航滚动区：组间距 12px，贴近 Settings 列表密度 */
 .manage-sidebar__nav {
   flex: 1;
   min-height: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-1) 0;
+  gap: var(--space-3);
+  padding: 0;
 }
 
 /* 细滚动条 */
@@ -200,18 +175,18 @@
 .manage-nav-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1); /* 4px：组内节奏 */
+  gap: var(--space-1);
   margin: 0;
 }
 
-/* 分组标题：12px / 次要色，非全大写（Apple Settings 风格） */
+/* 分组标题：一级，字号/字重强于叶子项 */
 .manage-nav-group__label {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   width: 100%;
-  min-height: 32px;
-  padding: var(--space-1) var(--space-3);
+  min-height: 36px;
+  padding: var(--space-2);
   border: none;
   border-radius: var(--manage-radius-sm);
   background: transparent;
@@ -230,28 +205,35 @@
   outline-offset: 2px;
 }
 
-.manage-sidebar.is-collapsed .manage-nav-group__label {
+.manage-nav-group__label-icon {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  padding: var(--space-2) 0;
-  min-height: 36px;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  font-size: 16px;
+  color: var(--manage-muted);
 }
 
 .manage-nav-group__title {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: var(--text-xs);
-  font-weight: 500;
-  color: var(--manage-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--manage-slate);
   line-height: 1.25;
-  letter-spacing: 0;
-  /* 不强制 uppercase，更接近 Apple 中文/系统设置层级 */
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .manage-nav-group__arrow {
   flex-shrink: 0;
   font-size: 12px;
-  color: var(--manage-tertiary);
+  color: var(--manage-muted);
   transition: transform 0.2s ease;
 }
 
@@ -259,18 +241,14 @@
   transform: rotate(180deg);
 }
 
-.manage-nav-group__label-icon {
-  display: none;
-}
-
-/* 菜单项列表：项间距 4px（≥8px 触控间距在移动端加大） */
+/* 叶子列表 */
 .manage-nav-group__items {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
-/* 菜单项：桌面 min-height 36，字号 14，圆角 6 */
+/* 菜单项：图标 + 文案，高度 36，圆角 6 */
 .manage-nav-item {
   width: 100%;
   display: flex;
@@ -288,10 +266,9 @@
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.manage-sidebar.is-collapsed .manage-nav-item {
-  justify-content: center;
-  min-height: 40px;
-  padding: var(--space-2) 0;
+/* 有分组时叶子略缩进，形成层级 */
+.manage-nav-group:has(.manage-nav-group__label) .manage-nav-item {
+  padding-left: var(--space-4);
 }
 
 .manage-nav-item:hover {
@@ -304,7 +281,7 @@
   outline-offset: 2px;
 }
 
-/* 激活态：浅主色底 + 主色文字（无渐变/无重阴影） */
+/* 激活态：浅主色底 + 主色文字 */
 .manage-nav-item.is-active {
   background: var(--manage-accent-soft);
   color: var(--manage-accent);
@@ -317,22 +294,23 @@
 }
 
 .manage-nav-item__icon {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  font-size: 16px;
+  color: var(--manage-muted);
 }
 
 .manage-nav-item.is-active .manage-nav-item__icon {
   color: var(--manage-accent);
 }
 
-.manage-nav-item__copy {
+.manage-nav-item__title {
   min-width: 0;
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.manage-nav-item__title {
   font-size: var(--text-sm);
   font-weight: inherit;
   color: inherit;
@@ -342,19 +320,59 @@
   text-overflow: ellipsis;
 }
 
-/* 移动端：触控目标 ≥ 44px，项间距 ≥ 8px */
+/* 折叠态：仅图标轨，分组标题隐藏，叶子居中 */
+.manage-sidebar.is-collapsed .manage-nav-group {
+  gap: var(--space-1);
+}
+
+.manage-sidebar.is-collapsed .manage-nav-group__label {
+  display: none;
+}
+
+.manage-sidebar.is-collapsed .manage-nav-group__items {
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.manage-sidebar.is-collapsed .manage-nav-item {
+  justify-content: center;
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  margin: 0 auto;
+}
+
+.manage-sidebar.is-collapsed .manage-nav-group:has(.manage-nav-group__label) .manage-nav-item {
+  padding-left: 0;
+}
+
+.manage-sidebar.is-collapsed .manage-nav-item__title {
+  display: none;
+}
+
+.manage-sidebar.is-collapsed .manage-nav-item__icon {
+  width: 20px;
+  height: 20px;
+  font-size: 18px;
+}
+
+/* 移动端：触控目标 ≥ 44px */
 @media (max-width: 768px) {
   .manage-nav-item {
     min-height: 44px;
     padding: var(--space-3);
   }
 
+  .manage-nav-group:has(.manage-nav-group__label) .manage-nav-item {
+    padding-left: var(--space-5);
+  }
+
   .manage-nav-group__items {
-    gap: var(--space-2);
+    gap: var(--space-1);
   }
 
   .manage-nav-group__label {
-    min-height: 40px;
+    min-height: 36px;
   }
 }
 

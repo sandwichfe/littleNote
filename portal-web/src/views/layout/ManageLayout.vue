@@ -4,10 +4,17 @@ import './manage-theme.css'
 import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
-  Grid,
-  Operation,
-  Fold,
+  Collection,
+  Document,
   Expand,
+  Fold,
+  Grid,
+  Menu as MenuIcon,
+  OfficeBuilding,
+  Operation,
+  Setting,
+  User,
+  UserFilled,
   ArrowDown
 } from '@element-plus/icons-vue'
 import ManageHeader from './ManageHeader.vue'
@@ -34,6 +41,11 @@ const toggleCollapse = () => {
 
 // 切换菜单组展开状态（手风琴模式）
 const toggleGroup = (sectionId) => {
+  // 折叠态：图标直达叶子，分组不再收起
+  if (isCollapsed.value) {
+    return
+  }
+
   if (expandedGroups.value.has(sectionId)) {
     expandedGroups.value.delete(sectionId)
   } else {
@@ -43,20 +55,33 @@ const toggleGroup = (sectionId) => {
   }
 }
 
-// 检查菜单组是否展开
-const isGroupExpanded = (sectionId) => expandedGroups.value.has(sectionId)
+// 折叠时强制展开全部组，保证叶子图标可达
+const isGroupExpanded = (sectionId) => {
+  if (isCollapsed.value) {
+    return true
+  }
+  return expandedGroups.value.has(sectionId)
+}
 
 const normalizeManagePath = (path = '') => {
   if (!path) return '/'
   return path.startsWith('/') ? path : `/${path}`
 }
 
-const getPageMeta = (path, fallbackTitle = '') => ({
-  title: fallbackTitle || '管理中心',
-  eyebrow: 'Workspace',
-  description: '统一管理账号、角色、菜单与组织结构，保持后台信息简洁有序。',
-  icon: Grid
-})
+// 按路径 / 标题解析导航图标（无业务装饰，仅作识别）
+const resolveNavIcon = (path = '', title = '') => {
+  const key = `${path} ${title}`.toLowerCase()
+
+  if (key.includes('user') || key.includes('用户')) return User
+  if (key.includes('role') || key.includes('角色')) return UserFilled
+  if (key.includes('menu') || key.includes('菜单')) return MenuIcon
+  if (key.includes('dept') || key.includes('部门')) return OfficeBuilding
+  if (key.includes('dict') || key.includes('字典')) return Collection
+  if (key.includes('log') || key.includes('日志')) return Document
+  if (key.includes('系统')) return Setting
+  if (key.includes('信息')) return Grid
+  return Operation
+}
 
 const getTabLabel = (path) => {
   const findTitle = (menus, targetPath) => {
@@ -110,23 +135,23 @@ const navigationSections = computed(() => {
   return menuData.value.map((menu) => {
     const children = Array.isArray(menu.children) ? menu.children : []
     const fallbackPath = normalizeManagePath(menu.path || '')
-    const sectionMeta = getPageMeta(fallbackPath, menu.title || menu.name)
+    const sectionTitle = menu.title || menu.name || ''
+    const sectionIcon = resolveNavIcon(fallbackPath, sectionTitle)
 
     if (children.length > 0) {
       return {
         id: menu.id || menu.name || menu.title,
-        label: menu.title || menu.name,
-        icon: sectionMeta.icon || Operation,
+        label: sectionTitle,
+        icon: sectionIcon,
         items: children.map((child) => {
           const childPath = normalizeManagePath(child.path || '')
-          const childMeta = getPageMeta(childPath, child.title || child.name)
+          const childTitle = child.title || child.name || ''
 
           return {
             id: child.id || child.name || childPath,
             path: childPath,
-            title: child.title || child.name,
-            description: childMeta.description,
-            icon: childMeta.icon
+            title: childTitle,
+            icon: resolveNavIcon(childPath, childTitle)
           }
         })
       }
@@ -135,14 +160,13 @@ const navigationSections = computed(() => {
     return {
       id: menu.id || menu.name || fallbackPath,
       label: '',
-      icon: sectionMeta.icon,
+      icon: sectionIcon,
       items: [
         {
           id: menu.id || menu.name || fallbackPath,
           path: fallbackPath,
-          title: menu.title || menu.name,
-          description: sectionMeta.description,
-          icon: sectionMeta.icon
+          title: sectionTitle,
+          icon: sectionIcon
         }
       ]
     }
@@ -279,9 +303,7 @@ watch(activeTab, (newTab) => {
         <div class="manage-sidebar__panel">
           <!-- 侧栏标题 + 折叠按钮 -->
           <div class="manage-sidebar__intro">
-            <div v-show="!isCollapsed">
-              <h2 class="manage-sidebar__title">后台管理</h2>
-            </div>
+            <h2 v-show="!isCollapsed" class="manage-sidebar__title">后台管理</h2>
             <el-icon
               class="manage-sidebar__collapse-btn"
               role="button"
@@ -303,18 +325,21 @@ watch(activeTab, (newTab) => {
               class="manage-nav-group"
               :class="{ 'is-active': isSectionActive(section), 'is-expanded': isGroupExpanded(section.id) }"
             >
-              <!-- 分组标题：button 保证键盘可操作；展开态由 is-expanded 控制箭头 -->
+              <!-- 分组标题：展开态可折叠；折叠态隐藏分组，仅保留叶子图标 -->
               <button
                 v-if="section.label"
                 type="button"
                 class="manage-nav-group__label"
-                :title="isCollapsed ? section.label : ''"
+                :title="section.label"
                 :aria-expanded="isGroupExpanded(section.id)"
                 :aria-controls="`nav-group-${section.id}`"
                 @click="toggleGroup(section.id)"
               >
-                <span v-show="!isCollapsed" class="manage-nav-group__title">{{ section.label }}</span>
-                <el-icon v-show="!isCollapsed" class="manage-nav-group__arrow" aria-hidden="true">
+                <el-icon class="manage-nav-group__label-icon" aria-hidden="true">
+                  <component :is="section.icon" />
+                </el-icon>
+                <span class="manage-nav-group__title">{{ section.label }}</span>
+                <el-icon class="manage-nav-group__arrow" aria-hidden="true">
                   <ArrowDown />
                 </el-icon>
               </button>
@@ -333,13 +358,14 @@ watch(activeTab, (newTab) => {
                     class="manage-nav-item"
                     :class="{ 'is-active': route.path === item.path }"
                     type="button"
-                    :title="isCollapsed ? item.title : ''"
+                    :title="item.title"
                     :aria-current="route.path === item.path ? 'page' : undefined"
                     @click="handleSelect(item.path)"
                   >
-                    <span class="manage-nav-item__copy" v-show="!isCollapsed">
-                      <span class="manage-nav-item__title">{{ item.title }}</span>
-                    </span>
+                    <el-icon class="manage-nav-item__icon" aria-hidden="true">
+                      <component :is="item.icon" />
+                    </el-icon>
+                    <span class="manage-nav-item__title">{{ item.title }}</span>
                   </button>
                 </div>
               </transition>

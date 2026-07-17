@@ -26,8 +26,6 @@ const logout = () => {
   <header class="manage-header">
     <div class="header-left">
       <div class="brand-group" @click="goManage">
-        <!-- 品牌标识：纯色块，无渐变 -->
-        <div class="brand-logo">数据中台</div>
         <div class="brand-info">
           <span class="brand-tag">管理控制台</span>
         </div>
