@@ -277,41 +277,56 @@ watch(activeTab, (newTab) => {
 
       <aside class="manage-sidebar" :class="{ 'is-mobile-visible': isMobileMenuVisible, 'is-collapsed': isCollapsed }">
         <div class="manage-sidebar__panel">
-          <div class="manage-sidebar__intro" :style="{ justifyContent: isCollapsed ? 'center' : 'space-between', alignItems: 'center', gap: isCollapsed ? '0' : '16px' }">
+          <!-- 侧栏标题 + 折叠按钮 -->
+          <div class="manage-sidebar__intro">
             <div v-show="!isCollapsed">
-              <h2 class="manage-sidebar__title" style="margin-top: 0;">后台管理</h2>
+              <h2 class="manage-sidebar__title">后台管理</h2>
             </div>
-            <el-icon 
-              class="manage-sidebar__collapse-btn" 
+            <el-icon
+              class="manage-sidebar__collapse-btn"
+              role="button"
+              tabindex="0"
+              :aria-label="isCollapsed ? '展开侧栏' : '折叠侧栏'"
               @click="toggleCollapse"
+              @keydown.enter.prevent="toggleCollapse"
+              @keydown.space.prevent="toggleCollapse"
             >
               <Fold v-if="!isCollapsed" />
               <Expand v-else />
             </el-icon>
           </div>
 
-          <nav class="manage-sidebar__nav" aria-label="manage navigation">
+          <nav class="manage-sidebar__nav" aria-label="后台导航">
             <section
               v-for="section in navigationSections"
               :key="section.id"
               class="manage-nav-group"
               :class="{ 'is-active': isSectionActive(section), 'is-expanded': isGroupExpanded(section.id) }"
             >
-              <div 
-                v-if="section.label" 
-                class="manage-nav-group__label" 
+              <!-- 分组标题：button 保证键盘可操作；展开态由 is-expanded 控制箭头 -->
+              <button
+                v-if="section.label"
+                type="button"
+                class="manage-nav-group__label"
                 :title="isCollapsed ? section.label : ''"
+                :aria-expanded="isGroupExpanded(section.id)"
+                :aria-controls="`nav-group-${section.id}`"
                 @click="toggleGroup(section.id)"
-                style="cursor: pointer; user-select: none;"
               >
-                <div v-show="!isCollapsed" class="manage-nav-group__title">{{ section.label }}</div>
-                <el-icon v-show="!isCollapsed" class="manage-nav-group__arrow" :style="{ transform: isGroupExpanded(section.id) ? 'rotate(180deg)' : 'rotate(0)' }">
+                <span v-show="!isCollapsed" class="manage-nav-group__title">{{ section.label }}</span>
+                <el-icon v-show="!isCollapsed" class="manage-nav-group__arrow" aria-hidden="true">
                   <ArrowDown />
                 </el-icon>
-              </div>
+              </button>
 
               <transition name="manage-menu-fade">
-                <div class="manage-nav-group__items" v-show="isGroupExpanded(section.id)">
+                <div
+                  v-show="isGroupExpanded(section.id)"
+                  :id="`nav-group-${section.id}`"
+                  class="manage-nav-group__items"
+                  role="group"
+                  :aria-label="section.label || undefined"
+                >
                   <button
                     v-for="item in section.items"
                     :key="item.id"
@@ -319,6 +334,7 @@ watch(activeTab, (newTab) => {
                     :class="{ 'is-active': route.path === item.path }"
                     type="button"
                     :title="isCollapsed ? item.title : ''"
+                    :aria-current="route.path === item.path ? 'page' : undefined"
                     @click="handleSelect(item.path)"
                   >
                     <span class="manage-nav-item__copy" v-show="!isCollapsed">
@@ -329,7 +345,6 @@ watch(activeTab, (newTab) => {
               </transition>
             </section>
           </nav>
-
         </div>
       </aside>
 

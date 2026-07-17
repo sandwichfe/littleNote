@@ -1,14 +1,44 @@
 <template>
   <section class="manage-page">
-    <header class="manage-page__hero">
-
-      <div class="manage-page__actions">
-
-        <el-button class="manage-secondary-button" @click="fetchDepts">
-          <el-icon><Refresh /></el-icon>
-          刷新数据
+    <!-- 查询区：常用条件 + 查询按钮 -->
+    <section class="manage-filter">
+      <el-input
+        v-model="queryForm.name"
+        class="manage-filter__control"
+        clearable
+        placeholder="部门名称"
+        @keyup.enter="handleSearch"
+      />
+      <el-input
+        v-model="queryForm.leader"
+        class="manage-filter__control"
+        clearable
+        placeholder="负责人"
+        @keyup.enter="handleSearch"
+      />
+      <el-select
+        v-model="queryForm.status"
+        class="manage-filter__control manage-filter__control--status"
+        clearable
+        placeholder="状态"
+      >
+        <el-option label="正常" :value="false" />
+        <el-option label="停用" :value="true" />
+      </el-select>
+      <div class="manage-filter__actions">
+        <el-button type="primary" class="manage-primary-button" @click="handleSearch">
+          <el-icon><Search /></el-icon>
+          查询
         </el-button>
+        <el-button class="manage-secondary-button" @click="handleResetQuery">
+          重置
+        </el-button>
+      </div>
+    </section>
 
+    <!-- 操作行：新建靠左 -->
+    <header class="manage-page__hero">
+      <div class="manage-page__actions is-start">
         <el-button type="primary" class="manage-primary-button" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           新建部门
@@ -16,14 +46,8 @@
       </div>
     </header>
 
+    <!-- 列表表面 -->
     <section class="manage-surface manage-table">
-      <div class="manage-surface__header">
-        <div class="manage-surface__header-title">
-          <h2>部门列表</h2>
-        </div>
-
-      </div>
-
       <div class="manage-surface__body">
         <el-table
           :data="deptList"
@@ -35,9 +59,9 @@
           <el-table-column label="部门信息" min-width="260" class-name="manage-tree-column">
             <template #default="{ row }">
               <div class="manage-entity">
-
                 <span class="manage-entity__text">
                   <span class="manage-entity__title">{{ row.name }}</span>
+                  <span class="manage-entity__meta">排序 {{ row.sort ?? 0 }}</span>
                 </span>
               </div>
             </template>
@@ -46,7 +70,7 @@
           <el-table-column label="负责人" min-width="160">
             <template #default="{ row }">
               <div class="manage-subtle-stack">
-                <span>{{ row.leader || '--' }}</span>
+                <span :class="{ 'manage-muted-text': !row.leader }">{{ row.leader || '未指定' }}</span>
               </div>
             </template>
           </el-table-column>
@@ -54,7 +78,7 @@
           <el-table-column label="联系电话" min-width="150">
             <template #default="{ row }">
               <div class="manage-subtle-stack">
-                <span>{{ row.phone || '--' }}</span>
+                <span :class="{ 'manage-muted-text': !row.phone }">{{ row.phone || '—' }}</span>
               </div>
             </template>
           </el-table-column>
@@ -62,22 +86,25 @@
           <el-table-column label="邮箱" min-width="210">
             <template #default="{ row }">
               <div class="manage-subtle-stack">
-                <span>{{ row.email || '--' }}</span>
+                <span :class="{ 'manage-muted-text': !row.email }">{{ row.email || '—' }}</span>
               </div>
             </template>
           </el-table-column>
 
           <el-table-column label="状态" width="120">
             <template #default="{ row }">
-              <el-tag :type="row.status ? 'danger' : 'success'" effect="light" round>
+              <span
+                class="manage-status"
+                :class="row.status ? 'is-danger' : 'is-success'"
+              >
                 {{ row.status ? '停用' : '正常' }}
-              </el-tag>
+              </span>
             </template>
           </el-table-column>
 
           <el-table-column label="创建时间" width="180">
             <template #default="{ row }">
-              {{ formatDateTime(row.createTime) }}
+              <span class="manage-muted-text">{{ formatDateTime(row.createTime) }}</span>
             </template>
           </el-table-column>
 
@@ -148,7 +175,7 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button class="manage-secondary-button" @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" class="manage-primary-button" @click="submitForm">保存部门</el-button>
       </template>
     </el-dialog>
@@ -156,18 +183,11 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  CircleCheck,
-  OfficeBuilding,
-  Plus,
-  Refresh,
-  User,
-  WarningFilled
-} from '@element-plus/icons-vue'
+import { Plus, Search } from '@element-plus/icons-vue'
 import { createDept, deleteDept, getDeptById, getTreeDepts, updateDept } from '@/network/manage/dept'
-import { countTreeNodes, formatDateTime } from './manage-utils'
+import { formatDateTime } from './manage-utils'
 
 const createDefaultForm = () => ({
   id: null,
@@ -180,6 +200,13 @@ const createDefaultForm = () => ({
   status: false
 })
 
+// 查询条件
+const createDefaultQuery = () => ({
+  name: '',
+  leader: '',
+  status: undefined
+})
+
 const deptList = ref([])
 const loading = ref(false)
 const dialogVisible = ref(false)
@@ -188,25 +215,12 @@ const isCreate = ref(true)
 const allDepts = ref([])
 const formRef = ref()
 const form = reactive(createDefaultForm())
+const queryForm = reactive(createDefaultQuery())
 
 const rules = reactive({
   name: [{ required: true, message: '请输入部门名称', trigger: 'blur' }],
   sort: [{ required: true, message: '请输入显示排序', trigger: 'change' }]
 })
-
-const countMatchingNodes = (nodes, predicate) => (
-  nodes.reduce(
-    (total, node) => total + (predicate(node) ? 1 : 0) + countMatchingNodes(node.children || [], predicate),
-    0
-  )
-)
-
-const totalDeptCount = computed(() => countTreeNodes(deptList.value))
-const activeDeptCount = computed(() => countMatchingNodes(deptList.value, node => !node.status))
-const disabledDeptCount = computed(() => countMatchingNodes(deptList.value, node => Boolean(node.status)))
-const assignedLeaderCount = computed(() => countMatchingNodes(deptList.value, node => Boolean(node.leader)))
-const emailReadyCount = computed(() => countMatchingNodes(deptList.value, node => Boolean(node.email)))
-const rootDeptCount = computed(() => deptList.value.length)
 
 const resetForm = () => {
   Object.assign(form, createDefaultForm())
@@ -230,22 +244,52 @@ const validateForm = async () => {
   }
 }
 
+// 组装树查询参数（空值不传）
+const buildTreeQuery = () => {
+  const params = {}
+  const name = String(queryForm.name || '').trim()
+  const leader = String(queryForm.leader || '').trim()
+
+  if (name) {
+    params.name = name
+  }
+  if (leader) {
+    params.leader = leader
+  }
+  if (queryForm.status !== undefined && queryForm.status !== null && queryForm.status !== '') {
+    params.status = queryForm.status
+  }
+
+  return params
+}
+
 onMounted(() => {
   fetchDepts()
 })
 
+// 列表查询（带筛选参数）
 const fetchDepts = async () => {
   try {
     loading.value = true
-    const response = await getTreeDepts()
+    const response = await getTreeDepts(buildTreeQuery())
     deptList.value = response.data || []
-    allDepts.value = response.data || []
   } catch (error) {
     console.error('获取部门列表失败:', error)
     ElMessage.error('获取部门列表失败')
   } finally {
     loading.value = false
   }
+}
+
+// 查询
+const handleSearch = () => {
+  fetchDepts()
+}
+
+// 重置查询
+const handleResetQuery = () => {
+  Object.assign(queryForm, createDefaultQuery())
+  fetchDepts()
 }
 
 const handleCreate = () => {
@@ -314,6 +358,7 @@ const handleDelete = (row) => {
   })
 }
 
+// 上级部门级联：始终拉完整树，不受列表筛选影响
 const handleCascaderVisibleChange = async (visible) => {
   if (!visible) {
     return

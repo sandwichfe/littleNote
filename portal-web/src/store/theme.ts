@@ -3,10 +3,11 @@ import { ref, watch } from 'vue'
 
 const STORAGE_KEY = 'manage-theme-colors'
 
+// Apple 极简默认色：主色蓝 + 深灰文字 + 浅灰背景
 const DEFAULTS = {
-  accent: '#193069',
-  textColor: '#3A3034',
-  bgColor: '#EFF1F8'
+  accent: '#0071e3',
+  textColor: '#111827',
+  bgColor: '#f5f5f7'
 }
 
 function hexToRgb(hex: string) {
@@ -24,11 +25,6 @@ function darken(hex: string, amount = 0.15) {
 function withAlpha(hex: string, alpha: number) {
   const { r, g, b } = hexToRgb(hex)
   return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-function lighten(hex: string, amount = 0.9) {
-  const { r, g, b } = hexToRgb(hex)
-  return `rgb(${Math.round(r + (255 - r) * amount)}, ${Math.round(g + (255 - g) * amount)}, ${Math.round(b + (255 - b) * amount)})`
 }
 
 export const useThemeStore = defineStore('theme', () => {
@@ -50,6 +46,7 @@ export const useThemeStore = defineStore('theme', () => {
     )
   }
 
+  // 将主题色写入 .manage-layout CSS 变量（纯色背景，无渐变）
   function applyTheme() {
     const el = document.querySelector('.manage-layout') as HTMLElement
     if (!el) return
@@ -62,18 +59,15 @@ export const useThemeStore = defineStore('theme', () => {
     el.style.setProperty('--manage-accent-strong', darken(a, 0.1))
     el.style.setProperty('--manage-accent-soft', withAlpha(a, 0.08))
     el.style.setProperty('--manage-slate', t)
-    el.style.setProperty('--manage-muted', withAlpha(t, 0.6))
-    el.style.setProperty('--manage-border', withAlpha(a, 0.08))
-    el.style.setProperty('--manage-surface-strong', bg)
-    el.style.setProperty('--manage-shadow', `0 8px 24px ${withAlpha(a, 0.05)}`)
-    el.style.setProperty('--manage-shadow-soft', `0 2px 8px ${withAlpha(a, 0.03)}`)
-
-    const bgLight = lighten(bg, 0.3)
-    el.style.setProperty(
-      '--manage-bg-gradient',
-      `linear-gradient(160deg, ${bg} 0%, ${bgLight} 40%, ${bg} 70%, ${bgLight} 100%)`
-    )
-    el.style.background = `linear-gradient(160deg, ${bg} 0%, ${bgLight} 40%, ${bg} 70%, ${bgLight} 100%)`
+    el.style.setProperty('--manage-muted', withAlpha(t, 0.55))
+    el.style.setProperty('--manage-border', '#e5e7eb')
+    el.style.setProperty('--manage-surface-strong', '#f3f4f6')
+    // 阴影使用中性黑，避免彩色投影
+    el.style.setProperty('--manage-shadow', '0 1px 3px rgba(0, 0, 0, 0.08)')
+    el.style.setProperty('--manage-shadow-soft', '0 1px 3px rgba(0, 0, 0, 0.08)')
+    el.style.setProperty('--manage-bg', bg)
+    // 纯色背景，符合 stylerule 禁止渐变
+    el.style.background = bg
   }
 
   function reset() {
