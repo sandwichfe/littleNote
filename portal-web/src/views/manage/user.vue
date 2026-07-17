@@ -34,15 +34,43 @@
       </aside>
 
       <div class="manage-page">
-        <header class="manage-page__hero">
-
-          <div class="manage-page__actions">
-
-            <el-button class="manage-secondary-button" @click="fetchUsers">
-              <el-icon><Refresh /></el-icon>
-              刷新用户
+        <!-- 查询区：条件 + 查询 / 重置 -->
+        <section class="manage-filter">
+          <el-input
+            v-model="queryForm.nickname"
+            class="manage-filter__control"
+            clearable
+            placeholder="昵称"
+            @keyup.enter="handleSearch"
+          />
+          <el-input
+            v-model="queryForm.username"
+            class="manage-filter__control"
+            clearable
+            placeholder="账号"
+            @keyup.enter="handleSearch"
+          />
+          <el-input
+            v-model="queryForm.email"
+            class="manage-filter__control"
+            clearable
+            placeholder="邮箱"
+            @keyup.enter="handleSearch"
+          />
+          <div class="manage-filter__actions">
+            <el-button type="primary" class="manage-primary-button" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              查询
             </el-button>
+            <el-button class="manage-secondary-button" @click="handleResetQuery">
+              重置
+            </el-button>
+          </div>
+        </section>
 
+        <!-- 操作行：新建靠左 -->
+        <header class="manage-page__hero">
+          <div class="manage-page__actions is-start">
             <el-button type="primary" class="manage-primary-button" @click="handleCreate">
               <el-icon><Plus /></el-icon>
               新建用户
@@ -51,19 +79,11 @@
         </header>
 
         <section class="manage-surface manage-table">
-          <div class="manage-surface__header">
-            <div class="manage-surface__header-title">
-              <h2>用户列表</h2>
-            </div>
-
-          </div>
-
           <div class="manage-surface__body">
             <el-table :data="userList" v-loading="loading" height="100%">
-              <el-table-column label="用户" min-width="260">
+              <el-table-column label="用户" min-width="200">
                 <template #default="{ row }">
                   <div class="manage-entity">
-
                     <span class="manage-entity__text">
                       <span class="manage-entity__title">{{ row.nickname || '--' }}</span>
                     </span>
@@ -71,7 +91,15 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="邮箱" min-width="220">
+              <el-table-column label="账号" min-width="160">
+                <template #default="{ row }">
+                  <div class="manage-subtle-stack">
+                    <span>{{ row.username || '--' }}</span>
+                  </div>
+                </template>
+              </el-table-column>
+
+              <el-table-column label="邮箱" min-width="200">
                 <template #default="{ row }">
                   <div class="manage-subtle-stack">
                     <span>{{ row.email || '--' }}</span>
@@ -79,7 +107,7 @@
                 </template>
               </el-table-column>
 
-              <el-table-column label="手机号" min-width="160">
+              <el-table-column label="手机号" min-width="140">
                 <template #default="{ row }">
                   <div class="manage-subtle-stack">
                     <span>{{ row.mobile || '--' }}</span>
@@ -121,7 +149,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="formTitle"
-      width="760px"
+      width="560px"
       class="manage-dialog"
       destroy-on-close
       @closed="handleDialogClosed"
@@ -166,15 +194,15 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" class="manage-primary-button" @click="submitForm">保存用户</el-button>
+        <el-button class="manage-secondary-button" @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" class="manage-primary-button" @click="submitForm">保存</el-button>
       </template>
     </el-dialog>
 
     <el-dialog
       v-model="roleDialogVisible"
       title="分配角色"
-      width="720px"
+      width="560px"
       class="manage-dialog"
       destroy-on-close
       @closed="handleRoleDialogClosed"
@@ -192,7 +220,7 @@
       </div>
 
       <template #footer>
-        <el-button @click="roleDialogVisible = false">取消</el-button>
+        <el-button class="manage-secondary-button" @click="roleDialogVisible = false">取消</el-button>
         <el-button type="primary" class="manage-primary-button" @click="submitAssignRole">保存分配</el-button>
       </template>
     </el-dialog>
@@ -200,23 +228,14 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Cellphone,
-  Grid,
-  Message,
-  OfficeBuilding,
-  Plus,
-  Refresh,
-  User,
-  UserFilled
-} from '@element-plus/icons-vue'
+import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 import { createUser, deleteUser, getAllUsers, getUserById, updateUser } from '@/network/manage/user'
 import { getAllRoles } from '@/network/manage/role'
 import { getTreeDepts } from '@/network/manage/dept'
 import { assignRolesToUser, getRolesByUserId } from '@/network/manage/userRole'
-import { formatDateTime, getInitial } from './manage-utils'
+import { formatDateTime } from './manage-utils'
 
 const createDefaultForm = () => ({
   id: null,
@@ -226,6 +245,13 @@ const createDefaultForm = () => ({
   password: '',
   email: '',
   mobile: ''
+})
+
+// 查询条件（空值不传给接口）
+const createDefaultQuery = () => ({
+  nickname: '',
+  username: '',
+  email: ''
 })
 
 const userList = ref([])
@@ -246,6 +272,7 @@ const currentUserId = ref(null)
 const roleTree = ref(null)
 const formRef = ref()
 const form = reactive(createDefaultForm())
+const queryForm = reactive(createDefaultQuery())
 
 const rules = reactive({
   nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
@@ -257,11 +284,32 @@ const rules = reactive({
   ]
 })
 
-const emailReadyCount = computed(() => userList.value.filter(item => item.email).length)
-const mobileReadyCount = computed(() => userList.value.filter(item => item.mobile).length)
-
 const resetForm = () => {
   Object.assign(form, createDefaultForm())
+}
+
+// 组装列表查询参数：分页 + 部门 + 非空筛选
+const buildListQuery = () => {
+  const params = {
+    pageNum: currentPage.value,
+    pageSize: pageSize.value,
+    deptId: currentDeptId.value
+  }
+  const nickname = String(queryForm.nickname || '').trim()
+  const username = String(queryForm.username || '').trim()
+  const email = String(queryForm.email || '').trim()
+
+  if (nickname) {
+    params.nickname = nickname
+  }
+  if (username) {
+    params.username = username
+  }
+  if (email) {
+    params.email = email
+  }
+
+  return params
 }
 
 const handleDialogClosed = () => {
@@ -307,11 +355,7 @@ const fetchDepts = async () => {
 const fetchUsers = async () => {
   try {
     loading.value = true
-    const response = await getAllUsers({
-      pageNum: currentPage.value,
-      pageSize: pageSize.value,
-      deptId: currentDeptId.value
-    })
+    const response = await getAllUsers(buildListQuery())
     userList.value = response.data?.records || []
     total.value = response.data?.total || 0
   } catch (error) {
@@ -341,6 +385,19 @@ const clearDeptFilter = () => {
   currentDeptId.value = null
   currentPage.value = 1
   deptTreeRef.value?.setCurrentKey?.(null)
+  fetchUsers()
+}
+
+// 查询：从第一页开始
+const handleSearch = () => {
+  currentPage.value = 1
+  fetchUsers()
+}
+
+// 重置查询条件并刷新
+const handleResetQuery = () => {
+  Object.assign(queryForm, createDefaultQuery())
+  currentPage.value = 1
   fetchUsers()
 }
 

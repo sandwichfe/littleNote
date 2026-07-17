@@ -25,30 +25,34 @@ interface ApiResponse<T> {
   msg?: string
 }
 
-interface PageVo {
+// 列表 / 树查询参数：分页 + 可选筛选（后端未接字段时会被忽略）
+interface MenuListQuery {
   pageNum: number
   pageSize: number
+  name?: string
+  path?: string
+  type?: number | string
 }
 
-export const createMenu = (menu: Menu) => request({ 
-  method: 'post', 
-  url: '/api/portal/sys/menu/create', 
-  data: menu 
+export const createMenu = (menu: Menu) => request({
+  method: 'post',
+  url: '/api/portal/sys/menu/create',
+  data: menu
 })
 
 export const getMenuById = (id: number) => request({ method: 'get', url: `/api/portal/sys/menu/get/${id}` })
 
 // 导出 getAllMenus 方法
-export const getAllMenus = (pageVo: PageVo) => request({ 
-  method: 'post', 
-  url: '/api/portal/sys/menu/list', 
-  data: pageVo 
+export const getAllMenus = (pageVo: MenuListQuery) => request({
+  method: 'post',
+  url: '/api/portal/sys/menu/list',
+  data: pageVo
 })
 
-export const getTreeMenus = (pageVo: PageVo) => request({ 
-  method: 'get', 
-  url: '/api/portal/sys/menu/tree', 
-  params: pageVo 
+export const getTreeMenus = (pageVo: MenuListQuery) => request({
+  method: 'get',
+  url: '/api/portal/sys/menu/tree',
+  params: pageVo
 })
 
 export const updateMenu = (menu: Menu) => request({ 

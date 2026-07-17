@@ -1,14 +1,35 @@
 <template>
   <section class="manage-page">
-    <header class="manage-page__hero">
-
-      <div class="manage-page__actions">
-
-        <el-button class="manage-secondary-button" @click="handleRefresh">
-          <el-icon><Refresh /></el-icon>
-          刷新结构
+    <!-- 查询区：条件 + 查询 / 重置 -->
+    <section class="manage-filter">
+      <el-input
+        v-model="queryForm.name"
+        class="manage-filter__control"
+        clearable
+        placeholder="菜单名称"
+        @keyup.enter="handleSearch"
+      />
+      <el-input
+        v-model="queryForm.path"
+        class="manage-filter__control"
+        clearable
+        placeholder="访问路径"
+        @keyup.enter="handleSearch"
+      />
+      <div class="manage-filter__actions">
+        <el-button type="primary" class="manage-primary-button" @click="handleSearch">
+          <el-icon><Search /></el-icon>
+          查询
         </el-button>
+        <el-button class="manage-secondary-button" @click="handleResetQuery">
+          重置
+        </el-button>
+      </div>
+    </section>
 
+    <!-- 操作行：新建靠左 -->
+    <header class="manage-page__hero">
+      <div class="manage-page__actions is-start">
         <el-button type="primary" class="manage-primary-button" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           新建菜单
@@ -17,13 +38,6 @@
     </header>
 
     <section class="manage-surface manage-table">
-      <div class="manage-surface__header">
-        <div class="manage-surface__header-title">
-          <h2>菜单树</h2>
-        </div>
-
-      </div>
-
       <div class="manage-surface__body">
         <el-table
           :data="menuList"
@@ -32,13 +46,11 @@
           :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
           height="100%"
         >
-          <el-table-column label="菜单信息" min-width="260" class-name="manage-tree-column">
+          <el-table-column label="菜单" min-width="260" class-name="manage-tree-column">
             <template #default="{ row }">
               <div class="manage-entity">
-
                 <span class="manage-entity__text">
                   <span class="manage-entity__title">{{ row.name }}</span>
-                  <span class="manage-entity__meta">{{ getMenuTypeMeta(row).note }}</span>
                 </span>
               </div>
             </template>
@@ -91,7 +103,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="formTitle"
-      width="720px"
+      width="560px"
       class="manage-dialog"
       destroy-on-close
       @closed="handleDialogClosed"
@@ -132,23 +144,17 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" class="manage-primary-button" @click="submitForm">保存菜单</el-button>
+        <el-button class="manage-secondary-button" @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" class="manage-primary-button" @click="submitForm">保存</el-button>
       </template>
     </el-dialog>
   </section>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Collection,
-  Grid,
-  Operation,
-  Plus,
-  Refresh
-} from '@element-plus/icons-vue'
+import { Plus, Search } from '@element-plus/icons-vue'
 import { createMenu, deleteMenu, getMenuById, getTreeMenus, updateMenu } from '@/network/manage/menu'
 import { countTreeNodes } from './manage-utils'
 
@@ -159,6 +165,12 @@ const createDefaultForm = () => ({
   type: '',
   sort: 0,
   menuPid: null
+})
+
+// 查询条件（空值不传给接口）
+const createDefaultQuery = () => ({
+  name: '',
+  path: ''
 })
 
 const menuList = ref([])
@@ -172,6 +184,7 @@ const isCreate = ref(true)
 const allMenus = ref([])
 const formRef = ref()
 const form = reactive(createDefaultForm())
+const queryForm = reactive(createDefaultQuery())
 
 const rules = reactive({
   name: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
@@ -180,23 +193,30 @@ const rules = reactive({
   type: [{ required: true, message: '请输入菜单类型', trigger: 'blur' }]
 })
 
-const countMatchingNodes = (nodes, predicate) => (
-  nodes.reduce(
-    (totalValue, node) => totalValue + (predicate(node) ? 1 : 0) + countMatchingNodes(node.children || [], predicate),
-    0
-  )
-)
-
 const isFolderNode = (node) => Array.isArray(node.children) && node.children.length > 0 || Number(node.type) === 0
-const isPageNode = (node) => Number(node.type) === 1 || (!isFolderNode(node) && Number(node.type) !== 2)
 const isActionNode = (node) => Number(node.type) === 2
-
-const totalMenuCount = computed(() => countTreeNodes(menuList.value))
-const folderCount = computed(() => countMatchingNodes(menuList.value, isFolderNode))
-const pageMenuCount = computed(() => countMatchingNodes(menuList.value, isPageNode))
 
 const resetForm = () => {
   Object.assign(form, createDefaultForm())
+}
+
+// 组装树列表查询参数：分页 + 非空筛选
+const buildListQuery = () => {
+  const params = {
+    pageNum: currentPage.value,
+    pageSize: pageSize.value
+  }
+  const name = String(queryForm.name || '').trim()
+  const path = String(queryForm.path || '').trim()
+
+  if (name) {
+    params.name = name
+  }
+  if (path) {
+    params.path = path
+  }
+
+  return params
 }
 
 const handleDialogClosed = () => {
@@ -232,7 +252,7 @@ onMounted(async () => {
 const fetchMenus = async () => {
   try {
     loading.value = true
-    const response = await getTreeMenus({ pageNum: currentPage.value, pageSize: pageSize.value })
+    const response = await getTreeMenus(buildListQuery())
     menuList.value = response.data || []
     total.value = countVisibleNodes(response.data)
   } catch (error) {
@@ -243,9 +263,17 @@ const fetchMenus = async () => {
   }
 }
 
-const handleRefresh = async () => {
-  await fetchMenus()
-  await refreshAllMenus()
+// 查询：从第一页开始
+const handleSearch = () => {
+  currentPage.value = 1
+  fetchMenus()
+}
+
+// 重置查询条件并刷新
+const handleResetQuery = () => {
+  Object.assign(queryForm, createDefaultQuery())
+  currentPage.value = 1
+  fetchMenus()
 }
 
 const handlePageChange = (newPage) => {
@@ -294,7 +322,8 @@ const submitForm = async () => {
     }
 
     dialogVisible.value = false
-    handleRefresh()
+    await fetchMenus()
+    await refreshAllMenus()
   } catch (error) {
     console.error('操作失败:', error)
     ElMessage.error('操作失败')
@@ -310,7 +339,8 @@ const handleDelete = (row) => {
     try {
       await deleteMenu(row.id)
       ElMessage.success('删除成功')
-      handleRefresh()
+      await fetchMenus()
+      await refreshAllMenus()
     } catch (error) {
       console.error('删除失败:', error)
       ElMessage.error('删除失败')
@@ -331,30 +361,25 @@ const handleCascaderVisibleChange = async (visible) => {
   }
 }
 
+// 菜单类型标签
 const getMenuTypeMeta = (row) => {
   if (isFolderNode(row)) {
     return {
       label: '目录',
-      tag: 'info',
-      note: '',
-      icon: Collection
+      tag: 'info'
     }
   }
 
   if (isActionNode(row)) {
     return {
       label: '按钮',
-      tag: 'warning',
-      note: '',
-      icon: Operation
+      tag: 'warning'
     }
   }
 
   return {
     label: '菜单',
-    tag: 'success',
-    note: '',
-    icon: Grid
+    tag: 'success'
   }
 }
 </script>

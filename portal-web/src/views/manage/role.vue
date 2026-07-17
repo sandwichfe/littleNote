@@ -1,14 +1,35 @@
 <template>
-  <section class="manage-page">
-    <header class="manage-page__hero">
-
-      <div class="manage-page__actions">
-
-        <el-button class="manage-secondary-button" @click="fetchRoles">
-          <el-icon><Refresh /></el-icon>
-          刷新角色
+  <section class="manage-page role-page">
+    <!-- 查询区：条件 + 查询 / 重置 -->
+    <section class="manage-filter">
+      <el-input
+        v-model="queryForm.roleName"
+        class="manage-filter__control"
+        clearable
+        placeholder="角色名称"
+        @keyup.enter="handleSearch"
+      />
+      <el-input
+        v-model="queryForm.description"
+        class="manage-filter__control"
+        clearable
+        placeholder="角色说明"
+        @keyup.enter="handleSearch"
+      />
+      <div class="manage-filter__actions">
+        <el-button type="primary" class="manage-primary-button" @click="handleSearch">
+          <el-icon><Search /></el-icon>
+          查询
         </el-button>
+        <el-button class="manage-secondary-button" @click="handleResetQuery">
+          重置
+        </el-button>
+      </div>
+    </section>
 
+    <!-- 操作行：新建靠左 -->
+    <header class="manage-page__hero">
+      <div class="manage-page__actions is-start">
         <el-button type="primary" class="manage-primary-button" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           新建角色
@@ -17,19 +38,11 @@
     </header>
 
     <section class="manage-surface manage-table">
-      <div class="manage-surface__header">
-        <div class="manage-surface__header-title">
-          <h2>角色列表</h2>
-        </div>
-
-      </div>
-
       <div class="manage-surface__body">
         <el-table :data="roleList" v-loading="loading" height="100%">
           <el-table-column label="角色" min-width="240">
             <template #default="{ row }">
               <div class="manage-entity">
-
                 <span class="manage-entity__text">
                   <span class="manage-entity__title">{{ row.roleName }}</span>
                 </span>
@@ -40,7 +53,7 @@
           <el-table-column label="说明" min-width="280">
             <template #default="{ row }">
               <div class="manage-subtle-stack">
-                <span>{{ row.description || '暂未补充角色说明' }}</span>
+                <span>{{ row.description || '--' }}</span>
               </div>
             </template>
           </el-table-column>
@@ -77,31 +90,37 @@
     <el-dialog
       v-model="dialogVisible"
       :title="formTitle"
-      width="680px"
+      width="560px"
       class="manage-dialog"
       destroy-on-close
       @closed="handleDialogClosed"
     >
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="manage-form-grid">
-        <el-form-item label="角色名称" prop="roleName">
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-position="top"
+        class="manage-form-grid"
+      >
+        <el-form-item class="manage-form-grid__full" label="角色名称" prop="roleName">
           <el-input v-model="form.roleName" placeholder="请输入角色名称" />
         </el-form-item>
 
-        <el-form-item label="角色描述" prop="description">
+        <el-form-item class="manage-form-grid__full" label="角色描述" prop="description">
           <el-input v-model="form.description" placeholder="请输入角色说明" />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" class="manage-primary-button" @click="submitForm">保存角色</el-button>
+        <el-button class="manage-secondary-button" @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" class="manage-primary-button" @click="submitForm">保存</el-button>
       </template>
     </el-dialog>
 
     <el-dialog
       v-model="menuDialogVisible"
       title="分配菜单"
-      width="720px"
+      width="560px"
       class="manage-dialog"
       destroy-on-close
       @closed="handleMenuDialogClosed"
@@ -119,7 +138,7 @@
       </div>
 
       <template #footer>
-        <el-button @click="menuDialogVisible = false">取消</el-button>
+        <el-button class="manage-secondary-button" @click="menuDialogVisible = false">取消</el-button>
         <el-button type="primary" class="manage-primary-button" @click="submitAssignMenu">保存分配</el-button>
       </template>
     </el-dialog>
@@ -127,20 +146,13 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, reactive, ref } from 'vue'
+import { nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import {
-  Collection,
-  Connection,
-  Grid,
-  Menu as MenuIcon,
-  Plus,
-  Refresh
-} from '@element-plus/icons-vue'
+import { Plus, Search } from '@element-plus/icons-vue'
 import { createRole, deleteRole, getAllRoles, getRoleById, updateRole } from '@/network/manage/role'
 import { getTreeMenus } from '@/network/manage/menu'
 import { assignMenusToRole, getMenusByRoleId } from '@/network/manage/roleMenu'
-import { countTreeNodes, formatDateTime, getInitial } from './manage-utils'
+import { formatDateTime } from './manage-utils'
 
 const createDefaultForm = () => ({
   id: null,
@@ -149,6 +161,12 @@ const createDefaultForm = () => ({
   sort: 0,
   createTime: null,
   createUserId: null,
+  description: ''
+})
+
+// 查询条件（空值不传给接口）
+const createDefaultQuery = () => ({
+  roleName: '',
   description: ''
 })
 
@@ -167,16 +185,33 @@ const currentRoleId = ref(null)
 const menuTree = ref(null)
 const formRef = ref()
 const form = reactive(createDefaultForm())
+const queryForm = reactive(createDefaultQuery())
 
 const rules = reactive({
   roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }]
 })
 
-const menuNodeCount = computed(() => countTreeNodes(allMenus.value))
-const describedRoleCount = computed(() => roleList.value.filter(item => item.description).length)
-
 const resetForm = () => {
   Object.assign(form, createDefaultForm())
+}
+
+// 组装列表查询参数：分页 + 非空筛选
+const buildListQuery = () => {
+  const params = {
+    pageNum: currentPage.value,
+    pageSize: pageSize.value
+  }
+  const roleName = String(queryForm.roleName || '').trim()
+  const description = String(queryForm.description || '').trim()
+
+  if (roleName) {
+    params.roleName = roleName
+  }
+  if (description) {
+    params.description = description
+  }
+
+  return params
 }
 
 const handleDialogClosed = () => {
@@ -211,7 +246,7 @@ onMounted(() => {
 const fetchRoles = async () => {
   try {
     loading.value = true
-    const response = await getAllRoles({ pageNum: currentPage.value, pageSize: pageSize.value })
+    const response = await getAllRoles(buildListQuery())
     roleList.value = response.data?.records || []
     total.value = response.data?.total || 0
   } catch (error) {
@@ -229,6 +264,19 @@ const fetchAllMenus = async () => {
   } catch (error) {
     console.error('获取菜单树失败:', error)
   }
+}
+
+// 查询：从第一页开始
+const handleSearch = () => {
+  currentPage.value = 1
+  fetchRoles()
+}
+
+// 重置查询条件并刷新
+const handleResetQuery = () => {
+  Object.assign(queryForm, createDefaultQuery())
+  currentPage.value = 1
+  fetchRoles()
 }
 
 const handlePageChange = (newPage) => {
@@ -330,3 +378,4 @@ const submitAssignMenu = async () => {
   }
 }
 </script>
+

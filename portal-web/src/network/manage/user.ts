@@ -21,17 +21,22 @@ interface ChangePasswordRequest {
   confirmPassword: string
 }
 
-interface PageVo {
+// 列表查询参数：分页 + 部门 + 可选筛选（后端未接字段时会被忽略）
+interface UserListQuery {
   pageNum: number
   pageSize: number
-  deptId?: number
+  deptId?: number | null
+  nickname?: string
+  username?: string
+  email?: string
+  mobile?: string
 }
 
 export const createUser = (user: User) => request({ method: 'post', url: '/api/portal/sys/user/create', data: user })
 
 export const getUserById = (id: number) => request({ method: 'get', url: `/api/portal/sys/user/get/${id}` })
 
-export const getAllUsers = (pageVo: PageVo) => request({ method: 'post', url: '/api/portal/sys/user/list', data: pageVo })
+export const getAllUsers = (pageVo: UserListQuery) => request({ method: 'post', url: '/api/portal/sys/user/list', data: pageVo })
 
 export const updateUser = (user: User) => request({ method: 'post', url: '/api/portal/sys/user/update', data: user })
 
