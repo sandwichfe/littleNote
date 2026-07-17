@@ -62,8 +62,8 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  /* 侧栏宽度参考 Apple Settings：约 256px */
-  grid-template-columns: 256px minmax(0, 1fr);
+  /* 侧栏宽度：紧凑轨，容纳 4 字中文标题 + 图标 */
+  grid-template-columns: 200px minmax(0, 1fr);
   gap: 0;
   padding: 0;
   position: relative;
@@ -72,7 +72,7 @@
 
 @media (min-width: 769px) {
   div.manage-shell.is-collapsed {
-    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-columns: 56px minmax(0, 1fr);
   }
 }
 
@@ -336,8 +336,8 @@
 
 .manage-sidebar.is-collapsed .manage-nav-item {
   justify-content: center;
-  width: 40px;
-  min-height: 40px;
+  width: 36px;
+  min-height: 36px;
   padding: 0;
   margin: 0 auto;
 }
@@ -1159,6 +1159,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  min-width: 0;
   min-height: 0;
   padding: var(--space-4);
   border-radius: var(--manage-radius);
@@ -1189,7 +1190,10 @@
 .manage-tree-panel__body {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  min-width: 0;
+  /* 仅纵向滚动，避免 el-tree 缩进/长文案撑出横向条 */
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: var(--space-2);
   border-radius: var(--manage-radius-sm);
   background: var(--manage-surface-strong);
@@ -1197,12 +1201,26 @@
 }
 
 .manage-tree-panel .el-tree {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
   background: transparent;
   color: var(--manage-slate);
 }
 
+/* 节点链路上都限制宽度，防止深层缩进把容器撑宽 */
+.manage-tree-panel .el-tree-node,
+.manage-tree-panel .el-tree-node__children {
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
 .manage-tree-panel .el-tree-node__content {
   height: 36px;
+  box-sizing: border-box;
+  width: 100%;
+  overflow: hidden;
   border-radius: var(--manage-radius-sm);
 }
 
@@ -1213,6 +1231,20 @@
 .manage-tree-panel .el-tree-node.is-current > .el-tree-node__content {
   background: var(--manage-accent-soft);
   color: var(--manage-accent);
+}
+
+/* 部门名称过长时省略，不横向撑开 */
+.manage-tree-panel .el-tree-node__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 面板内「全部用户」等同宽约束 */
+.manage-tree-panel__body > .manage-nav-item {
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .manage-tree-panel__footer {
@@ -1379,7 +1411,7 @@
 
 @media (max-width: 1100px) {
   .manage-shell {
-    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-columns: 184px minmax(0, 1fr);
   }
 
   .manage-tree-layout {
@@ -1406,7 +1438,7 @@
     top: 56px; /* 与顶栏高度对齐 */
     left: 0;
     bottom: 0;
-    width: min(280px, calc(100vw - 48px));
+    width: min(220px, calc(100vw - 48px));
     z-index: 1200;
     transform: translateX(-100%);
     transition: transform 0.25s ease;
