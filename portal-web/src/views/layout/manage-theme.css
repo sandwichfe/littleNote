@@ -723,6 +723,59 @@
   justify-content: flex-start;
 }
 
+/* 可折叠搜索面板：白底卡片，标题行可点开/收起 */
+.manage-search-panel {
+  flex-shrink: 0;
+  border-radius: var(--manage-radius);
+  border: 1px solid var(--manage-border);
+  background: var(--manage-surface);
+  overflow: hidden;
+}
+
+.manage-search-panel__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: none;
+  background: transparent;
+  color: var(--manage-slate);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.manage-search-panel__toggle:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.manage-search-panel__toggle:focus-visible {
+  outline: 2px solid var(--manage-accent);
+  outline-offset: -2px;
+}
+
+.manage-search-panel__arrow {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--manage-muted);
+  transition: transform 0.15s ease;
+}
+
+/* 展开时箭头朝下 */
+.manage-search-panel.is-open .manage-search-panel__arrow {
+  transform: rotate(90deg);
+}
+
+.manage-search-panel__body {
+  padding: 0 var(--space-4) var(--space-4);
+  border-top: 1px solid var(--manage-border);
+  padding-top: var(--space-4);
+}
+
 /* 查询条件行：左条件右按钮，紧凑单行 */
 .manage-filter {
   display: flex;
@@ -944,7 +997,7 @@
 
 .manage-surface__header-title h2 {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--manage-slate);
   line-height: 1.25;
