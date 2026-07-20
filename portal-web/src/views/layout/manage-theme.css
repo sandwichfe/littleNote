@@ -89,21 +89,21 @@
 .manage-sidebar__panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
   height: 100%;
-  padding: var(--space-4) var(--space-3);
+  padding: var(--space-2);
   background: var(--manage-surface);
 }
 
-/* 标题区：底部分割，略增高 */
+/* 标题区：紧凑留白，贴近参考侧栏的顶部密度 */
 .manage-sidebar__intro {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  min-height: 48px;
-  padding: var(--space-2) var(--space-2) var(--space-4);
-  margin-bottom: var(--space-1);
+  min-height: 40px;
+  padding: 0 var(--space-1) var(--space-2);
+  margin-bottom: 0;
   border-bottom: 1px solid var(--manage-border);
 }
 
