@@ -1,53 +1,68 @@
 <template>
   <section class="manage-page">
-    <!-- 查询区：常用条件 + 查询按钮 -->
-    <section class="manage-filter">
-      <el-input
-        v-model="queryForm.name"
-        class="manage-filter__control"
-        clearable
-        placeholder="部门名称"
-        @keyup.enter="handleSearch"
-      />
-      <el-input
-        v-model="queryForm.leader"
-        class="manage-filter__control"
-        clearable
-        placeholder="负责人"
-        @keyup.enter="handleSearch"
-      />
-      <el-select
-        v-model="queryForm.status"
-        class="manage-filter__control manage-filter__control--status"
-        clearable
-        placeholder="状态"
-      >
-        <el-option label="正常" :value="false" />
-        <el-option label="停用" :value="true" />
-      </el-select>
-      <div class="manage-filter__actions">
-        <el-button type="primary" class="manage-primary-button" @click="handleSearch">
-          <el-icon><Search /></el-icon>
-          查询
-        </el-button>
-        <el-button class="manage-secondary-button" @click="handleResetQuery">
-          重置
-        </el-button>
+    <!-- 可折叠搜索条件 -->
+    <section class="manage-search-panel" :class="{ 'is-open': searchExpanded }">
+      <button type="button" class="manage-search-panel__toggle" @click="searchExpanded = !searchExpanded">
+        <el-icon class="manage-search-panel__arrow"><ArrowRight /></el-icon>
+        <span>搜索</span>
+      </button>
+      <div v-show="searchExpanded" class="manage-search-panel__body">
+        <section class="manage-filter">
+          <el-input
+            v-model="queryForm.name"
+            class="manage-filter__control"
+            clearable
+            placeholder="部门名称"
+            @keyup.enter="handleSearch"
+          />
+          <el-input
+            v-model="queryForm.leader"
+            class="manage-filter__control"
+            clearable
+            placeholder="负责人"
+            @keyup.enter="handleSearch"
+          />
+          <el-select
+            v-model="queryForm.status"
+            class="manage-filter__control manage-filter__control--status"
+            clearable
+            placeholder="状态"
+          >
+            <el-option label="正常" :value="false" />
+            <el-option label="停用" :value="true" />
+          </el-select>
+          <div class="manage-filter__actions">
+            <el-button class="manage-secondary-button" @click="handleResetQuery">
+              <el-icon><Refresh /></el-icon>
+              重置
+            </el-button>
+            <el-button type="primary" class="manage-primary-button" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+          </div>
+        </section>
       </div>
     </section>
 
-    <!-- 操作行：新建靠左 -->
-    <header class="manage-page__hero">
-      <div class="manage-page__actions is-start">
-        <el-button type="primary" class="manage-primary-button" @click="handleCreate">
-          <el-icon><Plus /></el-icon>
-          新建部门
-        </el-button>
-      </div>
-    </header>
-
-    <!-- 列表表面 -->
+    <!-- 列表卡：左标题，右新增 / 刷新 -->
     <section class="manage-surface manage-table">
+      <div class="manage-surface__header">
+        <div class="manage-surface__header-title">
+          <h2>部门列表</h2>
+        </div>
+        <div class="manage-surface__header-side">
+          <el-button type="primary" class="manage-primary-button" @click="handleCreate">
+            <el-icon><Plus /></el-icon>
+            新增
+          </el-button>
+          <el-button class="manage-secondary-button" @click="fetchDepts">
+            <el-icon><Refresh /></el-icon>
+            刷新
+          </el-button>
+        </div>
+      </div>
+
       <div class="manage-surface__body">
         <el-table
           :data="deptList"
@@ -185,7 +200,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { ArrowRight, Plus, Refresh, Search } from '@element-plus/icons-vue'
 import { createDept, deleteDept, getDeptById, getTreeDepts, updateDept } from '@/network/manage/dept'
 import { formatDateTime } from './manage-utils'
 
@@ -209,6 +224,8 @@ const createDefaultQuery = () => ({
 
 const deptList = ref([])
 const loading = ref(false)
+// 搜索面板展开状态（默认收起）
+const searchExpanded = ref(false)
 const dialogVisible = ref(false)
 const formTitle = ref('')
 const isCreate = ref(true)

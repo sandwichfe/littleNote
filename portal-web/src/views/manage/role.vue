@@ -1,43 +1,59 @@
 <template>
   <section class="manage-page role-page">
-    <!-- 查询区：条件 + 查询 / 重置 -->
-    <section class="manage-filter">
-      <el-input
-        v-model="queryForm.roleName"
-        class="manage-filter__control"
-        clearable
-        placeholder="角色名称"
-        @keyup.enter="handleSearch"
-      />
-      <el-input
-        v-model="queryForm.description"
-        class="manage-filter__control"
-        clearable
-        placeholder="角色说明"
-        @keyup.enter="handleSearch"
-      />
-      <div class="manage-filter__actions">
-        <el-button type="primary" class="manage-primary-button" @click="handleSearch">
-          <el-icon><Search /></el-icon>
-          查询
-        </el-button>
-        <el-button class="manage-secondary-button" @click="handleResetQuery">
-          重置
-        </el-button>
+    <!-- 可折叠搜索条件 -->
+    <section class="manage-search-panel" :class="{ 'is-open': searchExpanded }">
+      <button type="button" class="manage-search-panel__toggle" @click="searchExpanded = !searchExpanded">
+        <el-icon class="manage-search-panel__arrow"><ArrowRight /></el-icon>
+        <span>搜索</span>
+      </button>
+      <div v-show="searchExpanded" class="manage-search-panel__body">
+        <section class="manage-filter">
+          <el-input
+            v-model="queryForm.roleName"
+            class="manage-filter__control"
+            clearable
+            placeholder="角色名称"
+            @keyup.enter="handleSearch"
+          />
+          <el-input
+            v-model="queryForm.description"
+            class="manage-filter__control"
+            clearable
+            placeholder="角色说明"
+            @keyup.enter="handleSearch"
+          />
+          <div class="manage-filter__actions">
+            <el-button class="manage-secondary-button" @click="handleResetQuery">
+              <el-icon><Refresh /></el-icon>
+              重置
+            </el-button>
+            <el-button type="primary" class="manage-primary-button" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+          </div>
+        </section>
       </div>
     </section>
 
-    <!-- 操作行：新建靠左 -->
-    <header class="manage-page__hero">
-      <div class="manage-page__actions is-start">
-        <el-button type="primary" class="manage-primary-button" @click="handleCreate">
-          <el-icon><Plus /></el-icon>
-          新建角色
-        </el-button>
-      </div>
-    </header>
-
+    <!-- 列表卡：左标题，右新增 / 刷新 -->
     <section class="manage-surface manage-table">
+      <div class="manage-surface__header">
+        <div class="manage-surface__header-title">
+          <h2>角色列表</h2>
+        </div>
+        <div class="manage-surface__header-side">
+          <el-button type="primary" class="manage-primary-button" @click="handleCreate">
+            <el-icon><Plus /></el-icon>
+            新增
+          </el-button>
+          <el-button class="manage-secondary-button" @click="fetchRoles">
+            <el-icon><Refresh /></el-icon>
+            刷新
+          </el-button>
+        </div>
+      </div>
+
       <div class="manage-surface__body">
         <el-table :data="roleList" v-loading="loading" height="100%">
           <el-table-column label="角色" min-width="240">
@@ -148,7 +164,7 @@
 <script setup>
 import { nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { ArrowRight, Plus, Refresh, Search } from '@element-plus/icons-vue'
 import { createRole, deleteRole, getAllRoles, getRoleById, updateRole } from '@/network/manage/role'
 import { getTreeMenus } from '@/network/manage/menu'
 import { assignMenusToRole, getMenusByRoleId } from '@/network/manage/roleMenu'
@@ -172,6 +188,8 @@ const createDefaultQuery = () => ({
 
 const roleList = ref([])
 const loading = ref(false)
+// 搜索面板展开状态（默认收起）
+const searchExpanded = ref(false)
 const pageSize = ref(10)
 const currentPage = ref(1)
 const total = ref(0)

@@ -1,42 +1,64 @@
 <template>
   <section class="manage-page">
-    <!-- 查询区：条件 + 查询 / 重置 -->
-    <section class="manage-filter">
-      <el-input
-        v-model="queryForm.keyword"
-        class="manage-filter__control manage-filter__control--wide"
-        clearable
-        placeholder="描述 / URI / 参数"
-        @keyup.enter="handleSearch"
-      />
-      <el-input
-        v-model="queryForm.operatorName"
-        class="manage-filter__control"
-        clearable
-        placeholder="操作者"
-        @keyup.enter="handleSearch"
-      />
-      <el-date-picker
-        v-model="queryForm.timeRange"
-        class="manage-filter__control manage-filter__control--range"
-        type="datetimerange"
-        start-placeholder="开始时间"
-        end-placeholder="结束时间"
-        format="YYYY-MM-DD HH:mm:ss"
-        value-format="YYYY-MM-DD HH:mm:ss"
-      />
-      <div class="manage-filter__actions">
-        <el-button type="primary" class="manage-primary-button" @click="handleSearch">
-          <el-icon><Search /></el-icon>
-          查询
-        </el-button>
-        <el-button class="manage-secondary-button" @click="handleResetQuery">
-          重置
-        </el-button>
+    <!-- 可折叠搜索条件 -->
+    <section class="manage-search-panel" :class="{ 'is-open': searchExpanded }">
+      <button type="button" class="manage-search-panel__toggle" @click="searchExpanded = !searchExpanded">
+        <el-icon class="manage-search-panel__arrow"><ArrowRight /></el-icon>
+        <span>搜索</span>
+      </button>
+      <div v-show="searchExpanded" class="manage-search-panel__body">
+        <section class="manage-filter">
+          <el-input
+            v-model="queryForm.keyword"
+            class="manage-filter__control manage-filter__control--wide"
+            clearable
+            placeholder="描述 / URI / 参数"
+            @keyup.enter="handleSearch"
+          />
+          <el-input
+            v-model="queryForm.operatorName"
+            class="manage-filter__control"
+            clearable
+            placeholder="操作者"
+            @keyup.enter="handleSearch"
+          />
+          <el-date-picker
+            v-model="queryForm.timeRange"
+            class="manage-filter__control manage-filter__control--range"
+            type="datetimerange"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+          />
+          <div class="manage-filter__actions">
+            <el-button class="manage-secondary-button" @click="handleResetQuery">
+              <el-icon><Refresh /></el-icon>
+              重置
+            </el-button>
+            <el-button type="primary" class="manage-primary-button" @click="handleSearch">
+              <el-icon><Search /></el-icon>
+              搜索
+            </el-button>
+          </div>
+        </section>
       </div>
     </section>
 
+    <!-- 列表卡：左标题，右刷新（日志无新增） -->
     <section class="manage-surface manage-table">
+      <div class="manage-surface__header">
+        <div class="manage-surface__header-title">
+          <h2>操作日志</h2>
+        </div>
+        <div class="manage-surface__header-side">
+          <el-button class="manage-secondary-button" @click="fetchLogs">
+            <el-icon><Refresh /></el-icon>
+            刷新
+          </el-button>
+        </div>
+      </div>
+
       <div class="manage-surface__body">
         <el-table :data="logList" v-loading="loading" height="100%">
           <el-table-column label="操作者" width="160">
@@ -157,7 +179,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
+import { ArrowRight, Refresh, Search } from '@element-plus/icons-vue'
 import { listOperationLogs } from '@/network/manage/operationLog'
 import { formatDateTime } from './manage-utils'
 
@@ -171,6 +193,8 @@ const createDefaultQuery = () => ({
 const loading = ref(false)
 const logList = ref<any[]>([])
 const queryForm = reactive(createDefaultQuery())
+// 搜索面板展开状态（默认收起）
+const searchExpanded = ref(false)
 const pageSize = ref(10)
 const currentPage = ref(1)
 const total = ref(0)

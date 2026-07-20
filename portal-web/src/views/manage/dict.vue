@@ -46,52 +46,76 @@
       </aside>
 
       <div class="manage-page">
-        <!-- 字典项查询 -->
-        <section class="manage-filter">
-          <el-input
-            v-model="itemQuery.keyword"
-            class="manage-filter__control"
-            clearable
-            placeholder="名称 / 值"
-            :disabled="!currentTypeId"
-            @keyup.enter="handleItemSearch"
-          />
-          <div class="manage-filter__actions">
-            <el-button
-              type="primary"
-              class="manage-primary-button"
-              :disabled="!currentTypeId"
-              @click="handleItemSearch"
-            >
-              <el-icon><Search /></el-icon>
-              查询
-            </el-button>
-            <el-button
-              class="manage-secondary-button"
-              :disabled="!currentTypeId"
-              @click="handleItemReset"
-            >
-              重置
-            </el-button>
+        <!-- 可折叠搜索条件 -->
+        <section class="manage-search-panel" :class="{ 'is-open': itemSearchExpanded }">
+          <button
+            type="button"
+            class="manage-search-panel__toggle"
+            @click="itemSearchExpanded = !itemSearchExpanded"
+          >
+            <el-icon class="manage-search-panel__arrow"><ArrowRight /></el-icon>
+            <span>搜索</span>
+          </button>
+          <div v-show="itemSearchExpanded" class="manage-search-panel__body">
+            <section class="manage-filter">
+              <el-input
+                v-model="itemQuery.keyword"
+                class="manage-filter__control"
+                clearable
+                placeholder="名称 / 值"
+                :disabled="!currentTypeId"
+                @keyup.enter="handleItemSearch"
+              />
+              <div class="manage-filter__actions">
+                <el-button
+                  class="manage-secondary-button"
+                  :disabled="!currentTypeId"
+                  @click="handleItemReset"
+                >
+                  <el-icon><Refresh /></el-icon>
+                  重置
+                </el-button>
+                <el-button
+                  type="primary"
+                  class="manage-primary-button"
+                  :disabled="!currentTypeId"
+                  @click="handleItemSearch"
+                >
+                  <el-icon><Search /></el-icon>
+                  搜索
+                </el-button>
+              </div>
+            </section>
           </div>
         </section>
 
-        <!-- 操作行：新建靠左 -->
-        <header class="manage-page__hero">
-          <div class="manage-page__actions is-start">
-            <el-button
-              type="primary"
-              class="manage-primary-button"
-              :disabled="!currentTypeId"
-              @click="handleCreateItem"
-            >
-              <el-icon><Plus /></el-icon>
-              新建字典项
-            </el-button>
-          </div>
-        </header>
-
+        <!-- 列表卡：左标题，右新增 / 刷新 -->
         <section class="manage-surface manage-table">
+          <div class="manage-surface__header">
+            <div class="manage-surface__header-title">
+              <h2>字典项列表</h2>
+            </div>
+            <div class="manage-surface__header-side">
+              <el-button
+                type="primary"
+                class="manage-primary-button"
+                :disabled="!currentTypeId"
+                @click="handleCreateItem"
+              >
+                <el-icon><Plus /></el-icon>
+                新增
+              </el-button>
+              <el-button
+                class="manage-secondary-button"
+                :disabled="!currentTypeId"
+                @click="fetchItems"
+              >
+                <el-icon><Refresh /></el-icon>
+                刷新
+              </el-button>
+            </div>
+          </div>
+
           <div class="manage-surface__body">
             <el-table :data="itemList" v-loading="itemLoading" height="100%">
               <el-table-column label="名称" min-width="200">
@@ -209,7 +233,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Edit, Plus, Search } from '@element-plus/icons-vue'
+import { ArrowRight, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue'
 import {
   createDictItem,
   createDictType,
@@ -248,6 +272,8 @@ const typeRules = {
 const itemList = ref<any[]>([])
 const itemLoading = ref(false)
 const itemQuery = reactive({ keyword: '' })
+// 字典项搜索面板展开状态（默认收起）
+const itemSearchExpanded = ref(false)
 const itemPageSize = ref(10)
 const itemCurrentPage = ref(1)
 const itemTotal = ref(0)
