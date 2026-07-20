@@ -10,6 +10,8 @@ interface User {
   mobile?: string
   email?: string
   avatarUrl?: string
+  gender?: string
+  signature?: string
   deptIds?: number[]
   deleted?: boolean
   sourceFrom?: string

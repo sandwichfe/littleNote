@@ -1,24 +1,14 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import Cookies from 'js-cookie'
 import { Brush } from '@element-plus/icons-vue'
 import { useThemeStore } from '@/store/theme'
+import UserAvatarDropdown from '@/components/UserAvatarDropdown.vue'
 
 const router = useRouter()
 const themeStore = useThemeStore()
 
-const hasToken = computed(() => {
-  return Boolean(Cookies.get('loginToken'))
-})
-
 const goManage = () => {
   router.push('/')
-}
-
-const logout = () => {
-  Cookies.remove('loginToken')
-  router.push('/login')
 }
 </script>
 
@@ -85,14 +75,8 @@ const logout = () => {
 
       <div class="divider" aria-hidden="true"></div>
 
-      <div v-if="hasToken">
-        <el-button type="danger" size="small" class="header-action" @click="logout">
-          退出登录
-        </el-button>
-      </div>
-      <el-button v-else type="primary" size="small" class="header-action" @click="router.push('/login')">
-        登录管理
-      </el-button>
+      <!-- 头像 + 昵称下拉：修改资料 / 修改密码 / 退出 -->
+      <UserAvatarDropdown />
     </div>
   </header>
 </template>

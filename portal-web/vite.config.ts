@@ -20,6 +20,16 @@ export default defineConfig(({ mode }) => {
         '/api/portal': {
           target: `${apiBaseUrl}:9088`,
           changeOrigin: true
+        },
+        // 头像等文件上传
+        '/api/oss': {
+          target: `${apiBaseUrl}:8000`,
+          changeOrigin: true
+        },
+        // OSS 静态资源访问
+        '/assets/oss': {
+          target: 'https://yiruserene.top:58888',
+          changeOrigin: true
         }
       }
     },
