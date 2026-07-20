@@ -5,6 +5,16 @@
         <div class="manage-tree-panel__header">
           <span class="manage-tree-panel__title">字典类型</span>
           <div class="manage-tree-panel__actions">
+            <!-- 编辑当前选中类型 -->
+            <el-button
+              text
+              circle
+              title="编辑类型"
+              :disabled="!currentTypeId"
+              @click="handleEditType(currentType)"
+            >
+              <el-icon><Edit /></el-icon>
+            </el-button>
             <el-button text circle title="新建类型" @click="handleCreateType">
               <el-icon><Plus /></el-icon>
             </el-button>
@@ -21,34 +31,17 @@
           />
         </section>
 
-        <div class="manage-tree-panel__body">
-          <el-table
-            :data="typeList"
-            v-loading="typeLoading"
-            height="100%"
-            highlight-current-row
-            @current-change="handleTypeCurrentChange"
+        <!-- 类型列表：纯白底，仅展示名称（编码） -->
+        <div class="manage-tree-panel__body manage-tree-panel__body--plain" v-loading="typeLoading">
+          <div
+            v-for="row in typeList"
+            :key="row.id"
+            class="manage-nav-item"
+            :class="{ 'is-active': currentTypeId === row.id }"
+            @click="handleTypeSelect(row)"
           >
-            <el-table-column label="类型" min-width="160">
-              <template #default="{ row }">
-                <div class="manage-entity">
-                  <span class="manage-entity__text">
-                    <!-- 单行展示：名称（编码） -->
-                    <span class="manage-entity__title">{{ row.typeName }}（{{ row.typeCode || '--' }}）</span>
-                  </span>
-                </div>
-              </template>
-            </el-table-column>
-
-            <el-table-column label="操作" width="120" align="right">
-              <template #default="{ row }">
-                <div class="manage-row-actions">
-                  <el-button text type="primary" @click.stop="handleEditType(row)">编辑</el-button>
-                  <el-button text type="danger" @click.stop="handleDeleteType(row)">删除</el-button>
-                </div>
-              </template>
-            </el-table-column>
-          </el-table>
+            <span class="manage-nav-item__title">{{ row.typeName }}（{{ row.typeCode || '--' }}）</span>
+          </div>
         </div>
       </aside>
 
@@ -216,12 +209,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Search } from '@element-plus/icons-vue'
+import { Edit, Plus, Search } from '@element-plus/icons-vue'
 import {
   createDictItem,
   createDictType,
   deleteDictItem,
-  deleteDictType,
   listDictItems,
   listDictTypes,
   updateDictItem,
@@ -358,7 +350,8 @@ const fetchItems = async () => {
   }
 }
 
-const handleTypeCurrentChange = (row: any) => {
+// 选中字典类型
+const handleTypeSelect = (row: any) => {
   if (!row) return
   currentType.value = row
 }
@@ -392,6 +385,7 @@ const handleCreateType = async () => {
 }
 
 const handleEditType = async (row: any) => {
+  if (!row) return
   typeIsCreate.value = false
   typeDialogTitle.value = '编辑字典类型'
   typeForm.id = row.id
@@ -420,19 +414,6 @@ const submitType = async () => {
     await fetchTypes()
   } else {
     ElMessage.error(res.msg || '保存失败')
-  }
-}
-
-const handleDeleteType = async (row: any) => {
-  await ElMessageBox.confirm(`确认删除字典类型「${row.typeName}」？此操作会同时删除其字典项。`, '提示', {
-    type: 'warning'
-  })
-  const res = await deleteDictType(row.id)
-  if (res.code === 200) {
-    ElMessage.success('删除成功')
-    await fetchTypes()
-  } else {
-    ElMessage.error(res.msg || '删除失败')
   }
 }
 
