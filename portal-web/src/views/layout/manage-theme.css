@@ -479,24 +479,27 @@
 /* tab 栏：折叠按钮 + 页签同一行，常见后台布局 */
 .manage-tabs-bar {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   flex-shrink: 0;
   min-width: 0;
+  height: 40px;
   border-bottom: 1px solid var(--manage-border);
   background: var(--manage-surface);
 }
 
-/* 折叠按钮：贴 tab 最左侧（侧栏右侧边缘） */
+/* 折叠按钮：与 tab 同高，轻量小图标，贴最左侧 */
 .manage-tabs-collapse-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
+  width: 32px;
+  height: 32px;
+  margin: 0 4px 0 8px;
   flex-shrink: 0;
   font-size: 16px;
   cursor: pointer;
   color: var(--manage-muted);
-  border-right: 1px solid var(--manage-border);
+  border-radius: var(--manage-radius-sm);
   transition: color 0.15s ease, background-color 0.15s ease;
 }
 
@@ -507,7 +510,7 @@
 
 .manage-tabs-collapse-btn:focus-visible {
   outline: 2px solid var(--manage-accent);
-  outline-offset: -2px;
+  outline-offset: 0;
 }
 
 .manage-tabs-shell .manage-tabs {
@@ -515,6 +518,7 @@
   flex: 1;
   flex-shrink: 1;
   min-width: 0;
+  height: 40px;
 }
 
 .manage-tabs-shell .manage-tabs .el-tabs__content {
@@ -523,9 +527,10 @@
 
 .manage-tabs-shell .manage-tabs > .el-tabs__header {
   margin: 0;
-  padding: 0 var(--space-4) 0 var(--space-2);
+  padding: 0 var(--space-4) 0 0;
   border-bottom: none;
   background: transparent;
+  height: 40px;
 }
 
 .manage-tabs-shell .manage-tabs > .el-tabs__header .el-tabs__nav-wrap {
