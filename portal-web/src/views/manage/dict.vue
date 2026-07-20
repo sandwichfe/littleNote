@@ -52,7 +52,7 @@
             v-model="itemQuery.keyword"
             class="manage-filter__control"
             clearable
-            placeholder="标签 / 值"
+            placeholder="名称 / 值"
             :disabled="!currentTypeId"
             @keyup.enter="handleItemSearch"
           />
@@ -94,7 +94,7 @@
         <section class="manage-surface manage-table">
           <div class="manage-surface__body">
             <el-table :data="itemList" v-loading="itemLoading" height="100%">
-              <el-table-column label="标签" min-width="200">
+              <el-table-column label="名称" min-width="200">
                 <template #default="{ row }">
                   <div class="manage-subtle-stack">
                     <span>{{ row.label || '--' }}</span>
@@ -184,7 +184,7 @@
       @closed="handleItemDialogClosed"
     >
       <el-form ref="itemFormRef" :model="itemForm" :rules="itemRules" label-position="top" class="manage-form-grid">
-        <el-form-item label="标签" prop="label">
+        <el-form-item label="名称" prop="label">
           <el-input v-model="itemForm.label" placeholder="例如：启用" />
         </el-form-item>
         <el-form-item label="值" prop="value">
@@ -266,7 +266,7 @@ const itemForm = reactive({
 })
 
 const itemRules = {
-  label: [{ required: true, message: '请输入标签', trigger: 'blur' }],
+  label: [{ required: true, message: '请输入名称', trigger: 'blur' }],
   value: [{ required: true, message: '请输入值', trigger: 'blur' }]
 }
 

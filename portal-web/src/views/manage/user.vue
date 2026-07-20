@@ -81,7 +81,7 @@
         <section class="manage-surface manage-table">
           <div class="manage-surface__body">
             <el-table :data="userList" v-loading="loading" height="100%">
-              <el-table-column label="用户" min-width="200">
+              <el-table-column label="昵称" min-width="200">
                 <template #default="{ row }">
                   <div class="manage-entity">
                     <span class="manage-entity__text">
