@@ -122,11 +122,13 @@
 
       <div class="manage-pagination">
         <el-pagination
-          :page-size="pageSize"
-          :current-page="currentPage"
-          layout="prev, pager, next"
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, prev, pager, next, sizes"
           :total="total"
           @current-change="handlePageChange"
+          @size-change="handleSizeChange"
         />
       </div>
     </section>
@@ -256,6 +258,13 @@ const handleResetQuery = () => {
 
 const handlePageChange = (page: number) => {
   currentPage.value = page
+  fetchLogs()
+}
+
+// 切换每页条数后回到第一页
+const handleSizeChange = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1
   fetchLogs()
 }
 

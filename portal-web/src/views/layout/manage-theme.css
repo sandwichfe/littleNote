@@ -1240,6 +1240,49 @@
 .manage-pagination .el-pagination {
   flex-wrap: wrap;
   gap: var(--space-2);
+  --el-pagination-font-size: var(--text-sm);
+  --el-pagination-button-width: 32px;
+  --el-pagination-button-height: 32px;
+  --el-pagination-button-bg-color: transparent;
+  --el-pagination-hover-color: var(--manage-accent);
+}
+
+/* 总数文案 */
+.manage-pagination .el-pagination__total {
+  color: var(--manage-muted);
+  font-weight: 400;
+}
+
+/* 页码按钮：圆角胶囊 */
+.manage-pagination .el-pager li {
+  min-width: 32px;
+  border-radius: 999px;
+  color: var(--manage-slate);
+  font-weight: 400;
+}
+
+.manage-pagination .el-pager li.is-active {
+  color: var(--manage-accent);
+  background: transparent;
+  border: 1px solid var(--manage-accent);
+  font-weight: 500;
+}
+
+.manage-pagination .btn-prev,
+.manage-pagination .btn-next {
+  border-radius: 999px;
+  color: var(--manage-muted);
+}
+
+/* 每页条数选择器 */
+.manage-pagination .el-pagination__sizes .el-select {
+  width: 100px;
+}
+
+.manage-pagination .el-pagination__sizes .el-select__wrapper {
+  min-height: 32px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px var(--manage-border) inset;
 }
 
 /* ---------- 树形布局 ---------- */
