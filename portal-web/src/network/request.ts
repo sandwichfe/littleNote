@@ -6,9 +6,18 @@ import axios, {
 import Cookies from 'js-cookie'
 import { ElMessage } from 'element-plus'
 import router from '../router'
+import { doneProgress, startProgress } from '@/utils/nprogress'
 
 type RequestConfig = AxiosRequestConfig & {
   url?: string
+  /** 为 true 时不展示顶栏进度条（轮询等静默请求） */
+  silent?: boolean
+}
+
+type InternalRequestConfig = InternalAxiosRequestConfig & {
+  silent?: boolean
+  /** 本请求是否已触发进度条 start，用于配对 done */
+  __progressStarted?: boolean
 }
 
 const REQUEST_TIMEOUT = 60000
@@ -26,11 +35,19 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    const nextConfig = config as InternalRequestConfig
     const accessToken = Cookies.get(LOGIN_TOKEN_KEY)
     if (accessToken) {
-      config.headers.Authorization = accessToken
+      nextConfig.headers.Authorization = accessToken
     }
-    return config
+
+    // 默认展示顶栏进度；silent 请求跳过
+    if (!nextConfig.silent) {
+      startProgress()
+      nextConfig.__progressStarted = true
+    }
+
+    return nextConfig
   },
   (error) => Promise.reject(error)
 )
@@ -38,9 +55,12 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse) => {
+    finishRequestProgress(response.config as InternalRequestConfig)
     return response.data
   },
   (error) => {
+    finishRequestProgress(error?.config as InternalRequestConfig | undefined)
+
     const response = error?.response
     const data = response?.data
     const code = getResponseCode(data)
@@ -57,6 +77,14 @@ service.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+/** 与 start 配对结束进度条 */
+function finishRequestProgress(config?: InternalRequestConfig) {
+  if (config?.__progressStarted) {
+    doneProgress()
+    config.__progressStarted = false
+  }
+}
 
 export function request<T = unknown>(config: RequestConfig = {}): Promise<T> {
   return service(config) as Promise<T>

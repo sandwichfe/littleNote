@@ -390,7 +390,14 @@ watch(activeTab, (newTab) => {
             </div>
 
             <div class="manage-view-panel">
-              <RouterView />
+              <!-- 页面切换：旧页淡出下移，新页淡入上移（mode=out-in） -->
+              <RouterView v-slot="{ Component, route: viewRoute }">
+                <transition name="manage-page-swap" mode="out-in">
+                  <div :key="viewRoute.path" class="manage-view-page">
+                    <component :is="Component" />
+                  </div>
+                </transition>
+              </RouterView>
             </div>
           </div>
         </section>

@@ -638,6 +638,15 @@
   overflow: auto;
 }
 
+/* 路由页容器：撑满面板，便于过渡动画 */
+.manage-view-page {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ---------- 页面结构 ---------- */
 .manage-page {
   flex: 1;
@@ -1527,6 +1536,30 @@
   opacity: 0;
 }
 
+/* 路由页切换：旧页淡出微下移，新页淡入微上移 */
+.manage-page-swap-enter-active,
+.manage-page-swap-leave-active {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+.manage-page-swap-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.manage-page-swap-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.manage-page-swap-enter-to,
+.manage-page-swap-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* ---------- 响应式 ---------- */
 @media (max-width: 1280px) {
   .manage-page__stats {
@@ -1726,7 +1759,14 @@
   .manage-fade-enter-active,
   .manage-fade-leave-active,
   .manage-menu-fade-enter-active,
-  .manage-menu-fade-leave-active {
+  .manage-menu-fade-leave-active,
+  .manage-page-swap-enter-active,
+  .manage-page-swap-leave-active {
     transition: none;
+  }
+
+  .manage-page-swap-enter-from,
+  .manage-page-swap-leave-to {
+    transform: none;
   }
 }

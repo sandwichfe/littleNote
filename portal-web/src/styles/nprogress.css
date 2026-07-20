@@ -1,0 +1,55 @@
+/* 顶栏请求进度条：固定 2px，左→右 scaleX */
+.app-nprogress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 2px;
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left center;
+  opacity: 0;
+  /* 主题色优先用 manage 变量，缺省走 Element 主色 */
+  background: var(--manage-accent, var(--el-color-primary, #0071e3));
+  transition:
+    transform 0.2s ease,
+    opacity 0.25s ease;
+  will-change: transform, opacity;
+}
+
+/* 前端高光，接近 YouTube / NProgress 的 peg */
+.app-nprogress__peg {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 80px;
+  height: 100%;
+  box-shadow:
+    0 0 8px var(--manage-accent, var(--el-color-primary, #0071e3)),
+    0 0 4px var(--manage-accent, var(--el-color-primary, #0071e3));
+  opacity: 0.75;
+  transform: rotate(2deg) translateY(-1px);
+}
+
+.app-nprogress.is-active {
+  opacity: 1;
+}
+
+/* 完成：先到 100%，再淡出 */
+.app-nprogress.is-done {
+  opacity: 0;
+  transition:
+    transform 0.18s ease,
+    opacity 0.28s ease 0.05s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-nprogress {
+    transition: opacity 0.15s ease;
+  }
+
+  .app-nprogress.is-done {
+    transition: opacity 0.15s ease;
+  }
+}

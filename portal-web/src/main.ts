@@ -7,6 +7,8 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 
 import App from './App.vue'
 import router from './router'
+// 顶栏请求进度条样式
+import '@/styles/nprogress.css'
 
 const app = createApp(App)
 const pinia = createPinia()
