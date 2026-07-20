@@ -276,9 +276,9 @@
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-/* 有分组时叶子缩进：比一级图标略右，保持靠左 */
+/* 有分组时叶子缩进：保留层级关系，同时避免二级标题视觉居中 */
 .manage-nav-group:has(.manage-nav-group__label) .manage-nav-item {
-  padding-left: 28px;
+  padding-left: var(--space-4);
 }
 
 .manage-nav-item:hover {
@@ -379,7 +379,7 @@
   }
 
   .manage-nav-group:has(.manage-nav-group__label) .manage-nav-item {
-    padding-left: 32px;
+    padding-left: var(--space-5);
   }
 
   .manage-nav-group__items {
