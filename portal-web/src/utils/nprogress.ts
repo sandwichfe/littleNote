@@ -12,7 +12,6 @@ let progress = 0
 let trickleTimer: ReturnType<typeof setTimeout> | null = null
 let hideTimer: ReturnType<typeof setTimeout> | null = null
 let barEl: HTMLDivElement | null = null
-let pegEl: HTMLDivElement | null = null
 let visible = false
 
 const listeners = new Set<ProgressListener>()
@@ -28,13 +27,13 @@ function ensureBar(): HTMLDivElement {
   bar.setAttribute('role', 'progressbar')
   bar.setAttribute('aria-hidden', 'true')
 
+  // peg 仅作前端高光装饰，样式由 CSS 控制，无需再持有引用
   const peg = document.createElement('div')
   peg.className = 'app-nprogress__peg'
   bar.appendChild(peg)
 
   document.body.appendChild(bar)
   barEl = bar
-  pegEl = peg
   return bar
 }
 
