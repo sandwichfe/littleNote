@@ -301,24 +301,7 @@ watch(activeTab, (newTab) => {
 
       <aside class="manage-sidebar" :class="{ 'is-mobile-visible': isMobileMenuVisible, 'is-collapsed': isCollapsed }">
         <div class="manage-sidebar__panel">
-          <!-- 侧栏标题 + 折叠按钮 -->
-          <div class="manage-sidebar__intro">
-            <!-- 用 span，避免 h2 标题体样式 -->
-            <span v-show="!isCollapsed" class="manage-sidebar__title">后台管理</span>
-            <el-icon
-              class="manage-sidebar__collapse-btn"
-              role="button"
-              tabindex="0"
-              :aria-label="isCollapsed ? '展开侧栏' : '折叠侧栏'"
-              @click="toggleCollapse"
-              @keydown.enter.prevent="toggleCollapse"
-              @keydown.space.prevent="toggleCollapse"
-            >
-              <Fold v-if="!isCollapsed" />
-              <Expand v-else />
-            </el-icon>
-          </div>
-
+          <!-- 无标题区：菜单直接顶上展示 -->
           <nav class="manage-sidebar__nav" aria-label="后台导航">
             <section
               v-for="section in navigationSections"
@@ -387,9 +370,24 @@ watch(activeTab, (newTab) => {
 
         <section class="manage-tabs-card">
           <div class="manage-tabs-shell">
-            <el-tabs class="manage-tabs" v-model="activeTab" type="card" closable @tab-remove="handleTabRemove">
-              <el-tab-pane v-for="tab in tabs" :key="tab.name" :label="tab.label" :name="tab.name" />
-            </el-tabs>
+            <!-- tab 栏：折叠按钮靠左（侧栏右侧边缘），后接页签 -->
+            <div class="manage-tabs-bar">
+              <el-icon
+                class="manage-tabs-collapse-btn"
+                role="button"
+                tabindex="0"
+                :aria-label="isCollapsed ? '展开侧栏' : '折叠侧栏'"
+                @click="toggleCollapse"
+                @keydown.enter.prevent="toggleCollapse"
+                @keydown.space.prevent="toggleCollapse"
+              >
+                <Fold v-if="!isCollapsed" />
+                <Expand v-else />
+              </el-icon>
+              <el-tabs class="manage-tabs" v-model="activeTab" type="card" closable @tab-remove="handleTabRemove">
+                <el-tab-pane v-for="tab in tabs" :key="tab.name" :label="tab.label" :name="tab.name" />
+              </el-tabs>
+            </div>
 
             <div class="manage-view-panel">
               <RouterView />
