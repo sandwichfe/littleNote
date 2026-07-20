@@ -52,6 +52,9 @@
   overflow: hidden;
   background: var(--manage-bg);
   color: var(--manage-slate);
+  /* 与系统 UI 一致的无衬线字体，避免标题体 */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
   font-size: var(--text-sm);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -62,8 +65,8 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  /* 侧栏宽度：紧凑轨，容纳 4 字中文标题 + 图标 */
-  grid-template-columns: 200px minmax(0, 1fr);
+  /* 侧栏宽度：对齐参考侧栏，容纳图标 + 中文标题 */
+  grid-template-columns: 220px minmax(0, 1fr);
   gap: 0;
   padding: 0;
   position: relative;
@@ -72,11 +75,11 @@
 
 @media (min-width: 769px) {
   div.manage-shell.is-collapsed {
-    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-columns: 64px minmax(0, 1fr);
   }
 }
 
-/* ---------- Sidebar：Apple Settings / 系统偏好设置风格 ---------- */
+/* ---------- Sidebar：对齐参考侧栏密度（标题 / 一级 / 二级） ---------- */
 .manage-sidebar {
   min-height: 0;
   border-right: 1px solid var(--manage-border);
@@ -86,20 +89,20 @@
 .manage-sidebar__panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   height: 100%;
-  padding: var(--space-3) var(--space-2);
+  padding: var(--space-4) var(--space-3);
   background: var(--manage-surface);
 }
 
-/* 标题区：底部分割 */
+/* 标题区：底部分割，略增高 */
 .manage-sidebar__intro {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  min-height: 40px;
-  padding: var(--space-1) var(--space-2) var(--space-3);
+  min-height: 48px;
+  padding: var(--space-2) var(--space-2) var(--space-4);
   margin-bottom: var(--space-1);
   border-bottom: 1px solid var(--manage-border);
 }
@@ -112,15 +115,17 @@
   padding-right: 0;
 }
 
+/* 标题：常规 UI 字，不用标题体 */
 .manage-sidebar__title {
   margin: 0;
   min-width: 0;
   flex: 1;
-  font-size: var(--text-sm);
+  font-family: inherit;
+  font-size: 16px;
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.4;
   color: var(--manage-slate);
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -151,14 +156,14 @@
   outline-offset: 2px;
 }
 
-/* 导航滚动区：组间距 12px，贴近 Settings 列表密度 */
+/* 导航滚动区：组间距更疏 */
 .manage-sidebar__nav {
   flex: 1;
   min-height: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
   padding: 0;
 }
 
@@ -175,21 +180,22 @@
 .manage-nav-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 2px;
   margin: 0;
 }
 
-/* 分组标题：一级，字号/字重强于叶子项 */
+/* 一级分组：14px 常规字重，行高约 40 */
 .manage-nav-group__label {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
   width: 100%;
-  min-height: 36px;
-  padding: var(--space-2);
+  min-height: 40px;
+  padding: 8px var(--space-3);
   border: none;
   border-radius: var(--manage-radius-sm);
   background: transparent;
+  font: inherit;
   cursor: pointer;
   user-select: none;
   text-align: left;
@@ -216,15 +222,17 @@
   color: var(--manage-muted);
 }
 
+/* 一级文案：与正文同字体，14px / 400 */
 .manage-nav-group__title {
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
   color: var(--manage-slate);
-  line-height: 1.25;
-  letter-spacing: -0.01em;
+  line-height: 1.5;
+  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -245,17 +253,19 @@
 .manage-nav-group__items {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 2px;
+  padding: 2px 0 var(--space-1);
 }
 
-/* 菜单项：图标 + 文案，高度 36，圆角 6 */
+/* 二级菜单：14px / 400，行高约 40；靠左缩进 */
 .manage-nav-item {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  min-height: 36px;
-  padding: var(--space-2) var(--space-3);
+  justify-content: flex-start;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: 8px var(--space-3);
   border: none;
   border-radius: var(--manage-radius-sm);
   background: transparent;
@@ -266,9 +276,9 @@
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-/* 有分组时叶子略缩进，形成层级 */
+/* 有分组时叶子缩进：比一级图标略右，保持靠左 */
 .manage-nav-group:has(.manage-nav-group__label) .manage-nav-item {
-  padding-left: var(--space-4);
+  padding-left: 28px;
 }
 
 .manage-nav-item:hover {
@@ -308,16 +318,20 @@
   color: var(--manage-accent);
 }
 
+/* 二级文案：与一级同字体/字号，常规字重 */
 .manage-nav-item__title {
   min-width: 0;
   flex: 1;
-  font-size: var(--text-sm);
-  font-weight: inherit;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
   color: inherit;
-  line-height: 1.25;
+  line-height: 1.5;
+  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left;
 }
 
 /* 折叠态：仅图标轨，分组标题隐藏，叶子居中 */
@@ -332,12 +346,13 @@
 .manage-sidebar.is-collapsed .manage-nav-group__items {
   gap: var(--space-1);
   align-items: center;
+  padding: 0;
 }
 
 .manage-sidebar.is-collapsed .manage-nav-item {
   justify-content: center;
-  width: 36px;
-  min-height: 36px;
+  width: 40px;
+  min-height: 40px;
   padding: 0;
   margin: 0 auto;
 }
@@ -364,15 +379,15 @@
   }
 
   .manage-nav-group:has(.manage-nav-group__label) .manage-nav-item {
-    padding-left: var(--space-5);
+    padding-left: 32px;
   }
 
   .manage-nav-group__items {
-    gap: var(--space-1);
+    gap: 2px;
   }
 
   .manage-nav-group__label {
-    min-height: 36px;
+    min-height: 44px;
   }
 }
 

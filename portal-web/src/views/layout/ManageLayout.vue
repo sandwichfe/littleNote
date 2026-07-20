@@ -303,7 +303,8 @@ watch(activeTab, (newTab) => {
         <div class="manage-sidebar__panel">
           <!-- 侧栏标题 + 折叠按钮 -->
           <div class="manage-sidebar__intro">
-            <h2 v-show="!isCollapsed" class="manage-sidebar__title">后台管理</h2>
+            <!-- 用 span，避免 h2 标题体样式 -->
+            <span v-show="!isCollapsed" class="manage-sidebar__title">后台管理</span>
             <el-icon
               class="manage-sidebar__collapse-btn"
               role="button"
