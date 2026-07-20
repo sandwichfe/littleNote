@@ -1239,7 +1239,6 @@
   overflow-y: auto;
   padding: var(--space-2);
   border-radius: var(--manage-radius-sm);
-  background: var(--manage-surface-strong);
   border: 1px solid var(--manage-border);
 }
 
