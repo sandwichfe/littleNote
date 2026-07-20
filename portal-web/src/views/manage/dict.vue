@@ -5,33 +5,20 @@
         <div class="manage-tree-panel__header">
           <span class="manage-tree-panel__title">字典类型</span>
           <div class="manage-tree-panel__actions">
-            <el-button text circle title="刷新" @click="fetchTypes">
-              <el-icon><Refresh /></el-icon>
-            </el-button>
             <el-button text circle title="新建类型" @click="handleCreateType">
               <el-icon><Plus /></el-icon>
             </el-button>
           </div>
         </div>
 
-        <!-- 类型筛选 -->
+        <!-- 类型筛选：输入实时搜索（防抖） -->
         <section class="manage-filter manage-filter--stack">
           <el-input
             v-model="typeQuery.keyword"
             class="manage-filter__control manage-filter__control--fill"
             clearable
             placeholder="编码 / 名称"
-            @keyup.enter="handleTypeSearch"
           />
-          <div class="manage-filter__actions">
-            <el-button type="primary" class="manage-primary-button" @click="handleTypeSearch">
-              <el-icon><Search /></el-icon>
-              查询
-            </el-button>
-            <el-button class="manage-secondary-button" @click="handleTypeReset">
-              重置
-            </el-button>
-          </div>
         </section>
 
         <div class="manage-tree-panel__body">
@@ -46,8 +33,8 @@
               <template #default="{ row }">
                 <div class="manage-entity">
                   <span class="manage-entity__text">
-                    <span class="manage-entity__title">{{ row.typeName }}</span>
-                    <span class="manage-entity__meta">{{ row.typeCode || '--' }}</span>
+                    <!-- 单行展示：名称（编码） -->
+                    <span class="manage-entity__title">{{ row.typeName }}（{{ row.typeCode || '--' }}）</span>
                   </span>
                 </div>
               </template>
@@ -229,7 +216,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Refresh, Search } from '@element-plus/icons-vue'
+import { Plus, Search } from '@element-plus/icons-vue'
 import {
   createDictItem,
   createDictType,
@@ -383,14 +370,17 @@ watch(currentTypeId, () => {
   fetchItems()
 })
 
-const handleTypeSearch = () => {
-  fetchTypes()
-}
-
-const handleTypeReset = () => {
-  typeQuery.keyword = ''
-  fetchTypes()
-}
+// 类型关键字防抖搜索
+let typeSearchTimer: ReturnType<typeof setTimeout> | null = null
+watch(
+  () => typeQuery.keyword,
+  () => {
+    if (typeSearchTimer) clearTimeout(typeSearchTimer)
+    typeSearchTimer = setTimeout(() => {
+      fetchTypes()
+    }, 300)
+  }
+)
 
 const handleCreateType = async () => {
   typeIsCreate.value = true
