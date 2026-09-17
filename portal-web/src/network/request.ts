@@ -69,9 +69,9 @@ service.interceptors.response.use(
       handleUnauthorized(getResponseMessage(data) || UNAUTHORIZED_MESSAGE)
     }
 
-    if (isSysWarn(code)) {
-      ElMessage.warning(getResponseMessage(data))
-    }
+    // if (isSysWarn(code)) {
+    //   ElMessage.warning(getResponseMessage(data))
+    // }
 
     console.error(error)
     return Promise.reject(error)
