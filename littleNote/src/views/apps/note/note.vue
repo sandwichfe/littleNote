@@ -53,7 +53,7 @@
         </div>
 
         <div v-else-if="contents && contents.length > 0">
-          <ul :class="{ 'is-searching': isRefreshing }">
+          <ul class="note-list" :class="{ 'is-searching': isRefreshing }">
             <!-- key 用笔记 id，搜索后复用卡片，避免动画重播与节点错位 -->
             <li v-for="c in contents" :key="c.id" class="line">
               <!-- 用 a 承载整张卡片：支持 Tab 聚焦、Ctrl/中键新标签打开、右键复制链接 -->
@@ -67,7 +67,11 @@
               </a>
 
               <!-- 卡片更多操作 -->
-              <el-dropdown trigger="click" class="card-more" placement="bottom-end"
+              <el-dropdown :ref="(el) => registerDropdownRef(c.id, el)"
+                           trigger="click"
+                           class="card-more"
+                           placement="bottom-end"
+                           @visible-change="(visible) => handleDropdownVisible(!!visible, c.id)"
                            @command="(command) => handleCardCommand(String(command), c)">
                 <button type="button" class="card-more-btn" aria-label="更多操作">
                   <el-icon><MoreFilled /></el-icon>
@@ -181,6 +185,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown);
+  scroll.value?.off?.('scrollStart', closeDropdownOnScroll);
   // 卸载时清理防抖定时器，避免组件销毁后仍触发请求
   debounce.cancel();
 });
@@ -450,6 +455,41 @@ const handleCardCommand = (command: string, note: Note) => {
     removeNote(note);
   }
 };
+
+/* ---------------- 更多菜单 ---------------- */
+
+type DropdownLike = { handleClose?: () => void } | null;
+
+// 记录每条笔记的下拉实例，滚动时用于收起当前展开的菜单
+const dropdownRefs = new Map<number, DropdownLike>();
+const openDropdownId = ref<number | null>(null);
+
+const registerDropdownRef = (id: number, instance: unknown) => {
+  if (instance) {
+    dropdownRefs.set(id, instance as DropdownLike);
+  } else {
+    dropdownRefs.delete(id);
+  }
+};
+
+const handleDropdownVisible = (visible: boolean, id: number) => {
+  if (visible) {
+    openDropdownId.value = id;
+  } else if (openDropdownId.value === id) {
+    openDropdownId.value = null;
+  }
+};
+
+// better-scroll 用 transform 滚动，popper 面板不会跟随卡片，滚动开始即收起菜单
+const closeDropdownOnScroll = () => {
+  if (openDropdownId.value === null) return;
+  dropdownRefs.get(openDropdownId.value)?.handleClose?.();
+  openDropdownId.value = null;
+};
+
+watch(scroll, (instance) => {
+  instance?.on?.('scrollStart', closeDropdownOnScroll);
+}, { immediate: true });
 
 /* ---------------- 快捷键 ---------------- */
 
@@ -748,7 +788,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   to { left: 100%; }
 }
 
-ul {
+/* 限定到笔记列表，避免作用域样式命中 el-dropdown-menu 的根 ul */
+.note-list {
   margin-left: 10px;
   margin-right: 10px;
   list-style: none;
@@ -758,12 +799,12 @@ ul {
   width: 100%;
 }
 
-ul>i {
+.note-list>i {
   width: 10rem;
 }
 
 /* 搜索请求中轻微弱化旧列表，并暂时屏蔽点击，避免打开旧结果 */
-ul.is-searching {
+.note-list.is-searching {
   opacity: 0.6;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -772,31 +813,28 @@ ul.is-searching {
 .line {
   position: relative;
   background-color: #fff;
-  border: 1px solid #eef1f5;
-  border-radius: 10px;
+  border-radius: 8px;
   margin-top: 8px;
   margin-bottom: 8px;
   width: 100%;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   opacity: 0;
-  animation: itemFadeInUp 0.4s ease-out forwards;
+  animation: itemFadeInUp 0.5s ease-out forwards;
   box-sizing: border-box;
 }
 
-/* hover 只改背景与描边，不再位移，避免网格下与相邻卡片重叠 */
+.line:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.line:hover .prename {
+  color: #409EFF;
+}
+
+/* 桌面端「更多」按钮 hover/focus 时出现，触摸端常驻显示 */
 @media (hover: hover) {
-  .line:hover {
-    background-color: #f8fafc;
-    border-color: #dbe4ef;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  }
-
-  .line:hover .prename {
-    color: #409EFF;
-  }
-
-  /* 桌面端操作按钮 hover/focus 时出现 */
   .line .card-more {
     opacity: 0;
   }
@@ -805,10 +843,6 @@ ul.is-searching {
   .line:focus-within .card-more {
     opacity: 1;
   }
-}
-
-.line:focus-within {
-  border-color: #bfdbfe;
 }
 
 .line:nth-child(1) { animation-delay: 0.1s; }
@@ -829,57 +863,58 @@ ul.is-searching {
 }
 
 .file-li-item {
-  width: 100%;
+  width: calc(100% - 40px);
   min-height: 90px;
   height: auto;
-  box-sizing: border-box;
-  padding: 12px 44px 12px 20px;
+  margin-left: 20px;
   display: flex;
   align-items: flex-start;
   flex-direction: column;
   gap: 4px;
   justify-content: center;
+  padding: 12px 0;
   overflow: hidden;
+  /* 卡片本身是 a 标签，清掉默认链接样式 */
   color: inherit;
   text-decoration: none;
   cursor: pointer;
 }
 
+/* 键盘 Tab 聚焦时的描边 */
 .file-li-item:focus-visible {
   outline: 2px solid rgba(64, 158, 255, 0.55);
   outline-offset: -2px;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .prename {
   text-align: left;
+  line-height: 1.35;
+  margin: 0;
+  color: #333;
   font-size: 16px;
   font-weight: 600;
-  line-height: 1.4;
-  margin: 0;
-  color: #1f2937;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: color 0.2s ease;
+  transition: color 0.3s ease;
   width: 100%;
   max-width: 100%;
+  /* 给右上角「更多」按钮留出空间，避免长标题被按钮压住 */
+  padding-right: 18px;
 }
 
 .pcontent {
   text-align: left;
+  line-height: 1.45;
   margin: 0;
-  color: #64748b;
+  color: #666;
   font-size: 14px;
-  line-height: 1.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   width: 100%;
   max-width: 100%;
-  /* 正文最多两行，超出省略 */
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  word-break: break-word;
 }
 
 .note-highlight-html :deep(em),
@@ -898,9 +933,8 @@ ul.is-searching {
   line-height: 1.4;
   margin-top: 2px;
   margin-bottom: 0;
-  color: #94a3b8;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
+  color: #888;
+  font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -955,9 +989,9 @@ ul.is-searching {
   min-height: 90px;
   margin: 8px 20px;
   padding: 14px 16px;
-  border: 1px solid #eef1f5;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
 }
 
@@ -1027,7 +1061,7 @@ ul.is-searching {
   .card-more,
   .card-more-btn,
   .file-li-item,
-  ul.is-searching {
+  .note-list.is-searching {
     transition: none;
   }
 }
