@@ -174,9 +174,49 @@
                 @click="toggleCodeBlock" title="代码块">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6 4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0 4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
         </button>
-        <button class="re-btn" @click="pickImage" title="插入图片">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
-        </button>
+        <div class="re-image-insert">
+          <button class="re-btn" @click="pickImage" title="插入图片（本地上传）">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          </button>
+          <button
+            class="re-image-arrow"
+            :class="{ active: showImagePanel }"
+            type="button"
+            title="插入网络图片"
+            aria-label="插入网络图片"
+            :aria-expanded="showImagePanel"
+            @click="toggleImagePanel"
+          >
+            <svg class="re-color-arrow" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 10l5 5 5-5H7z"/></svg>
+          </button>
+          <div v-if="showImagePanel" class="re-image-panel">
+            <label class="re-image-field">
+              <span class="re-image-label">图片地址</span>
+              <input
+                ref="imageUrlInput"
+                v-model="networkImageUrl"
+                class="re-image-input"
+                type="text"
+                placeholder="https://example.com/a.png"
+                @keydown.enter.prevent="insertNetworkImage"
+              />
+            </label>
+            <label class="re-image-field">
+              <span class="re-image-label">名称</span>
+              <input
+                v-model="networkImageName"
+                class="re-image-input"
+                type="text"
+                placeholder="可选，作为图片描述"
+                @keydown.enter.prevent="insertNetworkImage"
+              />
+            </label>
+            <div class="re-image-panel-actions">
+              <button class="re-image-upload" type="button" @click="pickImage">本地上传</button>
+              <button class="re-image-confirm" type="button" @click="insertNetworkImage">插入</button>
+            </div>
+          </div>
+        </div>
         <button class="re-btn" @click="pickVideo" title="插入视频">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
         </button>
@@ -327,6 +367,7 @@ const lowlight = createLowlight(common);
 const rootRef = ref<HTMLElement>();
 const imageInput = ref<HTMLInputElement>();
 const videoInput = ref<HTMLInputElement>();
+const imageUrlInput = ref<HTMLInputElement>();
 const tableToolbarRef = ref<HTMLElement>();
 const currentBlock = ref('paragraph');
 const currentFont = ref('');
@@ -334,6 +375,9 @@ const textColor = ref(DEFAULT_TEXT_COLOR);
 const backgroundColor = ref(DEFAULT_BACKGROUND_COLOR);
 const showColorPalette = ref<'text' | 'background' | null>(null);
 const showTablePicker = ref(false);
+const showImagePanel = ref(false);
+const networkImageUrl = ref('');
+const networkImageName = ref('');
 const isSelectionInTable = ref(false);
 const tablePickerRows = ref(6);
 const tablePickerCols = ref(6);
@@ -435,6 +479,10 @@ const closeColorPalette = () => {
   showColorPalette.value = null;
 };
 
+const closeImagePanel = () => {
+  showImagePanel.value = false;
+};
+
 const onDocumentMouseDown = (event: MouseEvent) => {
   const target = event.target as globalThis.Node;
   if (showTablePicker.value) {
@@ -446,12 +494,18 @@ const onDocumentMouseDown = (event: MouseEvent) => {
     const colorWrapper = (target as Element | null)?.closest?.('.re-color-wrapper');
     if (!colorWrapper || !rootRef.value?.contains(colorWrapper)) closeColorPalette();
   }
+
+  if (showImagePanel.value) {
+    const imageInsert = (target as Element | null)?.closest?.('.re-image-insert');
+    if (!imageInsert || !rootRef.value?.contains(imageInsert)) closeImagePanel();
+  }
 };
 
 const onDocumentKeyDown = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     closeTablePicker();
     closeColorPalette();
+    closeImagePanel();
   }
 };
 
@@ -714,6 +768,7 @@ const onFontChange = (e: Event) => {
 const toggleColorPalette = (type: 'text' | 'background') => {
   showColorPalette.value = showColorPalette.value === type ? null : type;
   closeTablePicker();
+  closeImagePanel();
 };
 
 const applyTextColor = () => run((c) => c.setColor(textColor.value));
@@ -761,6 +816,7 @@ const clearBgColor = () => {
 const toggleTablePicker = () => {
   showTablePicker.value = !showTablePicker.value;
   closeColorPalette();
+  closeImagePanel();
   resetTablePickerPreview();
 };
 
@@ -801,8 +857,53 @@ const runTableCommand = (
   }
 };
 
-const pickImage = () => imageInput.value?.click();
+const pickImage = () => {
+  closeImagePanel();
+  imageInput.value?.click();
+};
 const pickVideo = () => videoInput.value?.click();
+
+const toggleImagePanel = () => {
+  showImagePanel.value = !showImagePanel.value;
+  closeTablePicker();
+  closeColorPalette();
+  if (showImagePanel.value) nextTick(() => imageUrlInput.value?.focus());
+};
+
+// 网络图片只需校验协议，外链地址会原样进入正文，渲染时 fileUrl 也原样返回
+const NETWORK_IMAGE_SRC = /^(https?:\/\/|\/|data:image\/)/i;
+
+const insertNetworkImage = () => {
+  const url = networkImageUrl.value.trim();
+  if (!url) {
+    ElMessage.warning('请填写图片地址');
+    return;
+  }
+  if (!NETWORK_IMAGE_SRC.test(url)) {
+    ElMessage.warning('图片地址需以 http(s):// 或 / 开头');
+    return;
+  }
+
+  const name = networkImageName.value.trim();
+  run((c) =>
+    c.insertContent([
+      {
+        type: 'image',
+        attrs: {
+          src: url,
+          alt: name || null,
+          title: name || null,
+          scale: DEFAULT_IMAGE_SCALE,
+        },
+      },
+      { type: 'text', text: ' ' },
+    ])
+  );
+
+  networkImageUrl.value = '';
+  networkImageName.value = '';
+  closeImagePanel();
+};
 
 const doUpload = async (file: File) => {
   const res = await uploadFile(file, 'note-image');

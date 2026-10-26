@@ -9,6 +9,9 @@ import {
   MIN_IMAGE_SCALE_PERCENT,
 } from '../config';
 
+// 允许填写的图片来源：外链、站内相对路径、oss:// 与内联图片
+const EDITABLE_SRC = /^(https?:\/\/|\/|oss:\/\/|data:image\/)/i;
+
 // 图片节点负责尺寸属性、预设缩放和拖拽缩放交互。
 const normalizeImageWidth = (value: unknown) => {
   if (typeof value !== 'string') return null;
@@ -99,13 +102,88 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
   controls.addEventListener('pointerdown', keepControlsFromSelectingEditor);
   controls.addEventListener('mousedown', keepControlsFromSelectingEditor);
 
-  controls.append(sizeLabel, sizeSelect);
+  const editButton = document.createElement('button');
+  editButton.type = 'button';
+  editButton.className = 're-image-control-btn';
+  editButton.textContent = '编辑';
+  editButton.title = '编辑图片地址和名称';
+
+  controls.append(sizeLabel, sizeSelect, editButton);
 
   const handle = document.createElement('span');
   handle.className = 're-image-resize-handle';
   handle.title = '拖拽调整图片大小';
   stage.append(image, handle);
-  wrapper.append(stage, controls);
+
+  const createEditField = (labelText: string, placeholder: string) => {
+    const field = document.createElement('label');
+    field.className = 're-image-edit-field';
+
+    const label = document.createElement('span');
+    label.className = 're-image-edit-label';
+    label.textContent = labelText;
+
+    const input = document.createElement('input');
+    input.className = 're-image-edit-input';
+    input.type = 'text';
+    input.placeholder = placeholder;
+
+    field.append(label, input);
+    return { field, input };
+  };
+
+  const srcField = createEditField('地址', 'https://example.com/a.png');
+  const nameField = createEditField('名称', '可选，作为图片描述');
+
+  const editActions = document.createElement('div');
+  editActions.className = 're-image-edit-actions';
+
+  const cancelButton = document.createElement('button');
+  cancelButton.type = 'button';
+  cancelButton.className = 're-image-edit-btn';
+  cancelButton.textContent = '取消';
+
+  const saveButton = document.createElement('button');
+  saveButton.type = 'button';
+  saveButton.className = 're-image-edit-btn primary';
+  saveButton.textContent = '保存';
+
+  editActions.append(cancelButton, saveButton);
+
+  const editPanel = document.createElement('div');
+  editPanel.className = 're-image-edit-panel';
+  editPanel.append(srcField.field, nameField.field, editActions);
+
+  wrapper.append(stage, controls, editPanel);
+
+  editButton.addEventListener('click', () => openEdit());
+  cancelButton.addEventListener('click', () => {
+    closeEdit();
+    view.focus();
+  });
+  saveButton.addEventListener('click', () => saveEdit());
+  image.addEventListener('dblclick', (event) => {
+    event.preventDefault();
+    openEdit();
+  });
+
+  const bindEditInputKeys = (input: HTMLInputElement) => {
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        saveEdit();
+        return;
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeEdit();
+        view.focus();
+      }
+    });
+    input.addEventListener('input', () => input.classList.remove('invalid'));
+  };
+  bindEditInputKeys(srcField.input);
+  bindEditInputKeys(nameField.input);
 
   const updateScaleControls = (scale: string | null) => {
     const hasPresetScale = imageToolbarOptions.some((item) => item.value === scale);
@@ -187,21 +265,87 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
     });
   }
 
-  function updateScale(scale: string | null) {
+  function updateAttributes(attributes: Record<string, unknown>) {
     const pos = getPos();
     if (typeof pos !== 'number') return;
 
-    const normalizedScale = normalizeImageScale(scale) || DEFAULT_IMAGE_SCALE;
     const current = view.state.doc.nodeAt(pos);
     if (!current) return;
 
-    view.dispatch(
-      view.state.tr.setNodeMarkup(pos, undefined, {
-        ...current.attrs,
-        scale: normalizedScale,
-        width: null,
-      })
-    );
+    view.dispatch(view.state.tr.setNodeMarkup(pos, undefined, { ...current.attrs, ...attributes }));
+  }
+
+  function updateScale(scale: string | null) {
+    updateAttributes({
+      scale: normalizeImageScale(scale) || DEFAULT_IMAGE_SCALE,
+      width: null,
+    });
+  }
+
+  // 面板默认贴在图片下方，再按编辑区可视范围做左右夹取、必要时翻到图片上方，
+  // 否则窄图或靠边的图会把面板顶出滚动容器被裁掉。
+  function positionEditPanel() {
+    const host = wrapper.closest('.re-content') as HTMLElement | null;
+    const hostRect = (host || document.documentElement).getBoundingClientRect();
+    const margin = 8;
+
+    editPanel.style.left = '0px';
+    editPanel.style.top = 'calc(100% + 8px)';
+    editPanel.style.bottom = '';
+    editPanel.style.width = `${Math.min(272, Math.max(hostRect.width - margin * 2, 160))}px`;
+
+    const panelRect = editPanel.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
+
+    let left = 0;
+    const overflowRight = panelRect.right - (hostRect.right - margin);
+    if (overflowRight > 0) left -= overflowRight;
+
+    const overflowLeft = hostRect.left + margin - (wrapperRect.left + left);
+    if (overflowLeft > 0) left += overflowLeft;
+
+    editPanel.style.left = `${left}px`;
+
+    if (panelRect.bottom > hostRect.bottom - margin) {
+      editPanel.style.top = 'auto';
+      editPanel.style.bottom = 'calc(100% + 8px)';
+    }
+  }
+
+  // 编辑面板里显示的是节点 attrs 里的稳定地址，不是 DOM 上的预签名地址，
+  // 否则保存后会把会过期的签名写进正文。
+  function openEdit() {
+    if (!editor.isEditable) return;
+
+    srcField.input.value = typeof currentNode.attrs.src === 'string' ? currentNode.attrs.src : '';
+    nameField.input.value = currentNode.attrs.alt || currentNode.attrs.title || '';
+    srcField.input.classList.remove('invalid');
+
+    wrapper.classList.add('editing');
+    positionEditPanel();
+    requestAnimationFrame(() => {
+      srcField.input.focus();
+      srcField.input.select();
+    });
+  }
+
+  function closeEdit() {
+    wrapper.classList.remove('editing');
+    srcField.input.classList.remove('invalid');
+  }
+
+  function saveEdit() {
+    const src = srcField.input.value.trim();
+    if (!src || !EDITABLE_SRC.test(src)) {
+      srcField.input.classList.add('invalid');
+      srcField.input.focus();
+      return;
+    }
+
+    const name = nameField.input.value.trim();
+    updateAttributes({ src, alt: name || null, title: name || null });
+    closeEdit();
+    view.focus();
   }
 
   handle.addEventListener('pointerdown', (event) => {
@@ -271,10 +415,14 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
       return true;
     },
     selectNode: () => wrapper.classList.add('selected'),
-    deselectNode: () => wrapper.classList.remove('selected'),
+    deselectNode: () => {
+      wrapper.classList.remove('selected');
+      closeEdit();
+    },
     stopEvent: (event: Event) =>
       controls.contains(event.target as globalThis.Node) ||
-      handle.contains(event.target as globalThis.Node),
+      handle.contains(event.target as globalThis.Node) ||
+      editPanel.contains(event.target as globalThis.Node),
     ignoreMutation: () => true,
     destroy: () => {
       srcToken += 1;
