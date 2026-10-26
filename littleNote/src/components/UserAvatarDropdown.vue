@@ -6,7 +6,8 @@ import { ElMessage } from 'element-plus'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
 import Cookies from 'js-cookie'
-import { uploadImage } from '@/network/file'
+import { uploadFile } from '@/network/file'
+import { resolveFileUrl, toObjectKey } from '@/utils/oss'
 import defaultAvatar from "@/assets/img/default_avatar.jpg";
 import {
   getCurrentUser,
@@ -29,7 +30,8 @@ const isLoggedIn = computed(() => {
   return loginStatus.value
 })
 
-const ossLoadBaseUrl = import.meta.env.VITE_OSS_LOAD_BASE_URL;
+// 头像字段存裸 objectKey，展示与保存都通过 fileUrl / toObjectKey 转换
+const avatarKey = ref('')
 
 const userForm = ref({
   nickname: '',
@@ -82,9 +84,10 @@ const fetchUserInfo = async () => {
   try {
     const response = await getCurrentUser()
     const userData = response.data
+    avatarKey.value = userData?.avatarUrl ? toObjectKey(userData.avatarUrl) || '' : ''
     userForm.value = {
       nickname: userData.nickname || '默认昵称',
-      avatar: userData?.avatarUrl ? `${ossLoadBaseUrl}/${userData.avatarUrl}` : defaultAvatar,
+      avatar: avatarKey.value ? await resolveFileUrl(avatarKey.value) : defaultAvatar,
       gender: userData.gender || '',
       signature: userData.signature || ''
     }
@@ -102,7 +105,7 @@ const updateCurrentUserInfo = async () => {
   try {
     await updateCurrentUser({
       nickname: userForm.value.nickname,
-      avatarUrl: userForm.value.avatar.replace(ossLoadBaseUrl, ''),
+      avatarUrl: avatarKey.value,
       gender: userForm.value.gender,
       signature: userForm.value.signature
     })
@@ -204,8 +207,11 @@ const cropAndUpload = () => {
     canvas.toBlob(async (blob) => {
       const file = new File([blob], `${Date.now()}.jpg`, { type: "image/jpeg" })
       try {
-        const response = await uploadImage(file)
-        userForm.value.avatar = `${ossLoadBaseUrl}/${response.data}`
+        const response = await uploadFile(file, 'avatar')
+        const upload = response?.data || {}
+        avatarKey.value = toObjectKey(upload.objectKey) || ''
+        // 直连 OSS 的预览地址，不用后端返回的代理 url
+        userForm.value.avatar = (await resolveFileUrl(avatarKey.value)) || defaultAvatar
         ElMessage.success('上传成功')
         cropperDialogVisible.value = false
       } catch (error) {

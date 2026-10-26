@@ -1,6 +1,7 @@
 import type { NodeViewRendererProps } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 
+import { resolveFileUrl } from '@/utils/oss';
 import {
   DEFAULT_IMAGE_SCALE,
   imageToolbarOptions,
@@ -55,6 +56,9 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
 
   const image = document.createElement('img');
   image.draggable = true;
+  // 长笔记里图片多，可视区外不加载
+  image.loading = 'lazy';
+  image.decoding = 'async';
 
   const stage = document.createElement('span');
   stage.className = 're-image-stage';
@@ -117,15 +121,42 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
     sizeSelect.classList.toggle('has-custom-size', Boolean(scale && !hasPresetScale));
   };
 
+  let srcToken = 0;
+
+  // 节点 attrs 里存的是 objectKey（正文为站内相对路径），渲染时换成预签名地址，
+  // 浏览器直连 OSS；地址只影响 DOM，getHTML() 落库的仍是 objectKey。
+  const loadImage = (src: string, scale: string | null, width: string | null, allowRetry = true) => {
+    if (!src) return;
+
+    if (image.getAttribute('src') === src) {
+      applyImageScale(scale, width);
+      return;
+    }
+
+    image.onload = () => applyImageScale(scale, width);
+    image.onerror = () => {
+      if (!allowRetry) return;
+      // 预签名地址可能刚好过期，强刷一次再重试
+      void resolveFileUrl(currentNode.attrs.src, true).then((next) => {
+        if (next && next !== src) loadImage(next, scale, width, false);
+      });
+    };
+    image.src = src;
+    applyImageScale(scale, width);
+  };
+
   const updateImage = () => {
     const width = normalizeImageWidth(currentNode.attrs.width);
     const scale = normalizeImageScale(currentNode.attrs.scale) || normalizeImageScale(width) || DEFAULT_IMAGE_SCALE;
-    image.src = currentNode.attrs.src;
     image.alt = currentNode.attrs.alt || '';
     image.title = currentNode.attrs.title || '';
-    image.onload = () => applyImageScale(scale, width);
-    applyImageScale(scale, width);
     updateScaleControls(scale);
+
+    const token = ++srcToken;
+    void resolveFileUrl(currentNode.attrs.src).then((url) => {
+      if (token !== srcToken) return;
+      loadImage(url, scale, width);
+    });
   };
 
   function applyImageScale(scale: string | null, fallbackWidth?: string | null) {
@@ -246,6 +277,7 @@ const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) 
       handle.contains(event.target as globalThis.Node),
     ignoreMutation: () => true,
     destroy: () => {
+      srcToken += 1;
       cleanupResizeListeners?.();
       if (resizeFrame) cancelAnimationFrame(resizeFrame);
     },

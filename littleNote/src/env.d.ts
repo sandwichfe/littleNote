@@ -6,6 +6,7 @@
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL: string
   readonly VITE_OSS_LOAD_BASE_URL: string
+  readonly VITE_OSS_BUCKET: string
   readonly VITE_QRCODE_BASE_URL: string
   readonly VITE_PORTAL_LOGIN_URL: string
   readonly VITE_CLIENT_ID: string

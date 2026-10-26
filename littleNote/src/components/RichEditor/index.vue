@@ -294,7 +294,7 @@ import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { Selection, TextSelection } from '@tiptap/pm/state';
 import { common, createLowlight } from 'lowlight';
 import { ElMessage } from 'element-plus';
-import { uploadImage } from '@/network/file';
+import { uploadFile } from '@/network/file';
 import {
   blockTypes,
   commonColors,
@@ -805,8 +805,11 @@ const pickImage = () => imageInput.value?.click();
 const pickVideo = () => videoInput.value?.click();
 
 const doUpload = async (file: File) => {
-  const res = await uploadImage(file);
-  return `${import.meta.env.VITE_OSS_LOAD_BASE_URL}/${res.data}`;
+  const res = await uploadFile(file, 'note-image');
+  // 上传返回 UploadVo，正文只落 objectKey；目录由服务端按 bizType 决定。
+  const objectKey = typeof res?.data === 'string' ? res.data : res?.data?.objectKey;
+  if (!objectKey) throw new Error('上传未返回 objectKey');
+  return `/${String(objectKey).replace(/^\/+/, '')}`;
 };
 
 const insertUploadedImage = async (file: File, position?: number) => {
