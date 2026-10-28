@@ -1,4 +1,4 @@
-import type { NodeViewRendererProps } from '@tiptap/core';
+import type { NodeViewRenderer } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 
 import { resolveFileUrl } from '@/utils/oss';
@@ -47,7 +47,8 @@ const getImageScalePercent = (scale: string | null, image: HTMLImageElement, wra
   return Math.round((wrapper.offsetWidth / naturalWidth) * 100);
 };
 
-const createImageView = ({ node, view, getPos, editor }: NodeViewRendererProps) => {
+// 显式标注 NodeViewRenderer，返回的对象字面量才能拿到上下文类型（update 等回调参数不再隐式 any）
+const createImageView: NodeViewRenderer = ({ node, view, getPos, editor }) => {
   let currentNode = node;
   let resizeFrame = 0;
   let pendingResizeScale: string | null = null;
