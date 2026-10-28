@@ -2,8 +2,26 @@
   <div id="note-detail-page">
     <!-- 顶部工具栏 -->
     <div class="note-toolbar">
-      <!-- 左侧：分组选择（编辑态可改；预览态只读展示，不用灰态下拉框） -->
+      <!-- 左侧：标题占位，点击后在弹窗中编辑；预览态只做展示 -->
       <div class="toolbar-left">
+        <button
+            type="button"
+            class="note-title-text"
+            :class="{ 'is-empty': !noteTitle, 'is-readonly': viewMode === 'preview' }"
+            :title="noteTitle"
+            @click="openTitleDialog"
+        >
+          <span class="note-title-label">{{ noteTitle || '无标题' }}</span>
+          <!-- 编辑态悬浮时用铅笔暗示"可点开修改"，替代小手光标 -->
+          <el-icon v-if="viewMode === 'edit'" class="note-title-edit-icon">
+            <Edit/>
+          </el-icon>
+        </button>
+      </div>
+
+      <!-- 右侧：分组选择 + 保存反馈 + 模式切换 + 操作按钮（只留图标，悬浮再给文字说明） -->
+      <div class="toolbar-right">
+        <!-- 分组选择（编辑态可改；预览态只读展示，不用灰态下拉框） -->
         <div v-if="viewMode === 'preview'" class="group-readonly">
           <svg-icon iconClass="filter" className="filter-icon"/>
           <span class="group-readonly-name">{{ currentGroupName }}</span>
@@ -30,10 +48,17 @@
             />
           </el-select>
         </div>
-      </div>
 
-      <!-- 右侧：模式切换 + 操作按钮（只留图标，悬浮再给文字说明） -->
-      <div class="toolbar-right">
+        <!-- 保存状态：贴着保存按钮，反馈就近可见；预览态只在保存中/失败时出现 -->
+        <span
+            v-show="viewMode === 'edit' || saveState !== 'saved'"
+            class="save-status"
+            :class="`is-${saveState}`"
+        >{{ saveStatusText }}</span>
+
+        <!-- 分隔线 -->
+        <div class="toolbar-divider"></div>
+
         <!-- 模式切换 -->
         <div class="mode-switch">
           <el-tooltip content="编辑" placement="bottom" :show-after="300">
@@ -61,16 +86,6 @@
             </button>
           </el-tooltip>
         </div>
-
-        <!-- 分隔线 -->
-        <div class="toolbar-divider"></div>
-
-        <!-- 保存状态：贴着保存按钮，反馈就近可见；预览态只在保存中/失败时出现 -->
-        <span
-            v-show="viewMode === 'edit' || saveState !== 'saved'"
-            class="save-status"
-            :class="`is-${saveState}`"
-        >{{ saveStatusText }}</span>
 
         <!-- 保存按钮：仅编辑态存在；预览态内容不可改，留个禁用按钮只会误导 -->
         <el-tooltip v-if="viewMode === 'edit'" content="保存" placement="bottom" :show-after="300">
@@ -109,23 +124,7 @@
           :editable="viewMode === 'edit'"
           @change="markDirty"
           @update:char-count="charCount = $event"
-      >
-        <!-- 标题：放在编辑器容器内、正文之上；列表页展示的就是这个标题，正文自动生成的标题可在此改写 -->
-        <template #header>
-          <div class="note-title-bar" :class="{ 'is-preview': viewMode === 'preview' }">
-            <!-- 标题只做单行展示，点击后到弹窗里编辑，避免长标题在标题栏里挤成一团 -->
-            <button
-                type="button"
-                class="note-title-text"
-                :class="{ 'is-empty': !noteTitle, 'is-readonly': viewMode === 'preview' }"
-                :title="noteTitle"
-                @click="openTitleDialog"
-            >
-              {{ noteTitle || '无标题' }}
-            </button>
-          </div>
-        </template>
-      </RichEditor>
+      />
     </div>
 
     <!-- 底部状态栏：只放内容属性（字数），独占右下角不与操作反馈抢位置 -->
@@ -655,11 +654,13 @@ function handleEvent(event: KeyboardEvent) {
   gap: 16px;
 }
 
+/* 左侧只放标题：占满剩余宽度，长标题自行省略 */
 .toolbar-left {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-shrink: 0;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* 预览态分组只读展示：高度与字号对齐下拉框，切换模式时工具栏不跳动 */
@@ -778,31 +779,17 @@ function handleEvent(event: KeyboardEvent) {
   line-height: 1;
 }
 
-/* 标题栏：位于编辑器容器内、正文之上，左右内边距与正文对齐，预览态只读；
-   用一条极浅的分隔线与正文分层，比换底色更克制，不会和正文抢注意力 */
-.note-title-bar {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  padding: 14px 24px 12px;
-  background-color: #fff;
-  border-bottom: 1px solid #eff1f3;
-}
-
-/* 预览态正文限宽居中，标题跟随同样的宽度与边距，保证左边缘对齐（须与 RichEditor/styles.css 的 900px 保持一致） */
-.note-title-bar.is-preview {
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 24px 24px 12px;
-}
-
-/* 标题文本：只做展示，单行省略，点击打开弹窗编辑 */
+/* 标题：位于工具栏左上角，只做单行展示，点击打开弹窗编辑 */
 .note-title-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex: 1;
   min-width: 0;
-  padding: 6px 8px;
-  margin-left: -8px; /* 抵消内边距，让文字左边缘与正文对齐 */
+  /* 限制标题占位宽度：长标题不把工具栏横向拉满，超出部分直接省略 */
+  max-width: 480px;
+  padding: 4px 6px;
+  margin-left: -6px; /* 抵消内边距，让文字左边缘与工具栏内边距对齐 */
   border: none;
   border-radius: 4px;
   background: transparent;
@@ -810,18 +797,37 @@ function handleEvent(event: KeyboardEvent) {
   text-align: left;
   /* 标题收敛为半强调：比正文醒目，但不抢正文的视觉重心 */
   color: #3c4043;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.5;
+  overflow: hidden;
+  /* 不用小手：标题是原地可改的内容而非跳转链接，悬浮时由铅笔图标作提示 */
+  cursor: default;
+  transition: background-color 0.15s ease;
+}
+
+/* 省略只作用在文字上，避免铅笔图标被一起压缩掉 */
+.note-title-label {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  cursor: text;
-  transition: background-color 0.15s ease;
+}
+
+/* 铅笔图标：编辑态常驻显示，提示标题可点击修改；预览态由模板 v-if 直接不渲染 */
+.note-title-edit-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  color: #9aa0a6;
+  transition: color 0.15s ease;
 }
 
 .note-title-text:hover:not(.is-readonly) {
   background-color: #f8f9fa;
+}
+
+.note-title-text:hover:not(.is-readonly) .note-title-edit-icon {
+  color: #5f6368;
 }
 
 .note-title-text.is-empty {
@@ -1223,7 +1229,7 @@ function handleEvent(event: KeyboardEvent) {
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .note-title-text {
-    font-size: 18px;
+    font-size: 15px;
   }
 
   .note-toolbar {
@@ -1234,8 +1240,10 @@ function handleEvent(event: KeyboardEvent) {
     align-items: center;
   }
 
+  /* 小屏优先保证右侧操作可用，标题让位收缩 */
   .toolbar-left {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   /* 小屏跟随下拉框一起收缩，保持两态高度一致 */
@@ -1248,7 +1256,7 @@ function handleEvent(event: KeyboardEvent) {
   }
 
   .toolbar-right {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
     justify-content: flex-end;
     gap: 6px;
   }
