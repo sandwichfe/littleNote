@@ -64,6 +64,10 @@ export const commonColors = [
   '#ffffff',
 ];
 
+// 上传体积上限（MB）：避免超大文件直传占满带宽，超限时在编辑器内提示
+export const IMAGE_UPLOAD_MAX_MB = 80;
+export const VIDEO_UPLOAD_MAX_MB = 500;
+
 export const DEFAULT_IMAGE_SCALE = '100%';
 export const MIN_IMAGE_SCALE_PERCENT = 10;
 export const MAX_IMAGE_SCALE_PERCENT = 300;

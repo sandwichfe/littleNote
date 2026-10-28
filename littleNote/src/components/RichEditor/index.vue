@@ -279,6 +279,10 @@
     </div>
 
     <div class="re-editor-shell">
+      <!-- 上传进度：顶部细条，不遮挡正文 -->
+      <div v-if="uploadPercent !== null" class="re-upload-progress" :title="`上传中 ${uploadPercent}%`">
+        <span class="re-upload-progress-bar" :style="{ width: `${uploadPercent}%` }"></span>
+      </div>
       <div
         v-if="editable && editor && tableToolbar.visible"
         ref="tableToolbarRef"
@@ -343,16 +347,19 @@ import {
   DEFAULT_IMAGE_SCALE,
   DEFAULT_TEXT_COLOR,
   fonts,
+  IMAGE_UPLOAD_MAX_MB,
   TABLE_PICKER_COLS,
   TABLE_PICKER_DEFAULT_COLS,
   TABLE_PICKER_DEFAULT_ROWS,
   TABLE_PICKER_ROWS,
   TABLE_TOOLBAR_FALLBACK_WIDTH,
   TABLE_TOOLBAR_OFFSET,
+  VIDEO_UPLOAD_MAX_MB,
 } from './config';
 import { CodeBlockWithTools } from './extensions/CodeBlockWithTools';
 import { ImageWithSize } from './extensions/ImageWithSize';
 import { ListItemWithHeading, TableWithResizableColumns } from './extensions/basicExtensions';
+import { Placeholder } from './extensions/Placeholder';
 import { getSelectionDeleteLineRange } from './utils/deleteLine';
 import { Video } from './VideoNode';
 import 'highlight.js/styles/atom-one-light.css';
@@ -379,6 +386,7 @@ const showTablePicker = ref(false);
 const showImagePanel = ref(false);
 const networkImageUrl = ref('');
 const networkImageName = ref('');
+const uploadPercent = ref<number | null>(null);
 const isSelectionInTable = ref(false);
 const toolbarTick = ref(0);
 const tablePickerRows = ref(6);
@@ -534,6 +542,7 @@ const editor = useEditor({
   extensions: [
     StarterKit.configure({ codeBlock: false, listItem: false }),
     ListItemWithHeading,
+    Placeholder.configure({ text: '开始输入…' }),
     TextStyle,
     Color,
     FontFamily,
@@ -758,7 +767,8 @@ const toggleListKeepingBlockStyle = (listType: 'bulletList' | 'orderedList') => 
   }
 
   if (headingLevel) {
-    chain.setHeading({ level: headingLevel });
+    // getActiveHeadingLevel 只从 blockTypes 里取值，必然是 1~6
+    chain.setHeading({ level: headingLevel as 1 | 2 | 3 | 4 | 5 | 6 });
   }
 
   chain.run();
@@ -924,14 +934,42 @@ const insertNetworkImage = () => {
 };
 
 const doUpload = async (file: File) => {
-  const res = await uploadFile(file, 'note-image');
-  // 上传返回 UploadVo，正文只落 objectKey；目录由服务端按 bizType 决定。
-  const objectKey = typeof res?.data === 'string' ? res.data : res?.data?.objectKey;
-  if (!objectKey) throw new Error('上传未返回 objectKey');
-  return `/${String(objectKey).replace(/^\/+/, '')}`;
+  uploadPercent.value = 0;
+
+  try {
+    const res = await uploadFile(file, 'note-image', (percent) => {
+      uploadPercent.value = percent;
+    });
+    // 上传返回 UploadVo，正文只落 objectKey；目录由服务端按 bizType 决定。
+    const objectKey = typeof res?.data === 'string' ? res.data : res?.data?.objectKey;
+    if (!objectKey) throw new Error('上传未返回 objectKey');
+    return `/${String(objectKey).replace(/^\/+/, '')}`;
+  } finally {
+    uploadPercent.value = null;
+  }
+};
+
+// 上传前校验类型与体积，避免超大文件或类型不符的文件直接推到服务端
+const checkUploadFile = (file: File, kind: 'image' | 'video') => {
+  const isImage = kind === 'image';
+  const typeLabel = isImage ? '图片' : '视频';
+  const maxMb = isImage ? IMAGE_UPLOAD_MAX_MB : VIDEO_UPLOAD_MAX_MB;
+
+  // 个别格式浏览器取不到 MIME，此时只按体积限制，避免误拦有效文件
+  if (file.type && !file.type.startsWith(`${kind}/`)) {
+    ElMessage.warning(`请选择${typeLabel}文件`);
+    return false;
+  }
+  if (file.size > maxMb * 1024 * 1024) {
+    ElMessage.warning(`${typeLabel}不能超过 ${maxMb}MB`);
+    return false;
+  }
+  return true;
 };
 
 const insertUploadedImage = async (file: File, position?: number) => {
+  if (!checkUploadFile(file, 'image')) return;
+
   try {
     const url = await doUpload(file);
     const instance = editor.value;
@@ -970,6 +1008,10 @@ const onVideoChange = async (e: Event) => {
   const input = e.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
+  if (!checkUploadFile(file, 'video')) {
+    input.value = '';
+    return;
+  }
   try {
     const url = await doUpload(file);
     run((c) => c.setVideo({ src: url }));

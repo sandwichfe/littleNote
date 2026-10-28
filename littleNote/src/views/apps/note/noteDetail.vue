@@ -70,9 +70,10 @@
           <span class="btn-text">{{ saving ? '保存中' : '保存' }}</span>
         </button>
 
-        <!-- 删除按钮 -->
+        <!-- 删除按钮：新笔记尚未落库，不可删除 -->
         <button
             class="toolbar-btn toolbar-btn-delete"
+            :disabled="noteData.noteId === -1"
             @click="deleteDialogVisible = true"
         >
           <el-icon>
@@ -95,8 +96,7 @@
       />
     </div>
 
-    <div
-        style="border: 1px solid #ccc; margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;">
+    <div class="note-editor-wrap" v-loading="loading">
       <RichEditor ref="editorRef" v-model="valueHtml" :editable="viewMode === 'edit'"/>
     </div>
 
@@ -165,6 +165,7 @@ const deleteDialogVisible = ref(false);
 const noteTitle = ref('');
 const dirty = ref(false);   // 是否有未保存修改
 const saving = ref(false);  // 保存请求进行中，避免并发提交
+const loading = ref(false); // 笔记内容加载中
 
 const changeGroup = (newValue: number | string | null) => {
   // 清空时 el-select 可能给到 '' / undefined，统一转成 null 提交
@@ -183,11 +184,6 @@ const valueHtml = ref("");
 // 视图模式：edit（编辑）、preview（预览）
 const viewMode = ref<ViewMode>(props.initialViewMode);
 
-// 监听视图模式变化
-watch(viewMode, (newMode) => {
-  ElMessage.success(newMode === 'edit' ? '进入编辑模式' : '进入预览模式');
-});
-
 // 解密失败（历史明文或异常密文）时回退原文，避免内容被静默清空
 const safeDecrypt = (raw: string) => {
   if (!raw) return '';
@@ -203,14 +199,15 @@ let loadToken = 0;
 const loadNote = async (id: number) => {
   const token = ++loadToken;
   noteData.value.noteId = id;
+  loading.value = true;
 
-  if (id === -1) {
-    valueHtml.value = '';
-    noteTitle.value = '';
-    groupValue.value = null;
-    noteData.value.groupId = null;
-  } else {
-    try {
+  try {
+    if (id === -1) {
+      valueHtml.value = '';
+      noteTitle.value = '';
+      groupValue.value = null;
+      noteData.value.groupId = null;
+    } else {
       const res = await getNote(id);
       if (token !== loadToken) return; // 已有更新的加载请求，丢弃本次结果
 
@@ -219,15 +216,17 @@ const loadNote = async (id: number) => {
       const groupId = res.data?.groupId ?? null;
       groupValue.value = groupId === null ? null : Number(groupId);
       noteData.value.groupId = groupId === null ? null : Number(groupId);
-    } catch {
-      ElMessage.error('笔记加载失败');
-      return;
     }
-  }
 
-  // 程序化回填同样会触发下方 watch，渲染刷新后复位脏标记
-  await nextTick();
-  if (token === loadToken) dirty.value = false;
+    // 程序化回填同样会触发下方 watch，渲染刷新后复位脏标记
+    await nextTick();
+    if (token === loadToken) dirty.value = false;
+  } catch {
+    ElMessage.error('笔记加载失败');
+  } finally {
+    // 多个加载请求并发时，只由最后一次负责收起加载态
+    if (token === loadToken) loading.value = false;
+  }
 };
 
 // 未保存确认弹窗：返回 true 表示确认放弃修改
@@ -303,6 +302,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleEvent);
   window.removeEventListener('beforeunload', handleBeforeUnload);
+  if (ctrlSTimer) clearTimeout(ctrlSTimer);
 });
 
 // 有未保存修改时，离开页面需二次确认
@@ -378,10 +378,16 @@ const confirmDeleteNote = () => {
 };
 
 
-let ctrlS_timer: NodeJS.Timeout | null = null;
+let ctrlSTimer: ReturnType<typeof setTimeout> | null = null;
+
+// 兼容 Windows/Linux 的 Ctrl 与 macOS 的 Cmd
+const isModifierKey = (event: KeyboardEvent) => event.ctrlKey || event.metaKey;
 
 function handleEvent(event: KeyboardEvent) {
-  if (event.ctrlKey && event.key.toLowerCase() === 'd' ) {
+  // 统一转小写，避免开启 Caps Lock 后组合键失效
+  const key = event.key.toLowerCase();
+
+  if (isModifierKey(event) && key === 'd') {
     if (viewMode.value === 'preview') {
       event.preventDefault();
       return;
@@ -395,10 +401,11 @@ function handleEvent(event: KeyboardEvent) {
 
   }
 
-  if (event.ctrlKey && event.key === 's') {
+  // 保留 Ctrl/Cmd + Shift + S 给浏览器自身的"另存为"
+  if (isModifierKey(event) && key === 's' && !event.shiftKey) {
     event.preventDefault();
     // 多次触发 给出提示
-    if (ctrlS_timer) {
+    if (ctrlSTimer) {
       ElMessage({
         message: `⚡️ 少侠，你的手速突破系统结界啦！`,
         type: 'success',
@@ -406,8 +413,8 @@ function handleEvent(event: KeyboardEvent) {
       return;
     }
     saveNote();
-    ctrlS_timer = setTimeout(() => {
-      ctrlS_timer = null;
+    ctrlSTimer = setTimeout(() => {
+      ctrlSTimer = null;
     }, 1000); // 1秒内无法重复保存
   }
 }
@@ -416,11 +423,24 @@ function handleEvent(event: KeyboardEvent) {
 
 <style scoped>
 #note-detail-page {
-  height: calc(100vh - 64px); /* 减去 AppLayout header 的高度 */
+  /* 父级 .app-content 已占满 header 以下空间，这里跟随父级高度，避免写死 header 尺寸 */
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background-color: #fff;
+}
+
+/* 编辑区容器：撑满剩余高度，滚动交给编辑器内部 */
+.note-editor-wrap {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 0;
+  margin-top: 5px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 /* 顶部工具栏 */
@@ -891,11 +911,6 @@ function handleEvent(event: KeyboardEvent) {
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
-  #note-detail-page {
-    height: calc(100vh - 56px);  /* 减去layout-header的高度 */
-    overflow: hidden; /* 确保移动端也不会出现页面级滚动 */
-  }
-
   .note-title-input {
     font-size: 20px;
   }

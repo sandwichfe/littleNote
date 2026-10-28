@@ -347,6 +347,24 @@
   flex-direction: column;
 }
 
+/* 上传进度条：贴在编辑器顶部，仅上传期间出现 */
+.re-upload-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 12;
+  height: 3px;
+  background: rgba(22, 119, 255, 0.12);
+}
+
+.re-upload-progress-bar {
+  display: block;
+  height: 100%;
+  background: #1677ff;
+  transition: width 0.2s ease;
+}
+
 .re-table-toolbar {
   position: absolute;
   display: inline-flex;
@@ -429,6 +447,14 @@
 .re-content :deep(.ProseMirror p) {
   /* 回车会生成新段落，正文段落不额外加间距，避免普通换行被拉得过开。 */
   margin: 0;
+}
+/* 空笔记占位提示：float + height: 0 让它不参与行高计算 */
+.re-content :deep(.ProseMirror p.is-editor-empty::before) {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: #bdc1c6;
+  pointer-events: none;
 }
 .re-content :deep(.ProseMirror h1),
 .re-content :deep(.ProseMirror h2),

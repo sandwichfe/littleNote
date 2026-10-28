@@ -17,7 +17,12 @@ export interface UploadVo {
 export const MAX_PRESIGN_BATCH_SIZE = 200;
 
 // 通用文件上传接口
-export function uploadFile(file: File, bizType: OssBizType = "note-image"): Promise<any> {
+export function uploadFile(
+  file: File,
+  bizType: OssBizType = "note-image",
+  // 可选上传进度回调，返回 0~100 的整数
+  onUploadProgress?: (percent: number) => void,
+): Promise<any> {
   const formData = new FormData();
   // 后端接口固定读取 uploadFile 字段。
   formData.append("uploadFile", file);
@@ -29,7 +34,13 @@ export function uploadFile(file: File, bizType: OssBizType = "note-image"): Prom
     data: formData,
     headers: {
       "Content-Type": "multipart/form-data"
-    }
+    },
+    onUploadProgress: onUploadProgress
+      ? (event) => {
+          if (!event.total) return;
+          onUploadProgress(Math.round((event.loaded / event.total) * 100));
+        }
+      : undefined
   });
 }
 
