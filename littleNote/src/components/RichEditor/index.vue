@@ -34,6 +34,10 @@
     />
 
     <div class="re-editor-shell">
+      <!-- 头部插槽：供调用方放置标题等，位于正文之上且不随正文滚动 -->
+      <div v-if="$slots.header" class="re-header">
+        <slot name="header"/>
+      </div>
       <!-- 上传进度：顶部细条，不遮挡正文 -->
       <div v-if="uploadPercent !== null" class="re-upload-progress" :title="`上传中 ${uploadPercent}%`">
         <span class="re-upload-progress-bar" :style="{ width: `${uploadPercent}%` }"></span>

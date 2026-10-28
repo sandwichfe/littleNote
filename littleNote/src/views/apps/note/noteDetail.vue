@@ -87,19 +87,6 @@
       </div>
     </div>
 
-    <!-- 标题：列表页展示的就是这个标题，正文自动生成的标题可在此改写 -->
-    <div class="note-title-bar">
-      <input
-          v-model="noteTitle"
-          class="note-title-input"
-          :readonly="viewMode === 'preview'"
-          maxlength="100"
-          placeholder="无标题"
-          @input="markDirty"
-      />
-      <span class="note-char-count">{{ charCount }} 字</span>
-    </div>
-
     <div class="note-editor-wrap" v-loading="loading">
       <RichEditor
           ref="editorRef"
@@ -107,7 +94,22 @@
           :editable="viewMode === 'edit'"
           @change="markDirty"
           @update:char-count="charCount = $event"
-      />
+      >
+        <!-- 标题：放在编辑器容器内、正文之上；列表页展示的就是这个标题，正文自动生成的标题可在此改写 -->
+        <template #header>
+          <div class="note-title-bar" :class="{ 'is-preview': viewMode === 'preview' }">
+            <input
+                v-model="noteTitle"
+                class="note-title-input"
+                :readonly="viewMode === 'preview'"
+                maxlength="100"
+                placeholder="无标题"
+                @input="markDirty"
+            />
+            <span class="note-char-count">{{ charCount }} 字</span>
+          </div>
+        </template>
+      </RichEditor>
     </div>
 
     <el-dialog
@@ -636,14 +638,22 @@ function handleEvent(event: KeyboardEvent) {
   flex-shrink: 0;
 }
 
-/* 标题栏：左内边距与正文对齐，预览态只读 */
+/* 标题栏：位于编辑器容器内、正文之上，左右内边距与正文对齐，预览态只读 */
 .note-title-bar {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-  padding: 6px 25px 0;
+  padding: 14px 24px 0;
   background-color: #fff;
+}
+
+/* 预览态正文限宽居中，标题跟随同样的宽度与边距，保证左边缘对齐 */
+.note-title-bar.is-preview {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 24px 24px 0;
 }
 
 .note-title-input {
@@ -653,9 +663,10 @@ function handleEvent(event: KeyboardEvent) {
   border: none;
   outline: none;
   background: transparent;
-  color: #202124;
-  font-size: 24px;
-  font-weight: 600;
+  /* 标题收敛为半强调：比正文醒目，但不抢正文的视觉重心 */
+  color: #3c4043;
+  font-size: 20px;
+  font-weight: 500;
   line-height: 1.4;
 }
 
@@ -668,8 +679,8 @@ function handleEvent(event: KeyboardEvent) {
 }
 
 .note-title-input::placeholder {
-  color: #bdc1c6;
-  font-weight: 500;
+  color: #c7cacf;
+  font-weight: 400;
 }
 
 .note-title-input[readonly] {
@@ -1045,7 +1056,7 @@ function handleEvent(event: KeyboardEvent) {
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
   .note-title-input {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .note-toolbar {
