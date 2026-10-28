@@ -1,5 +1,7 @@
 import { computed, ref, type Ref } from 'vue';
 import type { Editor } from '@tiptap/vue-3';
+// useEditor 的回调里拿到的是 core 的 Editor（vue-3 的 Editor 只是它的子类），按父类收宽避免类型不兼容
+import type { Editor as CoreEditor } from '@tiptap/core';
 import {
   blockTypes,
   DEFAULT_BACKGROUND_COLOR,
@@ -148,7 +150,7 @@ export const useEditorToolbar = (editor: Ref<Editor | undefined>) => {
   };
 
   // 跟随光标同步工具栏展示状态，编辑器每次选区/内容变动都会调用
-  const syncToolbarState = (targetEditor?: Editor) => {
+  const syncToolbarState = (targetEditor?: CoreEditor) => {
     if (!targetEditor) return;
 
     const heading = blockTypes.find((item) => {
