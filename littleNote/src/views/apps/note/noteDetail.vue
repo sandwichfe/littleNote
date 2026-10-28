@@ -638,14 +638,16 @@ function handleEvent(event: KeyboardEvent) {
   flex-shrink: 0;
 }
 
-/* 标题栏：位于编辑器容器内、正文之上，左右内边距与正文对齐，预览态只读 */
+/* 标题栏：位于编辑器容器内、正文之上，左右内边距与正文对齐，预览态只读；
+   用一条极浅的分隔线与正文分层，比换底色更克制，不会和正文抢注意力 */
 .note-title-bar {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
-  padding: 14px 24px 0;
+  padding: 14px 24px 12px;
   background-color: #fff;
+  border-bottom: 1px solid #eff1f3;
 }
 
 /* 预览态正文限宽居中，标题跟随同样的宽度与边距，保证左边缘对齐 */
@@ -653,7 +655,7 @@ function handleEvent(event: KeyboardEvent) {
   width: 100%;
   max-width: 780px;
   margin: 0 auto;
-  padding: 24px 24px 0;
+  padding: 24px 24px 12px;
 }
 
 .note-title-input {
