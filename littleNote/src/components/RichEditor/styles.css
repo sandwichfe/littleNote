@@ -16,6 +16,11 @@
   flex-direction: column;
 }
 
+/* 头部插槽容器：不参与滚动，由内容区自己滚动 */
+.re-header {
+  flex-shrink: 0;
+}
+
 /* 上传进度条：贴在编辑器顶部，仅上传期间出现 */
 .re-upload-progress {
   position: absolute;

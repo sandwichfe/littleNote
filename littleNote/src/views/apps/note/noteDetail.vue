@@ -98,21 +98,54 @@
         <!-- 标题：放在编辑器容器内、正文之上；列表页展示的就是这个标题，正文自动生成的标题可在此改写 -->
         <template #header>
           <div class="note-title-bar" :class="{ 'is-preview': viewMode === 'preview' }">
-            <!-- 单行展示，超出部分省略；悬浮用 title 显示完整标题 -->
-            <input
-                v-model="noteTitle"
-                class="note-title-input"
-                :readonly="viewMode === 'preview'"
+            <!-- 标题只做单行展示，点击后到弹窗里编辑，避免长标题在标题栏里挤成一团 -->
+            <button
+                type="button"
+                class="note-title-text"
+                :class="{ 'is-empty': !noteTitle, 'is-readonly': viewMode === 'preview' }"
                 :title="noteTitle"
-                maxlength="100"
-                placeholder="无标题"
-                @input="markDirty"
-            />
+                @click="openTitleDialog"
+            >
+              {{ noteTitle || '无标题' }}
+            </button>
             <span class="note-char-count">{{ charCount }} 字</span>
           </div>
         </template>
       </RichEditor>
     </div>
+
+    <!-- 标题编辑弹窗：只在这里编辑标题，确定后才写回并标记未保存 -->
+    <el-dialog
+        v-model="titleDialogVisible"
+        title="编辑标题"
+        align-center
+        width="min(560px, calc(100vw - 32px))"
+        class="title-edit-dialog"
+        :close-on-click-modal="false"
+        @opened="focusTitleInput"
+    >
+      <el-input
+          ref="titleDialogInputRef"
+          v-model="titleDraft"
+          type="textarea"
+          :rows="5"
+          maxlength="100"
+          show-word-limit
+          resize="none"
+          placeholder="留空则自动取正文开头作为标题"
+          @keydown.enter="onTitleEnter"
+      />
+      <template #footer>
+        <div class="title-dialog-footer">
+          <button class="delete-dialog-btn delete-dialog-btn-cancel" @click="titleDialogVisible = false">
+            取消
+          </button>
+          <button class="delete-dialog-btn title-dialog-btn-primary" @click="confirmTitleEdit">
+            确定
+          </button>
+        </div>
+      </template>
+    </el-dialog>
 
     <el-dialog
         v-model="deleteDialogVisible"
@@ -178,6 +211,37 @@ const groups = ref<any[]>([]);
 const deleteDialogVisible = ref(false);
 const noteTitle = ref('');
 const charCount = ref(0);   // 正文字数，由编辑器同步
+
+// 标题编辑弹窗：标题栏只做展示，点开弹窗改完再写回
+const titleDialogVisible = ref(false);
+const titleDraft = ref('');          // 弹窗内的临时标题，取消即丢弃
+const titleDialogInputRef = shallowRef();
+
+const openTitleDialog = () => {
+  if (viewMode.value === 'preview') return; // 预览态不允许改动
+  titleDraft.value = noteTitle.value;
+  titleDialogVisible.value = true;
+};
+
+const focusTitleInput = () => titleDialogInputRef.value?.focus();
+
+// 回车直接确认；输入法选词时的回车要放行，否则中文输入会被打断
+const onTitleEnter = (event: KeyboardEvent) => {
+  if (event.isComposing || event.keyCode === 229) return;
+  event.preventDefault();
+  confirmTitleEdit();
+};
+
+// 确定才写回标题并置脏，空标题交给保存时用正文开头兜底
+const confirmTitleEdit = () => {
+  const next = titleDraft.value.trim();
+  titleDialogVisible.value = false;
+  if (next === noteTitle.value) return;
+
+  noteTitle.value = next;
+  markDirty();
+};
+
 const dirty = ref(false);   // 是否有未保存修改
 const saving = ref(false);  // 保存请求进行中，避免并发提交
 const loading = ref(false); // 笔记内容加载中
@@ -660,20 +724,41 @@ function handleEvent(event: KeyboardEvent) {
   padding: 24px 24px 12px;
 }
 
-.note-title-input {
+/* 标题文本：只做展示，单行省略，点击打开弹窗编辑 */
+.note-title-text {
   flex: 1;
   min-width: 0;
-  padding: 6px 0;
+  padding: 6px 8px;
+  margin-left: -8px; /* 抵消内边距，让文字左边缘与正文对齐 */
   border: none;
-  outline: none;
+  border-radius: 4px;
   background: transparent;
+  font-family: inherit;
+  text-align: left;
   /* 标题收敛为半强调：比正文醒目，但不抢正文的视觉重心 */
   color: #3c4043;
   font-size: 20px;
   font-weight: 500;
   line-height: 1.4;
-  /* 单行展示，溢出省略；无焦点时显示省略号，悬浮由 title 给出全文 */
+  white-space: nowrap;
+  overflow: hidden;
   text-overflow: ellipsis;
+  cursor: text;
+  transition: background-color 0.15s ease;
+}
+
+.note-title-text:hover:not(.is-readonly) {
+  background-color: #f8f9fa;
+}
+
+.note-title-text.is-empty {
+  color: #c7cacf;
+  font-weight: 400;
+}
+
+/* 预览态不可编辑，去掉可点击暗示（不用 disabled，否则悬浮 title 提示失效） */
+.note-title-text.is-readonly {
+  cursor: default;
 }
 
 /* 正文字数：常驻标题行右侧，不占用工具栏空间 */
@@ -684,13 +769,22 @@ function handleEvent(event: KeyboardEvent) {
   white-space: nowrap;
 }
 
-.note-title-input::placeholder {
-  color: #c7cacf;
-  font-weight: 400;
+/* 标题编辑弹窗：按钮沿用删除弹窗的尺寸，主按钮改成中性色 */
+.title-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-.note-title-input[readonly] {
-  cursor: default;
+.title-dialog-btn-primary {
+  background: #3c4043;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(32, 33, 36, 0.22);
+}
+
+.title-dialog-btn-primary:hover {
+  background: #202124;
+  box-shadow: 0 2px 6px rgba(32, 33, 36, 0.28);
 }
 
 /* 分组选择器 */
@@ -1061,7 +1155,7 @@ function handleEvent(event: KeyboardEvent) {
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
-  .note-title-input {
+  .note-title-text {
     font-size: 18px;
   }
 
