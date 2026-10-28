@@ -2,9 +2,13 @@
   <div id="note-detail-page">
     <!-- 顶部工具栏 -->
     <div class="note-toolbar">
-      <!-- 左侧：分组选择 -->
+      <!-- 左侧：分组选择（编辑态可改；预览态只读展示，不用灰态下拉框） -->
       <div class="toolbar-left">
-        <div class="filter-item">
+        <div v-if="viewMode === 'preview'" class="group-readonly">
+          <svg-icon iconClass="filter" className="filter-icon"/>
+          <span class="group-readonly-name">{{ currentGroupName }}</span>
+        </div>
+        <div v-else class="filter-item">
           <el-select
               v-model="groupValue"
               placeholder="类型"
@@ -12,7 +16,6 @@
               clearable
               class="group-select"
               popper-class="group-select-popper"
-              :disabled="viewMode === 'preview'"
               @change="changeGroup"
               @clear="handleClear"
           >
@@ -29,61 +32,73 @@
         </div>
       </div>
 
-      <!-- 右侧：模式切换 + 操作按钮 -->
+      <!-- 右侧：模式切换 + 操作按钮（只留图标，悬浮再给文字说明） -->
       <div class="toolbar-right">
         <!-- 模式切换 -->
         <div class="mode-switch">
-          <button
-              class="mode-switch-item"
-              :class="{ 'is-active': viewMode === 'edit' }"
-              @click="viewMode = 'edit'"
-          >
-            <el-icon>
-              <Edit/>
-            </el-icon>
-            <span>编辑</span>
-          </button>
-          <button
-              class="mode-switch-item"
-              :class="{ 'is-active': viewMode === 'preview' }"
-              @click="viewMode = 'preview'"
-          >
-            <el-icon>
-              <View/>
-            </el-icon>
-            <span>预览</span>
-          </button>
+          <el-tooltip content="编辑" placement="bottom" :show-after="300">
+            <button
+                class="mode-switch-item"
+                :class="{ 'is-active': viewMode === 'edit' }"
+                aria-label="编辑"
+                @click="viewMode = 'edit'"
+            >
+              <el-icon>
+                <Edit/>
+              </el-icon>
+            </button>
+          </el-tooltip>
+          <el-tooltip content="预览" placement="bottom" :show-after="300">
+            <button
+                class="mode-switch-item"
+                :class="{ 'is-active': viewMode === 'preview' }"
+                aria-label="预览"
+                @click="viewMode = 'preview'"
+            >
+              <el-icon>
+                <View/>
+              </el-icon>
+            </button>
+          </el-tooltip>
         </div>
 
         <!-- 分隔线 -->
         <div class="toolbar-divider"></div>
 
-        <!-- 保存状态：自动保存后静默更新 -->
-        <span class="save-status" :class="`is-${saveState}`">{{ saveStatusText }}</span>
+        <!-- 保存状态：自动保存后静默更新；预览态只在保存中/失败时出现，不常驻"已保存" -->
+        <span
+            v-show="viewMode === 'edit' || saveState !== 'saved'"
+            class="save-status"
+            :class="`is-${saveState}`"
+        >{{ saveStatusText }}</span>
 
-        <!-- 保存按钮：保存中与预览态（内容不可改）都不可点击 -->
-        <button
-            @click="saveNote()"
-            class="toolbar-btn toolbar-btn-save"
-            :disabled="saving || viewMode === 'preview'"
-        >
-          <el-icon>
-            <DocumentChecked/>
-          </el-icon>
-          <span class="btn-text">保存</span>
-        </button>
+        <!-- 保存按钮：仅编辑态存在；预览态内容不可改，留个禁用按钮只会误导 -->
+        <el-tooltip v-if="viewMode === 'edit'" content="保存" placement="bottom" :show-after="300">
+          <button
+              @click="saveNote()"
+              class="toolbar-btn toolbar-btn-save"
+              aria-label="保存"
+              :disabled="saving"
+          >
+            <el-icon>
+              <DocumentChecked/>
+            </el-icon>
+          </button>
+        </el-tooltip>
 
         <!-- 删除按钮：新笔记尚未落库，不可删除 -->
-        <button
-            class="toolbar-btn toolbar-btn-delete"
-            :disabled="noteData.noteId === -1"
-            @click="deleteDialogVisible = true"
-        >
-          <el-icon>
-            <Delete/>
-          </el-icon>
-          <span class="btn-text">删除</span>
-        </button>
+        <el-tooltip content="删除" placement="bottom" :show-after="300">
+          <button
+              class="toolbar-btn toolbar-btn-delete"
+              aria-label="删除"
+              :disabled="noteData.noteId === -1"
+              @click="deleteDialogVisible = true"
+          >
+            <el-icon>
+              <Delete/>
+            </el-icon>
+          </button>
+        </el-tooltip>
       </div>
     </div>
 
@@ -252,14 +267,30 @@ const saveError = ref(false);
 const AUTO_SAVE_DELAY = 3000;
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
 
+// 预览态只读展示用的分组名；未选分组时给出兜底文案
+const currentGroupName = computed(() => {
+  if (groupValue.value === null) return '未分组';
+  const hit = groups.value.find((item) => Number(item.id) === groupValue.value);
+  return hit?.groupName || '未分组';
+});
+
+// 分组同属笔记内容，改动后要置脏才能触发自动保存；
+// 新建笔记（id = -1）此时只记住分组，避免仅选了个分组就被自动保存成一条空笔记
+const markGroupChanged = () => {
+  if (noteData.value.noteId === -1) return;
+  markDirty();
+};
+
 const changeGroup = (newValue: number | string | null) => {
   // 清空时 el-select 可能给到 '' / undefined，统一转成 null 提交
   noteData.value.groupId = newValue ? Number(newValue) : null;
+  markGroupChanged();
 };
 
 const handleClear = () => {
   groupValue.value = null;
   noteData.value.groupId = null;
+  markGroupChanged();
 };
 
 
@@ -565,7 +596,10 @@ function handleEvent(event: KeyboardEvent) {
 
   // 保留 Ctrl/Cmd + Shift + S 给浏览器自身的"另存为"
   if (isModifierKey(event) && key === 's' && !event.shiftKey) {
+    // 预览态阻止浏览器另存为，同时与（已隐藏的）保存按钮保持一致：不触发保存
     event.preventDefault();
+    if (viewMode.value === 'preview') return;
+
     // 多次触发 给出提示
     if (ctrlSTimer) {
       ElMessage({
@@ -624,6 +658,27 @@ function handleEvent(event: KeyboardEvent) {
   flex-shrink: 0;
 }
 
+/* 预览态分组只读展示：高度与字号对齐下拉框，切换模式时工具栏不跳动 */
+.group-readonly {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  max-width: 148px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: #5f6368;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.group-readonly-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .filter-item {
   transition: all 0.3s ease;
   width: 148px;
@@ -664,8 +719,8 @@ function handleEvent(event: KeyboardEvent) {
 
 .mode-switch-item {
   height: 30px;
-  padding: 0 14px;
-  font-size: 13px;
+  /* 只留图标：内边距收窄成方形按钮，文字说明交给 tooltip */
+  padding: 0 9px;
   font-weight: 500;
   border-radius: 4px;
   border: none;
@@ -675,7 +730,7 @@ function handleEvent(event: KeyboardEvent) {
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
   white-space: nowrap;
   position: relative;
 }
@@ -970,10 +1025,11 @@ function handleEvent(event: KeyboardEvent) {
   color: #d93025;
 }
 
-/* 工具栏按钮 */
+/* 工具栏按钮：与模式切换一致，方形图标按钮，文案走 tooltip */
 .toolbar-btn {
   height: 32px;
-  padding: 0 14px;
+  width: 32px;
+  padding: 0;
   font-size: 13px;
   font-weight: 500;
   border-radius: 6px;
@@ -984,7 +1040,7 @@ function handleEvent(event: KeyboardEvent) {
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
   white-space: nowrap;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
@@ -1009,11 +1065,6 @@ function handleEvent(event: KeyboardEvent) {
 
 .toolbar-btn .el-icon {
   font-size: 15px;
-}
-
-.btn-text {
-  font-size: 13px;
-  font-weight: 500;
 }
 
 /* 保存按钮 */
@@ -1171,6 +1222,15 @@ function handleEvent(event: KeyboardEvent) {
     flex: 0 0 auto;
   }
 
+  /* 小屏跟随下拉框一起收缩，保持两态高度一致 */
+  .group-readonly {
+    height: 30px;
+    max-width: 120px;
+    padding: 0 8px;
+    font-size: 12px;
+    gap: 5px;
+  }
+
   .toolbar-right {
     flex: 1 1 auto;
     justify-content: flex-end;
@@ -1181,7 +1241,7 @@ function handleEvent(event: KeyboardEvent) {
     display: none;
   }
 
-  /* 小屏空间紧张，状态文字隐藏，保存结果仍可从按钮文案感知 */
+  /* 小屏空间紧张，保存状态文字隐藏，仅保留图标按钮 */
   .save-status {
     display: none;
   }
@@ -1215,8 +1275,8 @@ function handleEvent(event: KeyboardEvent) {
 
   .toolbar-btn {
     height: 30px;
-    padding: 0 10px;
-    font-size: 12px;
+    width: 30px;
+    padding: 0;
   }
 
   .toolbar-btn .el-icon {
@@ -1230,9 +1290,7 @@ function handleEvent(event: KeyboardEvent) {
 
   .mode-switch-item {
     height: 26px;
-    padding: 0 10px;
-    font-size: 12px;
-    gap: 4px;
+    padding: 0 7px;
   }
 
   .mode-switch-item .el-icon {
