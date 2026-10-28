@@ -58,16 +58,19 @@
         <!-- 分隔线 -->
         <div class="toolbar-divider"></div>
 
+        <!-- 保存状态：自动保存后静默更新 -->
+        <span class="save-status" :class="`is-${saveState}`">{{ saveStatusText }}</span>
+
         <!-- 保存按钮：保存中与预览态（内容不可改）都不可点击 -->
         <button
-            @click="saveNote"
+            @click="saveNote()"
             class="toolbar-btn toolbar-btn-save"
             :disabled="saving || viewMode === 'preview'"
         >
           <el-icon>
             <DocumentChecked/>
           </el-icon>
-          <span class="btn-text">{{ saving ? '保存中' : '保存' }}</span>
+          <span class="btn-text">保存</span>
         </button>
 
         <!-- 删除按钮：新笔记尚未落库，不可删除 -->
@@ -92,7 +95,7 @@
           :readonly="viewMode === 'preview'"
           maxlength="100"
           placeholder="无标题笔记"
-          @input="dirty = true"
+          @input="markDirty"
       />
     </div>
 
@@ -134,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import {nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
+import {computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
 import RichEditor from '@/components/RichEditor/index.vue';
 import {addNote, deleteNoteItem, editNote, getNote} from "@/network/note/note";
 import {onBeforeRouteLeave, useRouter} from 'vue-router';
@@ -166,6 +169,14 @@ const noteTitle = ref('');
 const dirty = ref(false);   // 是否有未保存修改
 const saving = ref(false);  // 保存请求进行中，避免并发提交
 const loading = ref(false); // 笔记内容加载中
+const lastSavedAt = ref<Date | null>(null);
+const saveError = ref(false);
+
+// 停止输入多久后自动保存
+const AUTO_SAVE_DELAY = 3000;
+let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+// 程序化回填正文期间的计数（允许多次加载重叠），大于 0 时不置脏、不自动保存
+let loadingContentCount = 0;
 
 const changeGroup = (newValue: number | string | null) => {
   // 清空时 el-select 可能给到 '' / undefined，统一转成 null 提交
@@ -184,6 +195,54 @@ const valueHtml = ref("");
 // 视图模式：edit（编辑）、preview（预览）
 const viewMode = ref<ViewMode>(props.initialViewMode);
 
+type SaveState = 'saved' | 'dirty' | 'saving' | 'error';
+
+// 状态栏展示优先级：保存中 > 失败 > 未保存 > 已保存
+const saveState = computed<SaveState>(() => {
+  if (saving.value) return 'saving';
+  if (saveError.value) return 'error';
+  return dirty.value ? 'dirty' : 'saved';
+});
+
+const formatSavedTime = (date: Date) => {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
+
+const saveStatusText = computed(() => {
+  switch (saveState.value) {
+    case 'saving':
+      return '保存中…';
+    case 'dirty':
+      return '未保存';
+    case 'error':
+      return '保存失败';
+    default:
+      return lastSavedAt.value ? `已保存 ${formatSavedTime(lastSavedAt.value)}` : '已保存';
+  }
+});
+
+const clearAutoSaveTimer = () => {
+  if (!autoSaveTimer) return;
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = null;
+};
+
+// 停止输入后自动保存，连续输入会不断重置计时
+const scheduleAutoSave = () => {
+  clearAutoSaveTimer();
+  autoSaveTimer = setTimeout(() => {
+    autoSaveTimer = null;
+    void saveNote({ silent: true });
+  }, AUTO_SAVE_DELAY);
+};
+
+// 统一的未保存入口：置脏、清失败态并安排自动保存
+const markDirty = () => {
+  dirty.value = true;
+  saveError.value = false;
+  scheduleAutoSave();
+};
+
 // 解密失败（历史明文或异常密文）时回退原文，避免内容被静默清空
 const safeDecrypt = (raw: string) => {
   if (!raw) return '';
@@ -200,6 +259,9 @@ const loadNote = async (id: number) => {
   const token = ++loadToken;
   noteData.value.noteId = id;
   loading.value = true;
+  clearAutoSaveTimer();
+  // 回填过程中不置脏、不触发自动保存
+  loadingContentCount++;
 
   try {
     if (id === -1) {
@@ -218,12 +280,16 @@ const loadNote = async (id: number) => {
       noteData.value.groupId = groupId === null ? null : Number(groupId);
     }
 
-    // 程序化回填同样会触发下方 watch，渲染刷新后复位脏标记
+    // 等 watch 回调执行完再放开标记，随后复位脏标记
     await nextTick();
-    if (token === loadToken) dirty.value = false;
+    if (token === loadToken) {
+      dirty.value = false;
+      saveError.value = false;
+    }
   } catch {
     ElMessage.error('笔记加载失败');
   } finally {
+    loadingContentCount--;
     // 多个加载请求并发时，只由最后一次负责收起加载态
     if (token === loadToken) loading.value = false;
   }
@@ -245,7 +311,13 @@ const confirmDiscard = async (message: string) => {
 
 // 正文变动即视为有未保存修改（标题通过输入事件标记，避免回填时误判）
 watch(valueHtml, () => {
-  dirty.value = true;
+  if (loadingContentCount > 0) return;
+  markDirty();
+});
+
+// 切到预览时把未保存的改动落库，让预览始终对应已保存的内容
+watch(viewMode, (mode) => {
+  if (mode === 'preview' && dirty.value) void saveNote({ silent: true });
 });
 
 // 同一路由复用组件时 onMounted 不会再次执行，必须监听参数变化重新加载
@@ -257,7 +329,10 @@ watch(() => router.currentRoute.value.params.id, async (val) => {
   if (dirty.value) {
     const previousId = noteData.value.noteId;
     if (!(await confirmDiscard('当前笔记有未保存的修改，切换后将丢失，确定继续吗？'))) {
-      await router.replace(`/noteDetail/${previousId}`);
+      await router.replace({
+        path: `/noteDetail/${previousId}`,
+        query: router.currentRoute.value.query,
+      });
       return;
     }
   }
@@ -303,6 +378,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleEvent);
   window.removeEventListener('beforeunload', handleBeforeUnload);
   if (ctrlSTimer) clearTimeout(ctrlSTimer);
+  clearAutoSaveTimer();
 });
 
 // 有未保存修改时，离开页面需二次确认
@@ -316,9 +392,12 @@ const buildNoteTitle = (text: string) => {
   return text.replace(/\s+/g, ' ').trim().substring(0, 100);
 };
 
-const saveNote = async () => {
+// silent 用于自动保存：状态只在工具栏展示，不弹全局提示
+const saveNote = async (options: { silent?: boolean } = {}) => {
+  const { silent = false } = options;
   const editor = editorRef.value;
   if (!editor || saving.value) return;
+  if (silent && !dirty.value) return;
 
   // 标题优先取输入框，留空时退回正文自动生成，并回填到输入框保持界面与实际一致
   const title = noteTitle.value.trim() || buildNoteTitle(editor.getText());
@@ -329,33 +408,49 @@ const saveNote = async () => {
   // 保存期间继续编辑的内容不算已保存，用快照比对决定是否清除脏标记
   const markSaved = () => {
     dirty.value = editor.getHTML() !== snapshot || noteTitle.value !== title;
+    saveError.value = false;
+    lastSavedAt.value = new Date();
   };
 
+  clearAutoSaveTimer();
   saving.value = true;
+  let saved = false;
+
   try {
     if (noteData.value.noteId === -1) {
       const res = await addNote(null, noteValue, title, noteData.value.groupId);
       if (res.code !== 200 || !res.data) {
-        ElMessage.error(res.msg || '保存失败');
+        saveError.value = true;
+        if (!silent) ElMessage.error(res.msg || '保存失败');
         return;
       }
       noteData.value.noteId = res.data;
       markSaved();
-      router.replace(`/noteDetail/${res.data}`);
-      ElMessage.success('保存成功！');
+      saved = true;
+      // 保留 query（viewMode），否则首次保存后会被 query watch 打回预览模式
+      void router.replace({
+        path: `/noteDetail/${res.data}`,
+        query: router.currentRoute.value.query,
+      });
+      if (!silent) ElMessage.success('保存成功！');
     } else {
       const res = await editNote(noteData.value.noteId, noteValue, title, noteData.value.groupId);
       if (res.code !== 200) {
-        ElMessage.error(res.msg || '保存失败');
+        saveError.value = true;
+        if (!silent) ElMessage.error(res.msg || '保存失败');
         return;
       }
       markSaved();
-      ElMessage.success('保存成功！');
+      saved = true;
+      if (!silent) ElMessage.success('保存成功！');
     }
   } catch {
-    ElMessage.error('保存失败，请稍后重试');
+    saveError.value = true;
+    if (!silent) ElMessage.error('保存失败，请稍后重试');
   } finally {
     saving.value = false;
+    // 保存期间又有新改动时，等这一轮结束后再安排下一次
+    if (saved && dirty.value) scheduleAutoSave();
   }
 };
 
@@ -365,8 +460,10 @@ const delNote = () => {
     return;
   }
   deleteNoteItem(noteData.value.noteId).then(() => {
-    // 删除成功后不再拦截离开
+    // 删除成功后不再拦截离开，并取消可能待触发的自动保存
+    clearAutoSaveTimer();
     dirty.value = false;
+    saveError.value = false;
     ElMessage.success('删除成功！');
     router.push(`/note`);
   });
@@ -726,6 +823,34 @@ function handleEvent(event: KeyboardEvent) {
   font-weight: 600;
 }
 
+/* 保存状态文字：颜色区分已保存 / 未保存 / 保存中 / 失败；固定宽度避免按钮位移 */
+.save-status {
+  flex-shrink: 0;
+  min-width: 84px;
+  color: #80868b;
+  font-size: 12px;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.save-status.is-saved {
+  color: #188038;
+}
+
+.save-status.is-dirty {
+  color: #b06000;
+}
+
+.save-status.is-saving {
+  color: #5f6368;
+}
+
+.save-status.is-error {
+  color: #d93025;
+}
+
 /* 工具栏按钮 */
 .toolbar-btn {
   height: 32px;
@@ -934,6 +1059,11 @@ function handleEvent(event: KeyboardEvent) {
   }
 
   .toolbar-divider {
+    display: none;
+  }
+
+  /* 小屏空间紧张，状态文字隐藏，保存结果仍可从按钮文案感知 */
+  .save-status {
     display: none;
   }
 
