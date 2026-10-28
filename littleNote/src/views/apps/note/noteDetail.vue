@@ -65,7 +65,7 @@
         <!-- 分隔线 -->
         <div class="toolbar-divider"></div>
 
-        <!-- 保存状态：自动保存后静默更新；预览态只在保存中/失败时出现，不常驻"已保存" -->
+        <!-- 保存状态：贴着保存按钮，反馈就近可见；预览态只在保存中/失败时出现 -->
         <span
             v-show="viewMode === 'edit' || saveState !== 'saved'"
             class="save-status"
@@ -123,10 +123,14 @@
             >
               {{ noteTitle || '无标题' }}
             </button>
-            <span class="note-char-count">{{ charCount }} 字</span>
           </div>
         </template>
       </RichEditor>
+    </div>
+
+    <!-- 底部状态栏：只放内容属性（字数），独占右下角不与操作反馈抢位置 -->
+    <div class="note-statusbar">
+      <span class="note-char-count">{{ charCount }} 字</span>
     </div>
 
     <!-- 标题编辑弹窗：只在这里编辑标题，确定后才写回并标记未保存 -->
@@ -759,12 +763,26 @@ function handleEvent(event: KeyboardEvent) {
   flex-shrink: 0;
 }
 
+/* 底部状态栏：只承载字数这类内容属性，独占右下角；
+   分隔靠编辑器容器自身的下边框，不再重复画线 */
+.note-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 16px;
+  color: #9aa0a6;
+  font-size: 12px;
+  line-height: 1;
+}
+
 /* 标题栏：位于编辑器容器内、正文之上，左右内边距与正文对齐，预览态只读；
    用一条极浅的分隔线与正文分层，比换底色更克制，不会和正文抢注意力 */
 .note-title-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
   flex-shrink: 0;
   padding: 14px 24px 12px;
   background-color: #fff;
@@ -816,11 +834,9 @@ function handleEvent(event: KeyboardEvent) {
   cursor: default;
 }
 
-/* 正文字数：常驻标题行右侧，不占用工具栏空间 */
+/* 正文字数：底部状态栏左侧，颜色字号跟随状态栏 */
 .note-char-count {
   flex-shrink: 0;
-  color: #9aa0a6;
-  font-size: 12px;
   white-space: nowrap;
 }
 
@@ -997,7 +1013,7 @@ function handleEvent(event: KeyboardEvent) {
   font-weight: 600;
 }
 
-/* 保存状态文字：颜色区分已保存 / 未保存 / 保存中 / 失败；固定宽度避免按钮位移 */
+/* 保存状态文字：紧邻保存按钮，颜色区分已保存 / 未保存 / 保存中 / 失败；固定宽度避免按钮位移 */
 .save-status {
   flex-shrink: 0;
   min-width: 84px;
@@ -1241,9 +1257,16 @@ function handleEvent(event: KeyboardEvent) {
     display: none;
   }
 
-  /* 小屏空间紧张，保存状态文字隐藏，仅保留图标按钮 */
+  /* 小屏工具栏空间紧张，保存状态隐藏，保存结果仍可从按钮与自动保存行为感知 */
   .save-status {
     display: none;
+  }
+
+  /* 底部状态栏小屏只收窄内边距 */
+  .note-statusbar {
+    height: 24px;
+    padding: 0 10px;
+    gap: 8px;
   }
 
   .group-select {
