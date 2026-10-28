@@ -37,6 +37,20 @@
                 @click="run(c => c.toggleStrike())" title="删除线">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M10 19h4v-3h-4v3zM5 4v3h5v3h4V7h5V4H5zM3 14h18v-2H3v2z"/></svg>
         </button>
+        <button class="re-btn" :class="{ active: editor.isActive('code') }"
+                @click="run(c => c.toggleCode())" title="行内代码">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round"><path d="m9 18-6-6 6-6M15 6l6 6-6 6"/></svg>
+        </button>
+        <button class="re-btn" :class="{ active: editor.isActive('link') }"
+                @click="openLinkDialog" title="链接">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round"><path d="M10.6 13.4a4 4 0 0 0 5.66 0l2.12-2.12a4 4 0 0 0-5.66-5.66l-1.06 1.06"/><path d="M13.4 10.6a4 4 0 0 0-5.66 0l-2.12 2.12a4 4 0 0 0 5.66 5.66l1.06-1.06"/></svg>
+        </button>
+        <button class="re-btn" @click="clearFormat" title="清除格式">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="m14 4 6 6-8 8H6l-2-2z"/><path d="m12 6 6 6"/></svg>
+        </button>
 
         <span class="re-sep"></span>
 
@@ -146,6 +160,11 @@
         <button class="re-btn" :class="{ active: editor.isActive('orderedList') }"
                 @click="toggleListKeepingBlockStyle('orderedList')" title="有序列表">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
+        </button>
+        <button class="re-btn" :class="{ active: editor.isActive('blockquote') }"
+                @click="run(c => c.toggleBlockquote())" title="引用">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round"><path d="M4 5v14"/><path d="M9 8h11M9 12h11M9 16h7"/></svg>
         </button>
 
         <span class="re-sep"></span>
@@ -337,8 +356,9 @@ import TableHeader from '@tiptap/extension-table-header';
 import TableCell from '@tiptap/extension-table-cell';
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model';
 import { Selection, TextSelection } from '@tiptap/pm/state';
+import Link from '@tiptap/extension-link';
 import { common, createLowlight } from 'lowlight';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { uploadFile } from '@/network/file';
 import {
   blockTypes,
@@ -368,7 +388,11 @@ const props = withDefaults(defineProps<{ modelValue: string; editable?: boolean 
   modelValue: '',
   editable: true,
 });
-const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>();
+const emit = defineEmits<{
+  (e: 'update:modelValue', value: string): void;
+  // 用 kebab 事件名，模板监听 @update:char-count 才能稳定匹配
+  (e: 'update:char-count', value: number): void;
+}>();
 
 const lowlight = createLowlight(common);
 
@@ -436,6 +460,12 @@ const syncToolbarState = (targetEditor?: any) => {
 
   // 选区或内容变化后自增，触发模板重算 isActive / can().undo() 等非响应式状态
   toolbarTick.value++;
+};
+
+// 正文字数：只统计可见文本，不含格式与标记
+const syncCharCount = (targetEditor?: any) => {
+  if (!targetEditor) return;
+  emit('update:char-count', targetEditor.state.doc.textContent.length);
 };
 
 const hideTableToolbar = () => {
@@ -550,6 +580,13 @@ const editor = useEditor({
     Underline,
     Strike,
     Italic,
+    // openOnClick 关闭，避免编辑时误点链接跳出并丢失未保存内容
+    Link.configure({
+      openOnClick: false,
+      autolink: true,
+      linkOnPaste: true,
+      HTMLAttributes: { target: '_blank', rel: 'noopener noreferrer nofollow' },
+    }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ImageWithSize.configure({ inline: true }),
     TableWithResizableColumns.configure({
@@ -565,11 +602,13 @@ const editor = useEditor({
   ],
   onCreate: ({ editor }) => {
     syncToolbarState(editor);
+    syncCharCount(editor);
     updateTableToolbarPosition();
   },
   onUpdate: ({ editor }) => {
     emit('update:modelValue', editor.getHTML());
     syncToolbarState(editor);
+    syncCharCount(editor);
     updateTableToolbarPosition();
   },
   onSelectionUpdate: ({ editor }) => {
@@ -591,6 +630,22 @@ const editor = useEditor({
       void insertUploadedImage(imageFile, view.state.selection.from);
       return true;
     },
+    // 拖拽文件到编辑区时走上传，落点即插入位置
+    handleDrop: (view, event, _slice, moved) => {
+      // 只读态与文档内部拖动都交给 ProseMirror / 浏览器处理
+      if (!props.editable || moved) return false;
+
+      const files = Array.from(event.dataTransfer?.files || []);
+      const mediaFile = files.find(
+        (file) => file.type.startsWith('image/') || file.type.startsWith('video/')
+      );
+      if (!mediaFile) return false;
+
+      event.preventDefault();
+      const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
+      void insertUploadedMedia(mediaFile, coords?.pos);
+      return true;
+    },
   },
 });
 
@@ -600,6 +655,8 @@ watch(
     if (editor.value && val !== editor.value.getHTML()) {
       editor.value.commands.setContent(val || '', false);
       syncToolbarState(editor.value);
+      // 程序化回填不会触发 onUpdate，这里补一次字数同步
+      syncCharCount(editor.value);
     }
   }
 );
@@ -793,6 +850,59 @@ const onFontChange = (e: Event) => {
   else run((c) => c.unsetFontFamily());
 };
 
+// 省略协议时补 https://，兼容 http、mailto、tel 与站内相对路径
+const normalizeUrl = (input: string) => {
+  if (/^(https?:\/\/|mailto:|tel:|\/)/i.test(input)) return input;
+  return `https://${input}`;
+};
+
+// 链接弹窗：留空表示移除当前链接
+const openLinkDialog = async () => {
+  const instance = editor.value;
+  if (!instance) return;
+
+  const currentHref = (instance.getAttributes('link').href as string) || '';
+  let input: string;
+
+  try {
+    const { value } = await ElMessageBox.prompt(
+      '请输入链接地址，留空则移除链接',
+      currentHref ? '编辑链接' : '插入链接',
+      {
+        inputValue: currentHref,
+        inputPlaceholder: 'https://example.com',
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+      }
+    );
+    input = (value || '').trim();
+  } catch {
+    return; // 用户取消
+  }
+
+  const chain = instance.chain().focus();
+
+  if (!input) {
+    chain.extendMarkRange('link').unsetLink().run();
+    return;
+  }
+
+  const href = normalizeUrl(input);
+
+  // 没有选中文字且光标不在链接上时，直接把地址插入为链接文本
+  if (instance.state.selection.empty && !currentHref) {
+    chain
+      .insertContent({ type: 'text', text: href, marks: [{ type: 'link', attrs: { href } }] })
+      .run();
+    return;
+  }
+
+  chain.extendMarkRange('link').setLink({ href }).run();
+};
+
+// 一次性去掉行内样式与块级格式，常用于粘贴外部内容后的清理
+const clearFormat = () => run((c) => c.unsetAllMarks().clearNodes());
+
 const toggleColorPalette = (type: 'text' | 'background') => {
   showColorPalette.value = showColorPalette.value === type ? null : type;
   closeTablePicker();
@@ -967,29 +1077,64 @@ const checkUploadFile = (file: File, kind: 'image' | 'video') => {
   return true;
 };
 
+// 上传期间文档可能已被修改，原坐标越界时退回当前选区，避免插入抛错
+const insertContentAtSafe = (content: any, position?: number) => {
+  const instance = editor.value;
+  if (!instance) return;
+
+  const docSize = instance.state.doc.content.size;
+  const hasValidPosition =
+    typeof position === 'number' && position >= 0 && position <= docSize;
+  const targetPos = hasValidPosition ? position : instance.state.selection.from;
+
+  instance.chain().focus().insertContentAt(targetPos, content).run();
+};
+
 const insertUploadedImage = async (file: File, position?: number) => {
   if (!checkUploadFile(file, 'image')) return;
 
   try {
     const url = await doUpload(file);
-    const instance = editor.value;
-    if (!instance) return;
-
-    const imageContent = [
-      { type: 'image', attrs: { src: url, scale: DEFAULT_IMAGE_SCALE } },
-      { type: 'text', text: ' ' },
-    ];
-
-    // 上传期间文档可能已被修改，原坐标越界时退回当前选区，避免插入抛错
-    const docSize = instance.state.doc.content.size;
-    const hasValidPosition =
-      typeof position === 'number' && position >= 0 && position <= docSize;
-    const targetPos = hasValidPosition ? position : instance.state.selection.from;
-
-    instance.chain().focus().insertContentAt(targetPos, imageContent).run();
+    insertContentAtSafe(
+      [
+        { type: 'image', attrs: { src: url, scale: DEFAULT_IMAGE_SCALE } },
+        { type: 'text', text: ' ' },
+      ],
+      position
+    );
   } catch (err) {
     console.error('图片上传失败:', err);
     ElMessage.error('图片上传失败');
+  }
+};
+
+// 块级节点（视频）不能落在段落内部，落点在文本块时对齐到该块末尾
+const toBlockPosition = (position?: number) => {
+  const instance = editor.value;
+  if (!instance || typeof position !== 'number') return position;
+
+  const docSize = instance.state.doc.content.size;
+  if (position < 0 || position > docSize) return position;
+
+  const $pos = instance.state.doc.resolve(position);
+  return $pos.parent.isTextblock ? $pos.after($pos.depth) : position;
+};
+
+// 拖拽上传入口：按文件类型分发到图片 / 视频
+const insertUploadedMedia = async (file: File, position?: number) => {
+  if (!file.type.startsWith('video/')) {
+    await insertUploadedImage(file, position);
+    return;
+  }
+
+  if (!checkUploadFile(file, 'video')) return;
+
+  try {
+    const url = await doUpload(file);
+    insertContentAtSafe({ type: 'video', attrs: { src: url } }, toBlockPosition(position));
+  } catch (err) {
+    console.error('视频上传失败:', err);
+    ElMessage.error('视频上传失败');
   }
 };
 

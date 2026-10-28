@@ -97,10 +97,16 @@
           placeholder="无标题笔记"
           @input="markDirty"
       />
+      <span class="note-char-count">{{ charCount }} 字</span>
     </div>
 
     <div class="note-editor-wrap" v-loading="loading">
-      <RichEditor ref="editorRef" v-model="valueHtml" :editable="viewMode === 'edit'"/>
+      <RichEditor
+          ref="editorRef"
+          v-model="valueHtml"
+          :editable="viewMode === 'edit'"
+          @update:char-count="charCount = $event"
+      />
     </div>
 
     <el-dialog
@@ -166,6 +172,7 @@ const groupValue = ref<number | null>(null);
 const groups = ref<any[]>([]);
 const deleteDialogVisible = ref(false);
 const noteTitle = ref('');
+const charCount = ref(0);   // 正文字数，由编辑器同步
 const dirty = ref(false);   // 是否有未保存修改
 const saving = ref(false);  // 保存请求进行中，避免并发提交
 const loading = ref(false); // 笔记内容加载中
@@ -642,13 +649,16 @@ function handleEvent(event: KeyboardEvent) {
 /* 标题栏：左内边距与正文对齐，预览态只读 */
 .note-title-bar {
   display: flex;
+  align-items: center;
+  gap: 12px;
   flex-shrink: 0;
   padding: 6px 25px 0;
   background-color: #fff;
 }
 
 .note-title-input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 6px 0;
   border: none;
   outline: none;
@@ -657,6 +667,14 @@ function handleEvent(event: KeyboardEvent) {
   font-size: 24px;
   font-weight: 600;
   line-height: 1.4;
+}
+
+/* 正文字数：常驻标题行右侧，不占用工具栏空间 */
+.note-char-count {
+  flex-shrink: 0;
+  color: #9aa0a6;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .note-title-input::placeholder {
