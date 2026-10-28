@@ -1,5 +1,5 @@
 <template>
-  <div class="re-toolbar">
+  <div ref="toolbarRef" class="re-toolbar">
     <div class="re-toolbar-row">
       <!-- 正文 / 标题 -->
       <select class="re-select re-block-select" :value="blockType" @change="onBlockChange">
@@ -297,7 +297,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
   blockTypes,
   commonColors,
@@ -352,9 +352,13 @@ const emit = defineEmits<{
   (e: 'update:networkImageName', value: string): void;
 }>();
 
+const toolbarRef = ref<HTMLElement>();
 const imageInput = ref<HTMLInputElement>();
 const videoInput = ref<HTMLInputElement>();
 const imageUrlInput = ref<HTMLInputElement>();
+
+// 浮层与编辑器右边界之间保留的最小间距
+const POPUP_GAP = 8;
 
 // 表格选择器的尺寸预览属于纯交互状态，留在组件内部
 const tablePickerRows = ref(TABLE_PICKER_DEFAULT_ROWS);
@@ -426,11 +430,36 @@ const onVideoChange = (e: Event) => {
   if (file) emit('select-file', { kind: 'video', file });
 };
 
-// 打开网络图片面板后聚焦地址输入框
+// 浮层贴着触发按钮展开，右侧空间不足时整体左移，避免被编辑器边界裁掉
+const repositionVisiblePopups = () => {
+  const container = toolbarRef.value?.closest('.rich-editor') as HTMLElement | null;
+  if (!container) return;
+
+  const containerRect = container.getBoundingClientRect();
+  const panels = toolbarRef.value!.querySelectorAll<HTMLElement>(
+    '.re-color-palette, .re-table-picker, .re-image-panel'
+  );
+
+  panels.forEach((panel) => {
+    const wrapper = panel.parentElement;
+    if (!wrapper) return;
+
+    panel.style.left = '0';
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const overflow = wrapperRect.left + panel.offsetWidth - (containerRect.right - POPUP_GAP);
+    // overflow > 0 说明右侧放不下，左移量最多顶到容器左边界
+    const minShift = containerRect.left + POPUP_GAP - wrapperRect.left;
+    panel.style.left = overflow > 0 ? `${Math.max(-overflow, minShift)}px` : '0';
+  });
+};
+
+// 浮层打开后定位；窗口尺寸变化时同步修正
 watch(
-  () => props.imagePanelVisible,
-  (visible) => {
-    if (visible) nextTick(() => imageUrlInput.value?.focus());
+  () => [props.colorPalette, props.tablePickerVisible, props.imagePanelVisible],
+  async () => {
+    await nextTick();
+    repositionVisiblePopups();
+    if (props.imagePanelVisible) imageUrlInput.value?.focus();
   }
 );
 
@@ -441,6 +470,9 @@ watch(
     if (!visible) resetTablePickerPreview();
   }
 );
+
+onMounted(() => window.addEventListener('resize', repositionVisiblePopups));
+onBeforeUnmount(() => window.removeEventListener('resize', repositionVisiblePopups));
 </script>
 
 <style scoped src="./toolbar.css"></style>
