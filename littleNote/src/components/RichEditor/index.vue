@@ -1,5 +1,5 @@
 <template>
-  <div ref="rootRef" class="rich-editor">
+  <div ref="rootRef" class="rich-editor" :class="{ 'is-preview': !editable }">
     <!-- data-tick 用于在选区变化时强制重算工具栏的 isActive 状态，tiptap 的 isActive 本身不是响应式来源 -->
     <div v-if="editable && editor" class="re-toolbar" :data-tick="toolbarTick">
       <div class="re-toolbar-row">
@@ -390,9 +390,17 @@ const props = withDefaults(defineProps<{ modelValue: string; editable?: boolean 
 });
 const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void;
+  // 内容一变动就立即通知（不带内容），供调用方做未保存标记
+  (e: 'change'): void;
   // 用 kebab 事件名，模板监听 @update:char-count 才能稳定匹配
   (e: 'update:char-count', value: number): void;
 }>();
+
+// 对外 emit 的防抖间隔：避免每个字符都序列化整篇文档
+const EMIT_DELAY = 200;
+let emitTimer: ReturnType<typeof setTimeout> | null = null;
+// 待消费的"自身发出内容"，仅用于识别紧随其后的 v-model 回流；消费后置空
+let emittedHtml: string | null = null;
 
 const lowlight = createLowlight(common);
 
@@ -488,35 +496,44 @@ const getSelectedTableElement = () => {
     || null;
 };
 
+let positionFrame = 0;
+
 const updateTableToolbarPosition = () => {
-  if (!props.editable || !editor.value) {
+  // 光标不在表格里时直接收起，省掉后面的 DOM 查询与布局读取
+  if (!props.editable || !editor.value || !editor.value.isActive('table')) {
     hideTableToolbar();
     return;
   }
 
-  nextTick(() => {
-    const shell = rootRef.value?.querySelector<HTMLElement>('.re-editor-shell');
-    const tableElement = getSelectedTableElement();
+  // 打字时 selectionUpdate 很频繁，合并到下一帧再测量
+  if (positionFrame) return;
+  positionFrame = requestAnimationFrame(() => {
+    positionFrame = 0;
 
-    if (!shell || !tableElement) {
-      hideTableToolbar();
-      return;
-    }
+    nextTick(() => {
+      const shell = rootRef.value?.querySelector<HTMLElement>('.re-editor-shell');
+      const tableElement = getSelectedTableElement();
 
-    const shellRect = shell.getBoundingClientRect();
-    const tableRect = tableElement.getBoundingClientRect();
-    const measuredToolbarWidth = tableToolbarRef.value?.offsetWidth;
-    const toolbarWidth = measuredToolbarWidth || TABLE_TOOLBAR_FALLBACK_WIDTH;
-    const toolbarLeft =
-      tableRect.right - shellRect.left + shell.scrollLeft - toolbarWidth;
+      if (!shell || !tableElement) {
+        hideTableToolbar();
+        return;
+      }
 
-    tableToolbar.left = Math.max(8, toolbarLeft);
-    tableToolbar.top = Math.max(
-      8,
-      tableRect.top - shellRect.top + shell.scrollTop - 44 - TABLE_TOOLBAR_OFFSET
-    );
-    tableToolbar.visible = true;
-    if (!measuredToolbarWidth) nextTick(updateTableToolbarPosition);
+      const shellRect = shell.getBoundingClientRect();
+      const tableRect = tableElement.getBoundingClientRect();
+      const measuredToolbarWidth = tableToolbarRef.value?.offsetWidth;
+      const toolbarWidth = measuredToolbarWidth || TABLE_TOOLBAR_FALLBACK_WIDTH;
+      const toolbarLeft =
+        tableRect.right - shellRect.left + shell.scrollLeft - toolbarWidth;
+
+      tableToolbar.left = Math.max(8, toolbarLeft);
+      tableToolbar.top = Math.max(
+        8,
+        tableRect.top - shellRect.top + shell.scrollTop - 44 - TABLE_TOOLBAR_OFFSET
+      );
+      tableToolbar.visible = true;
+      if (!measuredToolbarWidth) nextTick(updateTableToolbarPosition);
+    });
   });
 };
 
@@ -606,10 +623,19 @@ const editor = useEditor({
     updateTableToolbarPosition();
   },
   onUpdate: ({ editor }) => {
-    emit('update:modelValue', editor.getHTML());
+    // 立即通知调用方"内容已变"，避免脏标记被序列化防抖拖慢
+    emit('change');
     syncToolbarState(editor);
-    syncCharCount(editor);
     updateTableToolbarPosition();
+
+    // 连续输入时不逐字序列化整篇文档，等停手后再同步给父级
+    if (emitTimer) clearTimeout(emitTimer);
+    emitTimer = setTimeout(() => {
+      emitTimer = null;
+      emittedHtml = editor.getHTML();
+      emit('update:modelValue', emittedHtml);
+      syncCharCount(editor);
+    }, EMIT_DELAY);
   },
   onSelectionUpdate: ({ editor }) => {
     syncToolbarState(editor);
@@ -652,11 +678,26 @@ const editor = useEditor({
 watch(
   () => props.modelValue,
   (val) => {
-    if (editor.value && val !== editor.value.getHTML()) {
-      editor.value.commands.setContent(val || '', false);
-      syncToolbarState(editor.value);
+    const instance = editor.value;
+    if (!instance) return;
+
+    // 编辑器自己发出的更新回流：消费掉标记即可，不必再比较与重设内容
+    if (val === emittedHtml) {
+      emittedHtml = null;
+      return;
+    }
+
+    // 外部替换内容前取消待发出的防抖任务，避免旧内容覆盖新内容
+    if (emitTimer) {
+      clearTimeout(emitTimer);
+      emitTimer = null;
+    }
+
+    if (val !== instance.getHTML()) {
+      instance.commands.setContent(val || '', false);
+      syncToolbarState(instance);
       // 程序化回填不会触发 onUpdate，这里补一次字数同步
-      syncCharCount(editor.value);
+      syncCharCount(instance);
     }
   }
 );
@@ -676,6 +717,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', onDocumentMouseDown);
   document.removeEventListener('keydown', onDocumentKeyDown);
+  if (emitTimer) clearTimeout(emitTimer);
+  if (positionFrame) cancelAnimationFrame(positionFrame);
   editor.value?.destroy();
 });
 

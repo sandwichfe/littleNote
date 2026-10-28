@@ -105,6 +105,7 @@
           ref="editorRef"
           v-model="valueHtml"
           :editable="viewMode === 'edit'"
+          @change="markDirty"
           @update:char-count="charCount = $event"
       />
     </div>
@@ -143,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
+import {computed, onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
 import RichEditor from '@/components/RichEditor/index.vue';
 import {addNote, deleteNoteItem, editNote, getNote} from "@/network/note/note";
 import {onBeforeRouteLeave, useRouter} from 'vue-router';
@@ -182,8 +183,6 @@ const saveError = ref(false);
 // 停止输入多久后自动保存
 const AUTO_SAVE_DELAY = 3000;
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
-// 程序化回填正文期间的计数（允许多次加载重叠），大于 0 时不置脏、不自动保存
-let loadingContentCount = 0;
 
 const changeGroup = (newValue: number | string | null) => {
   // 清空时 el-select 可能给到 '' / undefined，统一转成 null 提交
@@ -267,8 +266,6 @@ const loadNote = async (id: number) => {
   noteData.value.noteId = id;
   loading.value = true;
   clearAutoSaveTimer();
-  // 回填过程中不置脏、不触发自动保存
-  loadingContentCount++;
 
   try {
     if (id === -1) {
@@ -287,8 +284,6 @@ const loadNote = async (id: number) => {
       noteData.value.groupId = groupId === null ? null : Number(groupId);
     }
 
-    // 等 watch 回调执行完再放开标记，随后复位脏标记
-    await nextTick();
     if (token === loadToken) {
       dirty.value = false;
       saveError.value = false;
@@ -296,7 +291,6 @@ const loadNote = async (id: number) => {
   } catch {
     ElMessage.error('笔记加载失败');
   } finally {
-    loadingContentCount--;
     // 多个加载请求并发时，只由最后一次负责收起加载态
     if (token === loadToken) loading.value = false;
   }
@@ -316,11 +310,7 @@ const confirmDiscard = async (message: string) => {
   }
 };
 
-// 正文变动即视为有未保存修改（标题通过输入事件标记，避免回填时误判）
-watch(valueHtml, () => {
-  if (loadingContentCount > 0) return;
-  markDirty();
-});
+// 正文变动由编辑器 @change 立即通知（标题走输入事件），这里无需再监听 v-model
 
 // 切到预览时把未保存的改动落库，让预览始终对应已保存的内容
 watch(viewMode, (mode) => {
@@ -355,8 +345,8 @@ watch(() => router.currentRoute.value.query.viewMode, (val) => {
 // 刷新/关闭标签页无法自定义文案，只触发浏览器原生确认
 const handleBeforeUnload = (event: BeforeUnloadEvent) => {
   if (!dirty.value) return;
+  // 现代浏览器统一由 preventDefault 触发原生确认（returnValue 已废弃）
   event.preventDefault();
-  event.returnValue = '';
 };
 
 onMounted(async () => {
