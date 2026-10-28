@@ -98,10 +98,12 @@
         <!-- 标题：放在编辑器容器内、正文之上；列表页展示的就是这个标题，正文自动生成的标题可在此改写 -->
         <template #header>
           <div class="note-title-bar" :class="{ 'is-preview': viewMode === 'preview' }">
+            <!-- 单行展示，超出部分省略；悬浮用 title 显示完整标题 -->
             <input
                 v-model="noteTitle"
                 class="note-title-input"
                 :readonly="viewMode === 'preview'"
+                :title="noteTitle"
                 maxlength="100"
                 placeholder="无标题"
                 @input="markDirty"
@@ -670,6 +672,8 @@ function handleEvent(event: KeyboardEvent) {
   font-size: 20px;
   font-weight: 500;
   line-height: 1.4;
+  /* 单行展示，溢出省略；无焦点时显示省略号，悬浮由 title 给出全文 */
+  text-overflow: ellipsis;
 }
 
 /* 正文字数：常驻标题行右侧，不占用工具栏空间 */
