@@ -118,9 +118,10 @@
   line-height: 1.6;
   color: #262626;
 }
-/* 预览态：正文限宽居中，避免大屏整行文字影响阅读 */
+/* 预览态：正文限宽居中，避免大屏整行文字影响阅读；
+   900px 去掉左右 24px 内边距后约 852px 行宽，中文约 55 字一行，兼顾大屏观感与阅读节奏 */
 .rich-editor.is-preview .re-content :deep(.ProseMirror) {
-  max-width: 780px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 28px 24px 72px;
 }

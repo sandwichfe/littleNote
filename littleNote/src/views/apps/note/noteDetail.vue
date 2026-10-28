@@ -789,10 +789,10 @@ function handleEvent(event: KeyboardEvent) {
   border-bottom: 1px solid #eff1f3;
 }
 
-/* 预览态正文限宽居中，标题跟随同样的宽度与边距，保证左边缘对齐 */
+/* 预览态正文限宽居中，标题跟随同样的宽度与边距，保证左边缘对齐（须与 RichEditor/styles.css 的 900px 保持一致） */
 .note-title-bar.is-preview {
   width: 100%;
-  max-width: 780px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 24px 24px 12px;
 }
