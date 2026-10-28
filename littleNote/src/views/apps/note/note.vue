@@ -16,7 +16,7 @@
 
         <!-- 搜索框移到顶部 -->
         <div class="filter-item search-box">
-          <el-input v-model="queryParams.keyword" placeholder="搜索笔记" ref="keywordSelect" size="large" clearable>
+          <el-input v-model="queryParams.keyword" placeholder="搜索" ref="keywordSelect" size="large" clearable>
             <template #prefix>
               <svg-icon iconClass="search" className="search-icon" />
             </template>
@@ -25,11 +25,11 @@
       </div>
 
       <!-- 添加 -->
-      <el-tooltip content="新建笔记" placement="bottom" :show-after="300">
+      <el-tooltip content="新建" placement="bottom" :show-after="300">
         <el-button
           size="large"
           class="add-btn"
-          aria-label="新建笔记"
+          aria-label="新建"
           @click="addOrUpdateNote(-1, 'edit')"
         >
           <el-icon class="add-btn-icon">
@@ -100,7 +100,7 @@
       </div>
 
       <!-- 搜索时的顶部进度条，保留旧列表，不做整块遮罩 -->
-      <div v-if="isRefreshing" class="list-progress" role="progressbar" aria-label="正在加载笔记"></div>
+      <div v-if="isRefreshing" class="list-progress" role="progressbar" aria-label="正在加载"></div>
     </div>
 
     <BackToTop :target="scrollContainer" :scroller="scroll" />

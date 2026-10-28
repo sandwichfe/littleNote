@@ -94,7 +94,7 @@
           class="note-title-input"
           :readonly="viewMode === 'preview'"
           maxlength="100"
-          placeholder="无标题笔记"
+          placeholder="无标题"
           @input="markDirty"
       />
       <span class="note-char-count">{{ charCount }} 字</span>

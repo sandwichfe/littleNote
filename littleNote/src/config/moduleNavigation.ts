@@ -11,7 +11,7 @@ export const moduleNavigationItems: ModuleNavigationItem[] = [
   {
     key: 'note',
     label: 'Note',
-    description: '笔记空间',
+    description: 'Note',
     route: '/note'
   },
   {
