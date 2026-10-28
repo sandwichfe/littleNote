@@ -12,6 +12,7 @@
               clearable
               class="group-select"
               popper-class="group-select-popper"
+              :disabled="viewMode === 'preview'"
               @change="changeGroup"
               @clear="handleClear"
           >
@@ -57,15 +58,16 @@
         <!-- 分隔线 -->
         <div class="toolbar-divider"></div>
 
-        <!-- 保存按钮 -->
+        <!-- 保存按钮：保存中与预览态（内容不可改）都不可点击 -->
         <button
             @click="saveNote"
             class="toolbar-btn toolbar-btn-save"
+            :disabled="saving || viewMode === 'preview'"
         >
           <el-icon>
             <DocumentChecked/>
           </el-icon>
-          <span class="btn-text">保存</span>
+          <span class="btn-text">{{ saving ? '保存中' : '保存' }}</span>
         </button>
 
         <!-- 删除按钮 -->
@@ -79,6 +81,18 @@
           <span class="btn-text">删除</span>
         </button>
       </div>
+    </div>
+
+    <!-- 标题：列表页展示的就是这个标题，正文自动生成的标题可在此改写 -->
+    <div class="note-title-bar">
+      <input
+          v-model="noteTitle"
+          class="note-title-input"
+          :readonly="viewMode === 'preview'"
+          maxlength="100"
+          placeholder="无标题笔记"
+          @input="dirty = true"
+      />
     </div>
 
     <div
@@ -120,11 +134,11 @@
 </template>
 
 <script setup lang="ts">
-import {onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
+import {nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
 import RichEditor from '@/components/RichEditor/index.vue';
 import {addNote, deleteNoteItem, editNote, getNote} from "@/network/note/note";
-import {useRouter} from 'vue-router';
-import {ElMessage} from 'element-plus'
+import {onBeforeRouteLeave, useRouter} from 'vue-router';
+import {ElMessage, ElMessageBox} from 'element-plus'
 import {Delete, DocumentChecked, Edit, View} from '@element-plus/icons-vue'
 import {cipherText, decrypted} from "@/utils/aesUtil";
 import {closeLoading} from "@/utils/loadingUtil";
@@ -145,16 +159,20 @@ const noteData = ref({
   groupId: null as number | null
 });
 
-const groupValue = ref('');
+const groupValue = ref<number | null>(null);
 const groups = ref<any[]>([]);
 const deleteDialogVisible = ref(false);
+const noteTitle = ref('');
+const dirty = ref(false);   // 是否有未保存修改
+const saving = ref(false);  // 保存请求进行中，避免并发提交
 
-const changeGroup = (newValue: string) => {
+const changeGroup = (newValue: number | string | null) => {
+  // 清空时 el-select 可能给到 '' / undefined，统一转成 null 提交
   noteData.value.groupId = newValue ? Number(newValue) : null;
 };
 
 const handleClear = () => {
-  groupValue.value = '';
+  groupValue.value = null;
   noteData.value.groupId = null;
 };
 
@@ -170,38 +188,127 @@ watch(viewMode, (newMode) => {
   ElMessage.success(newMode === 'edit' ? '进入编辑模式' : '进入预览模式');
 });
 
-onMounted(() => {
-  const paramId = Number(router.currentRoute.value.params.id);
-  noteData.value.noteId = paramId;
+// 解密失败（历史明文或异常密文）时回退原文，避免内容被静默清空
+const safeDecrypt = (raw: string) => {
+  if (!raw) return '';
+  try {
+    return decrypted(raw) || raw;
+  } catch {
+    return raw;
+  }
+};
 
-  if (paramId !== -1) {
-    getNote(paramId).then((res) => {
-      if (res.data.content == null) {
-        res.data.content = ''
-      }
-      valueHtml.value = decrypted(res.data.content);
-      groupValue.value = res.data.groupId;
-      noteData.value.groupId = res.data.groupId;
-    });
+// 加载笔记：新建（id = -1）与详情共用一套回填逻辑
+let loadToken = 0;
+const loadNote = async (id: number) => {
+  const token = ++loadToken;
+  noteData.value.noteId = id;
+
+  if (id === -1) {
+    valueHtml.value = '';
+    noteTitle.value = '';
+    groupValue.value = null;
+    noteData.value.groupId = null;
+  } else {
+    try {
+      const res = await getNote(id);
+      if (token !== loadToken) return; // 已有更新的加载请求，丢弃本次结果
+
+      valueHtml.value = safeDecrypt(res.data?.content || '');
+      noteTitle.value = res.data?.title || '';
+      const groupId = res.data?.groupId ?? null;
+      groupValue.value = groupId === null ? null : Number(groupId);
+      noteData.value.groupId = groupId === null ? null : Number(groupId);
+    } catch {
+      ElMessage.error('笔记加载失败');
+      return;
+    }
   }
 
+  // 程序化回填同样会触发下方 watch，渲染刷新后复位脏标记
+  await nextTick();
+  if (token === loadToken) dirty.value = false;
+};
+
+// 未保存确认弹窗：返回 true 表示确认放弃修改
+const confirmDiscard = async (message: string) => {
+  try {
+    await ElMessageBox.confirm(message, '未保存提醒', {
+      confirmButtonText: '离开',
+      cancelButtonText: '继续编辑',
+      type: 'warning',
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// 正文变动即视为有未保存修改（标题通过输入事件标记，避免回填时误判）
+watch(valueHtml, () => {
+  dirty.value = true;
+});
+
+// 同一路由复用组件时 onMounted 不会再次执行，必须监听参数变化重新加载
+watch(() => router.currentRoute.value.params.id, async (val) => {
+  const id = Number(val);
+  if (!Number.isFinite(id) || id === noteData.value.noteId) return;
+
+  // 同页切换笔记同样要保护未保存内容，取消时回退地址，保持界面与 URL 一致
+  if (dirty.value) {
+    const previousId = noteData.value.noteId;
+    if (!(await confirmDiscard('当前笔记有未保存的修改，切换后将丢失，确定继续吗？'))) {
+      await router.replace(`/noteDetail/${previousId}`);
+      return;
+    }
+  }
+
+  await loadNote(id);
+});
+
+// 外部带 query 进入（或刷新）时同步视图模式
+watch(() => router.currentRoute.value.query.viewMode, (val) => {
+  viewMode.value = val === 'edit' ? 'edit' : 'preview';
+});
+
+// 刷新/关闭标签页无法自定义文案，只触发浏览器原生确认
+const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+  if (!dirty.value) return;
+  event.preventDefault();
+  event.returnValue = '';
+};
+
+onMounted(async () => {
+  const paramId = Number(router.currentRoute.value.params.id);
+  const initialId = Number.isFinite(paramId) ? paramId : -1;
+
+  // 分组列表独立加载，不阻塞笔记内容
   listNoteGroup(-1, -1).then((res) => {
-    groups.value = res.data.records;
+    groups.value = res.data.records || [];
 
     // 如果是新建笔记且没有选中分组，则默认选中第一个分组
-    if (paramId === -1 && !groupValue.value && groups.value && groups.value.length > 0) {
-      groupValue.value = groups.value[0].id;
+    if (initialId === -1 && !groupValue.value && groups.value.length > 0) {
+      groupValue.value = Number(groups.value[0].id);
       noteData.value.groupId = Number(groups.value[0].id);
     }
   });
 
-
   window.addEventListener('keydown', handleEvent);
+  window.addEventListener('beforeunload', handleBeforeUnload);
+
+  await loadNote(initialId);
   closeLoading();
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleEvent);
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+});
+
+// 有未保存修改时，离开页面需二次确认
+onBeforeRouteLeave(async () => {
+  if (!dirty.value) return true;
+  return confirmDiscard('当前笔记有未保存的修改，确定离开吗？');
 });
 
 // 将编辑器纯文本整理为标题，回车和连续空白统一转为空格。
@@ -209,28 +316,46 @@ const buildNoteTitle = (text: string) => {
   return text.replace(/\s+/g, ' ').trim().substring(0, 100);
 };
 
-const saveNote = () => {
+const saveNote = async () => {
   const editor = editorRef.value;
-  if (!editor) return;
+  if (!editor || saving.value) return;
 
-  let noteValue = editor.getHTML();
-  const title = buildNoteTitle(editor.getText());
-  noteValue = cipherText(noteValue);
+  // 标题优先取输入框，留空时退回正文自动生成，并回填到输入框保持界面与实际一致
+  const title = noteTitle.value.trim() || buildNoteTitle(editor.getText());
+  noteTitle.value = title;
+  const snapshot = editor.getHTML();
+  const noteValue = cipherText(snapshot);
 
-  if (noteData.value.noteId === -1) {
-    addNote(null, noteValue, title, noteData.value.groupId).then((res) => {
-      if (res.code === 200) {
-        ElMessage.success('保存成功！');
-        if (res.data) {
-          router.replace(`/noteDetail/${res.data}`);
-          noteData.value.noteId = res.data;
-        }
+  // 保存期间继续编辑的内容不算已保存，用快照比对决定是否清除脏标记
+  const markSaved = () => {
+    dirty.value = editor.getHTML() !== snapshot || noteTitle.value !== title;
+  };
+
+  saving.value = true;
+  try {
+    if (noteData.value.noteId === -1) {
+      const res = await addNote(null, noteValue, title, noteData.value.groupId);
+      if (res.code !== 200 || !res.data) {
+        ElMessage.error(res.msg || '保存失败');
+        return;
       }
-    });
-  } else {
-    editNote(noteData.value.noteId, noteValue, title, noteData.value.groupId).then((res) => {
+      noteData.value.noteId = res.data;
+      markSaved();
+      router.replace(`/noteDetail/${res.data}`);
       ElMessage.success('保存成功！');
-    });
+    } else {
+      const res = await editNote(noteData.value.noteId, noteValue, title, noteData.value.groupId);
+      if (res.code !== 200) {
+        ElMessage.error(res.msg || '保存失败');
+        return;
+      }
+      markSaved();
+      ElMessage.success('保存成功！');
+    }
+  } catch {
+    ElMessage.error('保存失败，请稍后重试');
+  } finally {
+    saving.value = false;
   }
 };
 
@@ -240,6 +365,8 @@ const delNote = () => {
     return;
   }
   deleteNoteItem(noteData.value.noteId).then(() => {
+    // 删除成功后不再拦截离开
+    dirty.value = false;
     ElMessage.success('删除成功！');
     router.push(`/note`);
   });
@@ -393,6 +520,35 @@ function handleEvent(event: KeyboardEvent) {
   height: 24px;
   background-color: #e8e8e8;
   flex-shrink: 0;
+}
+
+/* 标题栏：左内边距与正文对齐，预览态只读 */
+.note-title-bar {
+  display: flex;
+  flex-shrink: 0;
+  padding: 6px 25px 0;
+  background-color: #fff;
+}
+
+.note-title-input {
+  width: 100%;
+  padding: 6px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #202124;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.note-title-input::placeholder {
+  color: #bdc1c6;
+  font-weight: 500;
+}
+
+.note-title-input[readonly] {
+  cursor: default;
 }
 
 /* 分组选择器 */
@@ -579,6 +735,14 @@ function handleEvent(event: KeyboardEvent) {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
+/* 保存中 / 预览态禁用 */
+.toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .toolbar-btn .el-icon {
   font-size: 15px;
 }
@@ -730,6 +894,10 @@ function handleEvent(event: KeyboardEvent) {
   #note-detail-page {
     height: calc(100vh - 56px);  /* 减去layout-header的高度 */
     overflow: hidden; /* 确保移动端也不会出现页面级滚动 */
+  }
+
+  .note-title-input {
+    font-size: 20px;
   }
 
   .note-toolbar {

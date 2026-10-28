@@ -1,6 +1,7 @@
 <template>
   <div ref="rootRef" class="rich-editor">
-    <div v-if="editable && editor" class="re-toolbar">
+    <!-- data-tick 用于在选区变化时强制重算工具栏的 isActive 状态，tiptap 的 isActive 本身不是响应式来源 -->
+    <div v-if="editable && editor" class="re-toolbar" :data-tick="toolbarTick">
       <div class="re-toolbar-row">
         <!-- 正文 / 标题 -->
         <select class="re-select re-block-select" :value="currentBlock" @change="onBlockChange">
@@ -379,6 +380,7 @@ const showImagePanel = ref(false);
 const networkImageUrl = ref('');
 const networkImageName = ref('');
 const isSelectionInTable = ref(false);
+const toolbarTick = ref(0);
 const tablePickerRows = ref(6);
 const tablePickerCols = ref(6);
 const tableToolbar = reactive({
@@ -407,7 +409,14 @@ const syncToolbarState = (targetEditor?: any) => {
   });
   currentBlock.value = heading?.value ?? 'paragraph';
 
-  currentFont.value = targetEditor.getAttributes('textStyle').fontFamily || '';
+  const textStyleAttrs = targetEditor.getAttributes('textStyle');
+  currentFont.value = textStyleAttrs.fontFamily || '';
+  // 颜色指示条跟随光标所在文本；非 hex 值（如粘贴带入的 rgb()）按默认色处理
+  textColor.value = isHexColor(textStyleAttrs.color) ? textStyleAttrs.color : DEFAULT_TEXT_COLOR;
+  const highlightAttrs = targetEditor.getAttributes('highlight');
+  backgroundColor.value = isHexColor(highlightAttrs.color)
+    ? highlightAttrs.color
+    : DEFAULT_BACKGROUND_COLOR;
 
   isSelectionInTable.value = targetEditor.isActive('table');
   if (isSelectionInTable.value) {
@@ -416,6 +425,9 @@ const syncToolbarState = (targetEditor?: any) => {
     tablePickerRows.value = TABLE_PICKER_DEFAULT_ROWS;
     tablePickerCols.value = TABLE_PICKER_DEFAULT_COLS;
   }
+
+  // 选区或内容变化后自增，触发模板重算 isActive / can().undo() 等非响应式状态
+  toolbarTick.value++;
 };
 
 const hideTableToolbar = () => {
@@ -557,6 +569,12 @@ const editor = useEditor({
   },
   editorProps: {
     handlePaste: (view, event) => {
+      const clipboard = event.clipboardData;
+      if (!clipboard) return false;
+
+      // 剪贴板同时含文字或 HTML 时交给默认粘贴，避免只保留图片而丢掉文字
+      if (clipboard.getData('text/html') || clipboard.getData('text/plain').trim()) return false;
+
       const imageFile = getImageFileFromClipboard(event);
       if (!imageFile) return false;
 
@@ -916,19 +934,21 @@ const doUpload = async (file: File) => {
 const insertUploadedImage = async (file: File, position?: number) => {
   try {
     const url = await doUpload(file);
-    const chain = editor.value?.chain().focus();
-    if (!chain) return;
+    const instance = editor.value;
+    if (!instance) return;
 
     const imageContent = [
       { type: 'image', attrs: { src: url, scale: DEFAULT_IMAGE_SCALE } },
       { type: 'text', text: ' ' },
     ];
 
-    if (typeof position === 'number') {
-      chain.insertContentAt(position, imageContent).run();
-    } else {
-      chain.insertContent(imageContent).run();
-    }
+    // 上传期间文档可能已被修改，原坐标越界时退回当前选区，避免插入抛错
+    const docSize = instance.state.doc.content.size;
+    const hasValidPosition =
+      typeof position === 'number' && position >= 0 && position <= docSize;
+    const targetPos = hasValidPosition ? position : instance.state.selection.from;
+
+    instance.chain().focus().insertContentAt(targetPos, imageContent).run();
   } catch (err) {
     console.error('图片上传失败:', err);
     ElMessage.error('图片上传失败');
