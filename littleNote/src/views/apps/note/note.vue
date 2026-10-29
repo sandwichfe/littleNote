@@ -75,14 +75,6 @@
 
     </div>
 
-    <!-- 结果概览：条数 + 当前筛选条件，固定在顶部不参与滚动（首屏骨架期不显示） -->
-    <div v-if="!firstLoading" class="result-bar">
-      <span class="result-count">共 {{ contents.length }} 条</span>
-      <span v-if="selectedGroupName" class="result-chip">{{ selectedGroupName }}</span>
-      <span v-if="queryParams.keyword.trim()" class="result-chip">“{{ queryParams.keyword.trim() }}”</span>
-      <button v-if="hasActiveQuery" type="button" class="result-clear" @click="clearFilters">清除筛选</button>
-    </div>
-
     <!-- 列表：外层只负责定位进度条，内层是原生滚动容器 -->
     <div class="list-box">
       <div ref="scrollContainer" class="scroll_content" :aria-busy="loading">
@@ -332,26 +324,10 @@ const firstLoading = ref(true);
 const isRefreshing = computed(() => loading.value && !firstLoading.value);
 const isSearchEmpty = computed(() => !!queryParams.keyword.trim());
 
-/* ---------------- 结果概览 / 筛选 ---------------- */
-
-const selectedGroupName = computed(() => {
-  const group = groups.value.find(item => item.id === queryParams.groupId);
-  return group?.groupName || '';
-});
-
-// 有关键词或已按分组筛选时，才需要「清除筛选」
-const hasActiveQuery = computed(() => !!queryParams.keyword.trim() || queryParams.groupId !== null);
-
 const emptyDescription = computed(() => {
   const keyword = queryParams.keyword.trim();
   return keyword ? `没有找到包含“${keyword}”的笔记` : '还没有笔记';
 });
-
-const clearFilters = () => {
-  queryParams.keyword = '';
-  queryParams.groupId = null;
-  noteGroupStore.resetSelectedGroupId();
-};
 
 // 当前分组内没搜到，切到全部笔记再搜一次
 const searchInAllGroups = () => {
@@ -823,16 +799,15 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   /* 留白处透出外层渐变背景，形成居中的文档卡片 */
   background-color: transparent;
   height: calc(100vh - 64px);
-  /* 左列定宽放分组导航，右列占满放内容；三行依次是工具栏、结果概览、列表 */
+  /* 左列定宽放分组导航，右列占满放内容；两行依次是工具栏、列表 */
   display: grid;
   grid-template-columns: 196px minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   column-gap: 16px;
 }
 
-/* 结果概览是条件渲染的，行号显式指定，避免首屏缺行时列表塌陷 */
+/* 行号显式指定，避免内容缺失时列表位置漂移 */
 .top-box,
-.result-bar,
 .list-box {
   grid-column: 2;
 }
@@ -841,12 +816,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   grid-row: 1;
 }
 
-.result-bar {
-  grid-row: 2;
-}
-
 .list-box {
-  grid-row: 3;
+  grid-row: 2;
 }
 
 /* 左侧分组导航：与右侧内容齐高，分组多时自身滚动 */
@@ -945,7 +916,6 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   }
 
   .top-box,
-  .result-bar,
   .list-box {
     grid-column: 1;
   }
@@ -988,51 +958,6 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   .top-box {
     padding: 8px 10px;
   }
-}
-
-/* 结果概览：条数 + 当前筛选条件 */
-.result-bar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 20px 10px;
-  background: #fff;
-  font-size: 12px;
-  line-height: 1.4;
-  color: #8a9199;
-  flex-shrink: 0;
-}
-
-.result-count {
-  font-variant-numeric: tabular-nums;
-}
-
-.result-chip {
-  max-width: 40%;
-  padding: 1px 8px;
-  border-radius: 999px;
-  background: rgba(13, 148, 136, 0.08);
-  color: #0f766e;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.result-clear {
-  margin-left: auto;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: #0d9488;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.result-clear:hover,
-.result-clear:focus-visible {
-  color: #0f766e;
-  text-decoration: underline;
 }
 
 .filter-container {
@@ -1620,9 +1545,6 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 /* 窄屏下压缩行内边距，时间字号同步缩小 */
 @media screen and (max-width: 768px) {
-  .result-bar {
-    padding: 0 15px 8px;
-  }
 
   .file-li-item {
     min-height: 70px;
