@@ -155,7 +155,8 @@ const goToModule = (targetPath: string) => {
   width: 34px;
   height: 34px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #dff7f4 0%, #f0fdfa 100%);
+  /* 跟随主色的浅色梯度，主色调整时不用再改这里 */
+  background: linear-gradient(135deg, var(--el-color-primary-light-8) 0%, var(--el-color-primary-light-9) 100%);
   color: var(--header-accent);
   font-size: 13px;
   font-weight: 700;
@@ -353,7 +354,7 @@ const goToModule = (targetPath: string) => {
 }
 
 .module-entry.is-active .module-entry-content {
-  background: linear-gradient(135deg, rgba(240, 253, 250, 0.8), rgba(204, 251, 241, 0.4));
+  background: linear-gradient(135deg, rgba(var(--app-primary-rgb), 0.06), rgba(var(--app-primary-rgb), 0.03));
   border-color: rgba(var(--app-primary-rgb), 0.15);
 }
 
