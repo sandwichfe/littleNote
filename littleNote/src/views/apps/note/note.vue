@@ -1442,16 +1442,16 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   border-radius: 6px;
 }
 
-/* 第一层：标题 */
+/* 第一层：标题，比正文重、比近黑轻，取中间一档 */
 .prename {
   display: block;
   width: 100%;
   text-align: left;
   line-height: 1.4;
   margin: 0;
-  color: #1d2129;
+  color: #344054;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
