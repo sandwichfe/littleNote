@@ -26,11 +26,12 @@
       <div class="filter-container">
         <!-- 分组筛选：宽屏下由左侧分组栏代替，这里只在窄屏显示 -->
         <div class="filter-item group-filter">
-          <el-select v-model="queryParams.groupId" placeholder="类型" size="large" clearable
-                     @clear="handleClear">
+          <!-- 用 groupSelectValue 代理：null 会被 el-select 当成空值只显示 placeholder，所以「全部」用 'all' 承载 -->
+          <el-select v-model="groupSelectValue" placeholder="全部分组" size="large" aria-label="筛选分组">
             <template #prefix>
               <svg-icon iconClass="filter" className="filter-icon" />
             </template>
+            <el-option label="全部笔记" value="all" />
             <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
           </el-select>
         </div>
@@ -105,6 +106,8 @@
                   <span class="ptime"
                         :title="formatFullTime(c.updateTime || c.createTime)">{{ formatRelativeTime(c.updateTime || c.createTime) }}</span>
                   <span v-if="c.groupName" class="note-group">{{ c.groupName }}</span>
+                  <!-- 未分组也给出标记，避免元信息右侧留空、卡片重心失衡 -->
+                  <span v-else class="note-group is-empty">未分组</span>
                 </span>
               </a>
 
@@ -128,6 +131,16 @@
               </el-dropdown>
             </li>
           </ul>
+
+          <!-- 触底分页：加载下一页中 / 已经到底，给用户明确的滚动终点 -->
+          <div v-if="loadingMore" class="list-more" role="status">加载中…</div>
+          <div v-else-if="!hasMore && contents.length >= PAGE_SIZE" class="list-more is-end">没有更多了</div>
+        </div>
+
+        <!-- 请求失败：不静默吞掉，给出重试入口 -->
+        <div v-else-if="loadError" class="load-error" role="alert">
+          <p class="load-error-text">笔记加载失败，请检查网络后重试</p>
+          <el-button class="empty-action" type="primary" @click="retryLoad">重新加载</el-button>
         </div>
 
         <!-- 空态区分：真的没笔记 / 搜索没结果 -->
@@ -181,6 +194,32 @@ const noteGroupStore = useNoteGroupStore();
 const queryParams = reactive<QueryParams>({
   groupId: null,
   keyword: ''
+});
+
+// 分组 id 统一收敛：空值/非法值一律归为 null（null 表示「全部」）
+const toGroupId = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+  const id = Number(value);
+  return Number.isFinite(id) ? id : null;
+};
+
+// 把当前分组同步到全局 store，侧栏与窄屏下拉共用同一份选择
+const syncSelectedGroup = (groupId: number | null) => {
+  if (groupId === null) {
+    noteGroupStore.resetSelectedGroupId();
+  } else {
+    noteGroupStore.updateSelectedGroupId(groupId);
+  }
+};
+
+// el-select 用 'all' 承载「全部」：null 会被当成空值只显示 placeholder
+const groupSelectValue = computed<string | number>({
+  get: () => (queryParams.groupId === null ? 'all' : queryParams.groupId),
+  set: (value) => {
+    const groupId = value === 'all' ? null : toGroupId(value);
+    queryParams.groupId = groupId;
+    syncSelectedGroup(groupId);
+  }
 });
 
 const isInitializing = ref(true);
@@ -287,6 +326,8 @@ watch(() => [queryParams.groupId, queryParams.keyword], () => {
   loading.value = true;
   notesSeq++;
   debounce.run(() => {
+    // 条件落到地址栏（放在防抖里，连续输入只写一次），刷新、从详情页返回、复制链接都能回到同一视图
+    syncQueryToUrl();
     loadNotesByQuery();
   }, 300);
 }, { deep: true });
@@ -332,6 +373,16 @@ const loading = ref(false);
 // 首屏骨架屏标记，只在初始化阶段为 true
 const firstLoading = ref(true);
 
+// 分页：一次取一页，滚动到底再取下一页，避免首屏拉全量
+const PAGE_SIZE = 30;
+// 距底部多少像素开始预取下一页
+const LOAD_MORE_THRESHOLD = 120;
+const pageNum = ref(1);
+const hasMore = ref(false);
+const loadingMore = ref(false);
+// 列表请求失败标记，用于错误态与重试入口
+const loadError = ref(false);
+
 // 已有列表情况下的加载（搜索/切分组），走顶部进度条 + 半透明遮罩
 const isRefreshing = computed(() => loading.value && !firstLoading.value);
 const isSearchEmpty = computed(() => !!queryParams.keyword.trim());
@@ -339,9 +390,13 @@ const isSearchEmpty = computed(() => !!queryParams.keyword.trim());
 // 加载文案跟随触发来源，切分组时提示「加载中」更准确
 const loadingText = computed(() => (isSearchEmpty.value ? '搜索中…' : '加载中…'));
 
+// 空态文案带上当前分组上下文，比笼统的「还没有笔记」更能说明情况
 const emptyDescription = computed(() => {
   const keyword = queryParams.keyword.trim();
-  return keyword ? `没有找到包含“${keyword}”的笔记` : '还没有笔记';
+  if (keyword) return `没有找到包含“${keyword}”的笔记`;
+
+  const currentGroup = groups.value.find(item => item.id === queryParams.groupId);
+  return currentGroup ? `「${currentGroup.groupName}」分组还没有笔记` : '还没有笔记';
 });
 
 // 当前分组内没搜到，切到全部笔记再搜一次
@@ -355,19 +410,18 @@ onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeydown);
   // 原生滚动容器滚动时收起展开的菜单，避免 popper 与卡片错位
   scrollContainer.value?.addEventListener('scroll', closeDropdownOnScroll, { passive: true });
+  // 滚动到底自动取下一页
+  scrollContainer.value?.addEventListener('scroll', handleScrollLoadMore, { passive: true });
   initList();
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown);
   scrollContainer.value?.removeEventListener('scroll', closeDropdownOnScroll);
+  scrollContainer.value?.removeEventListener('scroll', handleScrollLoadMore);
   // 卸载时清理防抖定时器，避免组件销毁后仍触发请求
   debounce.cancel();
 });
-
-const handleClear = () => {
-  noteGroupStore.resetSelectedGroupId();
-};
 
 const loadNoteGroups = async () => {
   try {
@@ -378,23 +432,55 @@ const loadNoteGroups = async () => {
   }
 };
 
-const selectGroup = () => {
-  if (!groups.value || groups.value.length === 0) return;
+// 分组 id 只有在当前分组列表里存在时才可用（分组可能已被删除）
+const normalizeGroupId = (id: number | null) => {
+  if (id === null) return null;
+  return groups.value.some(group => group.id === id) ? id : null;
+};
 
-  const storeSaveId = noteGroupStore.selectedGroupId;
+/* ---------------- 地址栏同步 ---------------- */
 
-  if (storeSaveId) {
-    const groupExists = groups.value.some(group => group.id === storeSaveId);
-    if (groupExists) {
-      queryParams.groupId = storeSaveId;
-    } else if (storeSaveId === -1) {
-      queryParams.groupId = null;
-    } else if (storeSaveId === null) {
-      queryParams.groupId = groups.value[0].id;
-    }
-  } else {
-    queryParams.groupId = Number(groups.value[0].id);
+// 地址栏里 groupId 记具体分组或 'all'（全部），q 记关键词；
+// 刷新、从详情页返回、复制链接都能回到同一视图
+const restoreQueryFromUrl = (): { groupFromUrl: boolean; groupId: number | null } => {
+  const route = router.currentRoute.value;
+  const urlGroup = route.query.groupId;
+  const urlKeyword = route.query.q;
+
+  queryParams.keyword = typeof urlKeyword === 'string' ? urlKeyword : '';
+
+  if (urlGroup === 'all') return { groupFromUrl: true, groupId: null };
+  if (typeof urlGroup === 'string' && urlGroup) {
+    return { groupFromUrl: true, groupId: toGroupId(urlGroup) };
   }
+  // 地址栏没带分组：交给 store 里的上次选择
+  return { groupFromUrl: false, groupId: null };
+};
+
+// 条件变化后写回地址栏；与当前 query 相同时跳过，避免多余的路由更新
+const syncQueryToUrl = () => {
+  const route = router.currentRoute.value;
+  const nextQuery: Record<string, string> = {};
+  // 只保留字符串型 query，数组型（如重复参数）不参与合并
+  Object.entries(route.query).forEach(([key, value]) => {
+    if (typeof value === 'string') nextQuery[key] = value;
+  });
+
+  nextQuery.groupId = queryParams.groupId === null ? 'all' : String(queryParams.groupId);
+
+  const keyword = queryParams.keyword.trim();
+  if (keyword) {
+    nextQuery.q = queryParams.keyword;
+  } else {
+    delete nextQuery.q;
+  }
+
+  const keys = Object.keys(nextQuery);
+  const same = keys.length === Object.keys(route.query).length
+      && keys.every(key => nextQuery[key] === route.query[key]);
+  if (same) return;
+
+  void router.replace({ path: route.path, query: nextQuery });
 };
 
 // 侧栏切换分组：只改查询条件，具体的列表刷新交给上面的 watch 防抖处理
@@ -402,27 +488,39 @@ const selectGroupById = (id: number | null) => {
   if (queryParams.groupId === id) return;
 
   queryParams.groupId = id;
-
   // 与顶部下拉保持一致，把选择结果同步到全局 store
-  if (id === null) {
-    noteGroupStore.resetSelectedGroupId();
-  } else {
-    noteGroupStore.updateSelectedGroupId(id);
-  }
+  syncSelectedGroup(id);
 };
 
+// 取某一页笔记；groupId 为 null 表示全部，listNote 只接受 number | undefined
+const fetchNotes = async (page: number, groupId: number | null, keyword: string): Promise<Note[]> => {
+  const noteRes = await listNote(page, PAGE_SIZE, groupId ?? undefined, keyword);
+  return noteRes.data?.records || [];
+};
+
+// 条件变更后的整表加载：重置分页、替换列表、回到顶部
 const loadNotesByQuery = async () => {
   const seq = ++notesSeq;
   loading.value = true;
+  loadError.value = false;
   try {
-    await loadNotes(queryParams.groupId, queryParams.keyword, seq);
-    // 已有更新的请求时，本次不再动滚动条
+    const records = await fetchNotes(1, queryParams.groupId, queryParams.keyword);
+    // 已有更新的请求在跑，本次结果直接丢弃，避免旧结果盖掉新结果
     if (seq !== notesSeq) return;
+
+    // 接口已按 ES 搜索返回结果，前端不再按标题二次过滤，避免正文命中被隐藏。
+    contents.value = records;
+    pageNum.value = 1;
+    // 本页没取满说明已经是最后一页
+    hasMore.value = records.length >= PAGE_SIZE;
+
     // 新结果回到顶部
     nextTick(() => {
       resetScroll();
     });
   } catch (error) {
+    // 不静默吞错：列表区展示错误态，用户可重试
+    if (seq === notesSeq) loadError.value = true;
     console.error('Failed to load notes by query:', error);
   } finally {
     // 只有最后一次请求负责收起加载态，避免连续搜索时遮罩闪烁
@@ -430,46 +528,76 @@ const loadNotesByQuery = async () => {
   }
 };
 
+// 触底加载下一页：只追加，不清空已有结果
+const loadMoreNotes = async () => {
+  if (loadingMore.value || loading.value || !hasMore.value) return;
+
+  const seq = notesSeq;
+  loadingMore.value = true;
+  try {
+    const records = await fetchNotes(pageNum.value + 1, queryParams.groupId, queryParams.keyword);
+    // 查询条件已变化时丢弃，避免把旧查询的第二页拼到新结果后面
+    if (seq !== notesSeq) return;
+
+    // 分页过程中排序可能变动导致同一条重复出现，按 id 去重避免 key 冲突
+    const exists = new Set(contents.value.map(item => item.id));
+    const added = records.filter(item => !exists.has(item.id));
+    contents.value = contents.value.concat(added);
+    pageNum.value += 1;
+    // 本页没取满、或全是重复项（后端不认分页）时收尾，避免反复触发加载
+    hasMore.value = records.length >= PAGE_SIZE && added.length > 0;
+  } catch (error) {
+    console.error('Failed to load more notes:', error);
+    ElMessage.error('加载更多失败，请稍后重试');
+  } finally {
+    loadingMore.value = false;
+  }
+};
+
+// 距底部一定距离时预取，避免用户滚到底看到空白等待
+const handleScrollLoadMore = () => {
+  const el = scrollContainer.value;
+  if (!el) return;
+  if (el.scrollHeight - el.scrollTop - el.clientHeight > LOAD_MORE_THRESHOLD) return;
+  void loadMoreNotes();
+};
+
+// 错误态重试：列表与侧栏计数一起重来
+const retryLoad = () => {
+  void loadNotesByQuery();
+  void loadNoteCounts();
+};
+
 // 显式搜索（点搜索按钮）：取消防抖立即请求，并把关键词记入历史
 const doSearch = () => {
   showHistory.value = false;
   debounce.cancel();
   saveSearchHistory(queryParams.keyword);
+  // 防抖回调被取消，地址栏同步要在这里补上
+  syncQueryToUrl();
   loadNotesByQuery();
-};
-
-const loadNotes = async (groupId: number | null = null, keyword = '', seq?: number) => {
-  try {
-    // listNote 的 groupId 只接受 number | undefined，null 统一转 undefined（axios 都不会带上该参数）
-    const noteRes = await listNote(-1, -1, groupId ?? undefined, keyword);
-
-    // 已有更新的请求在跑，本次结果直接丢弃，避免旧结果盖掉新结果
-    if (seq !== undefined && seq !== notesSeq) return false;
-
-    // 接口已按 ES 搜索返回结果，前端不再按标题二次过滤，避免正文命中被隐藏。
-    contents.value = noteRes.data.records;
-
-    return true;
-  } catch (error) {
-    console.error('Failed to load notes:', error);
-    return false;
-  }
 };
 
 const initList = async () => {
   isInitializing.value = true;
   loading.value = true;
   firstLoading.value = true;
+  loadError.value = false;
   try {
+    const restored = restoreQueryFromUrl();
     await loadNoteGroups();
-    selectGroup();
+    // 地址栏明确指定了分组就用它，否则回到上次选择；分组已删除时统一归一为「全部」
+    const preferredGroup = restored.groupFromUrl ? restored.groupId : toGroupId(noteGroupStore.selectedGroupId);
+    queryParams.groupId = normalizeGroupId(preferredGroup);
+
     // 列表与侧栏计数互不依赖，并行请求缩短首屏时间
     await Promise.all([
-      loadNotes(queryParams.groupId, queryParams.keyword),
+      loadNotesByQuery(),
       loadNoteCounts()
     ]);
   } catch (error) {
     console.error('Failed to initialize data:', error);
+    loadError.value = true;
   } finally {
     loading.value = false;
     firstLoading.value = false;
@@ -621,10 +749,12 @@ type NoteViewMode = 'edit' | 'preview';
 const getNoteHref = (id: number) => router.resolve({ path: `/noteDetail/${id}` }).href;
 
 const getNoteUrl = (id: number, viewMode: NoteViewMode = 'preview') => {
-  const href = router.resolve({
-    path: `/noteDetail/${id}`,
-    query: viewMode === 'edit' ? { viewMode } : undefined
-  }).href;
+  const query: Record<string, string> = {};
+  if (viewMode === 'edit') query.viewMode = viewMode;
+  // 新建时带上当前分组：在「工作」分组下点新建，新笔记就落在工作分组，不再默认落到第一个分组
+  if (id === -1 && queryParams.groupId !== null) query.groupId = String(queryParams.groupId);
+
+  const href = router.resolve({ path: `/noteDetail/${id}`, query }).href;
   return new URL(href, window.location.href).href;
 };
 
@@ -1352,6 +1482,19 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   transition: opacity 0.2s ease;
 }
 
+/* 触底加载提示：只占一行，不打断卡片列表的节奏 */
+.list-more {
+  padding: 10px 0 4px;
+  color: #a9aeb8;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* 到底时留白收一点，避免列表尾部看起来被截断 */
+.list-more.is-end {
+  padding-bottom: 6px;
+}
+
 .line {
   position: relative;
   margin: 0;
@@ -1403,6 +1546,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 .line:nth-child(3) { animation-delay: 0.2s; }
 .line:nth-child(4) { animation-delay: 0.25s; }
 .line:nth-child(5) { animation-delay: 0.3s; }
+/* 第 6 条起统一延迟，避免后面的卡片集体同帧出现 */
+.line:nth-child(n + 6) { animation-delay: 0.35s; }
 
 @keyframes itemFadeInUp {
   from {
@@ -1518,6 +1663,21 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   transition: background-color 0.18s ease, color 0.18s ease;
 }
 
+/* 未分组：弱化成虚线描边，和真实分组标签区分开又不留空 */
+.note-group.is-empty {
+  padding: 0 7px;
+  background: transparent;
+  border: 1px dashed #e0e4ea;
+  color: #b6bcc6;
+}
+
+.line:hover .note-group.is-empty,
+.line:focus-within .note-group.is-empty {
+  background: transparent;
+  border-color: #d5dae2;
+  color: #a3aab4;
+}
+
 /* 行右侧「更多」，垂直居中避免压住标题和底部元信息 */
 .card-more {
   position: absolute;
@@ -1609,6 +1769,22 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 .empty-action {
   margin-top: 4px;
+}
+
+/* 加载失败：与空态同位置，但文案和按钮更明确 */
+.load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 60px;
+  color: #909399;
+  font-size: 13px;
+  text-align: center;
+}
+
+.load-error-text {
+  margin: 0 0 8px;
 }
 
 /* 窄屏下压缩行内边距，时间字号同步缩小 */

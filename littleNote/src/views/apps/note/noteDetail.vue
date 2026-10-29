@@ -402,14 +402,23 @@ watch(() => router.currentRoute.value.query.viewMode, (val) => {
 onMounted(async () => {
   const paramId = Number(router.currentRoute.value.params.id);
   const initialId = Number.isFinite(paramId) ? paramId : -1;
+  // 列表页新建时会把当前分组带过来，优先用它，避免新笔记落到其他分组
+  const queryGroupId = toGroupId(router.currentRoute.value.query.groupId);
 
   // 分组列表独立加载，不阻塞笔记内容
   listNoteGroup(-1, -1).then((res) => {
     groups.value = res.data.records || [];
 
-    // 如果是新建笔记且没有选中分组，则默认选中第一个分组
-    if (initialId === -1 && !groupValue.value && groups.value.length > 0) {
-      groupValue.value = toGroupId(groups.value[0].id);
+    // 如果是新建笔记且没有选中分组：优先用列表页带来的分组，取不到再默认选中第一个分组
+    if (initialId === -1 && !groupValue.value) {
+      const queryGroupExists = queryGroupId !== null
+          && groups.value.some((item) => toGroupId(item.id) === queryGroupId);
+
+      if (queryGroupExists) {
+        groupValue.value = queryGroupId;
+      } else if (groups.value.length > 0) {
+        groupValue.value = toGroupId(groups.value[0].id);
+      }
     }
   });
 
@@ -449,10 +458,13 @@ const persistNote = async (silent: boolean): Promise<boolean> => {
       }
       noteId.value = res.data;
       markSaved();
-      // 保留 query（viewMode），否则首次保存后会被 query watch 打回预览模式
+      // 保留 query（viewMode），否则首次保存后会被 query watch 打回预览模式；
+      // 分组已经随笔记落库，地址上不再需要 groupId
+      const nextQuery = { ...router.currentRoute.value.query };
+      delete nextQuery.groupId;
       void router.replace({
         path: noteDetailPath(Number(res.data)),
-        query: router.currentRoute.value.query,
+        query: nextQuery,
       });
     } else {
       const res = await editNote(noteId.value, snapshot, title, groupValue.value);
