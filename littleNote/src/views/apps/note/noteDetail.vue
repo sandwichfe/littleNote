@@ -95,7 +95,7 @@
               <el-dropdown-item
                   command="delete"
                   class="toolbar-more-danger"
-                  :disabled="noteData.noteId === -1"
+                  :disabled="noteId === -1"
               >
                 <el-icon>
                   <Delete/>
@@ -213,15 +213,18 @@
 </template>
 
 <script setup lang="ts">
-import {computed, onBeforeUnmount, onMounted, ref, shallowRef, watch} from 'vue';
+import {computed, onMounted, ref, shallowRef, watch} from 'vue';
 import RichEditor from '@/components/RichEditor/index.vue';
 import {addNote, deleteNoteItem, editNote, getNote} from "@/network/note/note";
-import {onBeforeRouteLeave, useRouter} from 'vue-router';
-import {ElMessage, ElMessageBox} from 'element-plus'
+import {useRouter} from 'vue-router';
+import {ElMessage} from 'element-plus'
 import {Delete, DocumentChecked, Edit, MoreFilled, View} from '@element-plus/icons-vue'
 import {cipherText, decrypted} from "@/utils/aesUtil";
 import {closeLoading} from "@/utils/loadingUtil";
 import {listNoteGroup} from "@/network/note/noteGroup";
+import {useNoteAutoSave} from "@/composables/useNoteAutoSave";
+import {useUnsavedGuard} from "@/composables/useUnsavedGuard";
+import {useEditorHotkeys} from "@/composables/useEditorHotkeys";
 
 const router = useRouter();
 
@@ -233,11 +236,19 @@ const props = withDefaults(defineProps<{
   initialViewMode: 'preview'
 });
 
-const noteData = ref({
-  noteId: -1,
-  groupId: null as number | null
-});
+const noteId = ref(-1); // 当前笔记 id，-1 表示尚未保存的新笔记
 
+// 分组 id 统一收敛：空值/非法值一律归为 null，其余转数字便于比较与提交
+const toGroupId = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+  const id = Number(value);
+  return Number.isFinite(id) ? id : null;
+};
+
+// 详情页地址统一入口，避免路径字符串散落在各处
+const noteDetailPath = (id: number) => `/noteDetail/${id}`;
+
+// 当前分组：全局唯一数据源，提交时直接取这里，不再另存一份
 const groupValue = ref<number | null>(null);
 const groups = ref<any[]>([]);
 const deleteDialogVisible = ref(false);
@@ -269,8 +280,8 @@ const onTitleEnter = (event: KeyboardEvent) => {
 // 确定才写回标题与分组并置脏，空标题交给保存时用正文开头兜底
 const confirmTitleEdit = () => {
   const nextTitle = titleDraft.value.trim();
-  // 下拉清空时 el-select 给的是 undefined，统一收敛成 null；id 统一转成数字便于比较
-  const nextGroup = groupDraft.value == null ? null : Number(groupDraft.value);
+  // 下拉清空时 el-select 给的是 undefined，这里统一收敛成 null
+  const nextGroup = toGroupId(groupDraft.value);
   titleDialogVisible.value = false;
 
   const titleChanged = nextTitle !== noteTitle.value;
@@ -283,7 +294,6 @@ const confirmTitleEdit = () => {
   }
   if (groupChanged) {
     groupValue.value = nextGroup;
-    noteData.value.groupId = nextGroup ? Number(nextGroup) : null;
     markGroupChanged();
   }
 
@@ -292,26 +302,32 @@ const confirmTitleEdit = () => {
   if (dirty.value) void saveNote();
 };
 
-const dirty = ref(false);   // 是否有未保存修改
-const saving = ref(false);  // 保存请求进行中，避免并发提交
 const loading = ref(false); // 笔记内容加载中
-const saveError = ref(false); // 最近一次保存是否失败（仅用于自动保存失败提示去重）
 
-// 停止输入多久后自动保存
-const AUTO_SAVE_DELAY = 3000;
-let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+// 自动保存的状态与排期（脏标记、防抖、并发、失败提示去重）统一交给 composable，
+// 页面只负责"存什么"，通过 persistNote 回调注入
+const {
+  dirty,
+  saving,
+  saveError,
+  markDirty,
+  runSave,
+  reportSaveError,
+  clearAutoSaveTimer,
+  resetSaveState,
+} = useNoteAutoSave({ save: (silent) => persistNote(silent) });
 
 // 预览态只读展示用的分组名；未选分组时给出兜底文案
 const currentGroupName = computed(() => {
   if (groupValue.value === null) return '未分组';
-  const hit = groups.value.find((item) => Number(item.id) === groupValue.value);
+  const hit = groups.value.find((item) => toGroupId(item.id) === groupValue.value);
   return hit?.groupName || '未分组';
 });
 
 // 分组同属笔记内容，改动后要置脏才能触发自动保存；
 // 新建笔记（id = -1）此时只记住分组，避免仅选了个分组就被自动保存成一条空笔记
 const markGroupChanged = () => {
-  if (noteData.value.noteId === -1) return;
+  if (noteId.value === -1) return;
   markDirty();
 };
 
@@ -321,28 +337,6 @@ const valueHtml = ref("");
 
 // 视图模式：edit（编辑）、preview（预览）
 const viewMode = ref<ViewMode>(props.initialViewMode);
-
-const clearAutoSaveTimer = () => {
-  if (!autoSaveTimer) return;
-  clearTimeout(autoSaveTimer);
-  autoSaveTimer = null;
-};
-
-// 停止输入后自动保存，连续输入会不断重置计时
-const scheduleAutoSave = () => {
-  clearAutoSaveTimer();
-  autoSaveTimer = setTimeout(() => {
-    autoSaveTimer = null;
-    void saveNote({ silent: true });
-  }, AUTO_SAVE_DELAY);
-};
-
-// 统一的未保存入口：置脏、清失败态并安排自动保存
-const markDirty = () => {
-  dirty.value = true;
-  saveError.value = false;
-  scheduleAutoSave();
-};
 
 // 解密失败（历史明文或异常密文）时回退原文，避免内容被静默清空
 const safeDecrypt = (raw: string) => {
@@ -358,7 +352,7 @@ const safeDecrypt = (raw: string) => {
 let loadToken = 0;
 const loadNote = async (id: number) => {
   const token = ++loadToken;
-  noteData.value.noteId = id;
+  noteId.value = id;
   loading.value = true;
   clearAutoSaveTimer();
 
@@ -367,22 +361,17 @@ const loadNote = async (id: number) => {
       valueHtml.value = '';
       noteTitle.value = '';
       groupValue.value = null;
-      noteData.value.groupId = null;
     } else {
       const res = await getNote(id);
       if (token !== loadToken) return; // 已有更新的加载请求，丢弃本次结果
 
       valueHtml.value = safeDecrypt(res.data?.content || '');
       noteTitle.value = res.data?.title || '';
-      const groupId = res.data?.groupId ?? null;
-      groupValue.value = groupId === null ? null : Number(groupId);
-      noteData.value.groupId = groupId === null ? null : Number(groupId);
+      groupValue.value = toGroupId(res.data?.groupId);
     }
 
-    if (token === loadToken) {
-      dirty.value = false;
-      saveError.value = false;
-    }
+    // 加载成功后回到干净状态，避免上一份笔记的脏标记带到新内容上
+    if (token === loadToken) resetSaveState();
   } catch {
     ElMessage.error('笔记加载失败');
   } finally {
@@ -391,19 +380,11 @@ const loadNote = async (id: number) => {
   }
 };
 
-// 未保存确认弹窗：返回 true 表示确认放弃修改
-const confirmDiscard = async (message: string) => {
-  try {
-    await ElMessageBox.confirm(message, '未保存提醒', {
-      confirmButtonText: '离开',
-      cancelButtonText: '继续编辑',
-      type: 'warning',
-    });
-    return true;
-  } catch {
-    return false;
-  }
-};
+// 未保存保护：路由离开、浏览器刷新/关闭、同页切换三个入口统一由 composable 收口
+const {canSwitchNote} = useUnsavedGuard({
+  isDirty: dirty,
+  getFallbackPath: () => noteDetailPath(noteId.value),
+});
 
 // 正文变动由编辑器 @change 立即通知（标题走输入事件），这里无需再监听 v-model
 
@@ -416,19 +397,10 @@ watch(viewMode, (mode) => {
 // 同一路由复用组件时 onMounted 不会再次执行，必须监听参数变化重新加载
 watch(() => router.currentRoute.value.params.id, async (val) => {
   const id = Number(val);
-  if (!Number.isFinite(id) || id === noteData.value.noteId) return;
+  if (!Number.isFinite(id) || id === noteId.value) return;
 
   // 同页切换笔记同样要保护未保存内容，取消时回退地址，保持界面与 URL 一致
-  if (dirty.value) {
-    const previousId = noteData.value.noteId;
-    if (!(await confirmDiscard('当前笔记有未保存的修改，切换后将丢失，确定继续吗？'))) {
-      await router.replace({
-        path: `/noteDetail/${previousId}`,
-        query: router.currentRoute.value.query,
-      });
-      return;
-    }
-  }
+  if (!(await canSwitchNote())) return;
 
   await loadNote(id);
 });
@@ -437,13 +409,6 @@ watch(() => router.currentRoute.value.params.id, async (val) => {
 watch(() => router.currentRoute.value.query.viewMode, (val) => {
   viewMode.value = val === 'edit' ? 'edit' : 'preview';
 });
-
-// 刷新/关闭标签页无法自定义文案，只触发浏览器原生确认
-const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-  if (!dirty.value) return;
-  // 现代浏览器统一由 preventDefault 触发原生确认（returnValue 已废弃）
-  event.preventDefault();
-};
 
 onMounted(async () => {
   const paramId = Number(router.currentRoute.value.params.id);
@@ -455,29 +420,12 @@ onMounted(async () => {
 
     // 如果是新建笔记且没有选中分组，则默认选中第一个分组
     if (initialId === -1 && !groupValue.value && groups.value.length > 0) {
-      groupValue.value = Number(groups.value[0].id);
-      noteData.value.groupId = Number(groups.value[0].id);
+      groupValue.value = toGroupId(groups.value[0].id);
     }
   });
 
-  window.addEventListener('keydown', handleEvent);
-  window.addEventListener('beforeunload', handleBeforeUnload);
-
   await loadNote(initialId);
   closeLoading();
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('keydown', handleEvent);
-  window.removeEventListener('beforeunload', handleBeforeUnload);
-  if (ctrlSTimer) clearTimeout(ctrlSTimer);
-  clearAutoSaveTimer();
-});
-
-// 有未保存修改时，离开页面需二次确认
-onBeforeRouteLeave(async () => {
-  if (!dirty.value) return true;
-  return confirmDiscard('当前笔记有未保存的修改，确定离开吗？');
 });
 
 // 将编辑器纯文本整理为标题，回车和连续空白统一转为空格。
@@ -485,12 +433,11 @@ const buildNoteTitle = (text: string) => {
   return text.replace(/\s+/g, ' ').trim().substring(0, 100);
 };
 
-// silent 用于自动保存：成功不打扰用户，失败仍要提醒一次（内容没落库不能让用户以为存好了）
-const saveNote = async (options: { silent?: boolean } = {}) => {
-  const { silent = false } = options;
+// 真正的落库逻辑，返回 true 表示已保存成功，composable 据此决定是否续期自动保存
+// silent 只影响提示：自动保存成功不打扰用户，失败仍要提醒一次（内容没落库不能让用户以为存好了）
+const persistNote = async (silent: boolean): Promise<boolean> => {
   const editor = editorRef.value;
-  if (!editor || saving.value) return;
-  if (silent && !dirty.value) return;
+  if (!editor) return false;
 
   // 标题优先取输入框，留空时退回正文自动生成，并回填到输入框保持界面与实际一致
   const title = noteTitle.value.trim() || buildNoteTitle(editor.getText());
@@ -500,66 +447,52 @@ const saveNote = async (options: { silent?: boolean } = {}) => {
 
   // 保存期间继续编辑的内容不算已保存，用快照比对决定是否清除脏标记
   const markSaved = () => {
-    dirty.value = editor.getHTML() !== snapshot || noteTitle.value !== title;
+    dirty.value = editor.getHTML() !== snapshot;
     saveError.value = false;
   };
 
-  // 失败统一入口：手动保存必提示；自动保存只在"首次失败"时提示一次，连续失败不反复弹窗
-  const reportSaveError = (msg: string) => {
-    const alreadyFailed = saveError.value;
-    saveError.value = true;
-    if (!silent || !alreadyFailed) ElMessage.error({message: msg, grouping: true});
-  };
-
-  clearAutoSaveTimer();
-  saving.value = true;
-  let saved = false;
-
   try {
-    if (noteData.value.noteId === -1) {
-      const res = await addNote(null, noteValue, title, noteData.value.groupId);
+    if (noteId.value === -1) {
+      const res = await addNote(null, noteValue, title, groupValue.value);
       if (res.code !== 200 || !res.data) {
-        reportSaveError(res.msg || '保存失败');
-        return;
+        reportSaveError(res.msg || '保存失败', silent);
+        return false;
       }
-      noteData.value.noteId = res.data;
+      noteId.value = res.data;
       markSaved();
-      saved = true;
       // 保留 query（viewMode），否则首次保存后会被 query watch 打回预览模式
       void router.replace({
-        path: `/noteDetail/${res.data}`,
+        path: noteDetailPath(Number(res.data)),
         query: router.currentRoute.value.query,
       });
-      if (!silent) ElMessage.success('保存成功！');
     } else {
-      const res = await editNote(noteData.value.noteId, noteValue, title, noteData.value.groupId);
+      const res = await editNote(noteId.value, noteValue, title, groupValue.value);
       if (res.code !== 200) {
-        reportSaveError(res.msg || '保存失败');
-        return;
+        reportSaveError(res.msg || '保存失败', silent);
+        return false;
       }
       markSaved();
-      saved = true;
-      if (!silent) ElMessage.success('保存成功！');
     }
   } catch {
-    reportSaveError('保存失败，请稍后重试');
-  } finally {
-    saving.value = false;
-    // 保存期间又有新改动时，等这一轮结束后再安排下一次
-    if (saved && dirty.value) scheduleAutoSave();
+    reportSaveError('保存失败，请稍后重试', silent);
+    return false;
   }
+
+  if (!silent) ElMessage.success('保存成功！');
+  return true;
 };
 
+// 统一保存入口：模板按钮、快捷键、切换预览都走这里，并发与防抖由 composable 负责
+const saveNote = (options: { silent?: boolean } = {}) => runSave(options.silent ?? false);
+
 const delNote = () => {
-  if (noteData.value.noteId === -1) {
+  if (noteId.value === -1) {
     ElMessage.warning('新笔记无法删除');
     return;
   }
-  deleteNoteItem(noteData.value.noteId).then(() => {
+  deleteNoteItem(noteId.value).then(() => {
     // 删除成功后不再拦截离开，并取消可能待触发的自动保存
-    clearAutoSaveTimer();
-    dirty.value = false;
-    saveError.value = false;
+    resetSaveState();
     ElMessage.success('删除成功！');
     router.push(`/note`);
   });
@@ -576,49 +509,12 @@ const handleMoreCommand = (command: string) => {
 };
 
 
-let ctrlSTimer: ReturnType<typeof setTimeout> | null = null;
-
-// 兼容 Windows/Linux 的 Ctrl 与 macOS 的 Cmd
-const isModifierKey = (event: KeyboardEvent) => event.ctrlKey || event.metaKey;
-
-function handleEvent(event: KeyboardEvent) {
-  // 统一转小写，避免开启 Caps Lock 后组合键失效
-  const key = event.key.toLowerCase();
-
-  if (isModifierKey(event) && key === 'd') {
-    if (viewMode.value === 'preview') {
-      event.preventDefault();
-      return;
-    }
-
-    if (viewMode.value === 'edit') {
-      event.preventDefault();
-      editorRef.value?.deleteCurrentLine();
-      return;
-    }
-
-  }
-
-  // 保留 Ctrl/Cmd + Shift + S 给浏览器自身的"另存为"
-  if (isModifierKey(event) && key === 's' && !event.shiftKey) {
-    // 预览态阻止浏览器另存为，同时与（已隐藏的）保存按钮保持一致：不触发保存
-    event.preventDefault();
-    if (viewMode.value === 'preview') return;
-
-    // 多次触发 给出提示
-    if (ctrlSTimer) {
-      ElMessage({
-        message: `⚡️ 少侠，你的手速突破系统结界啦！`,
-        type: 'success',
-      });
-      return;
-    }
-    saveNote();
-    ctrlSTimer = setTimeout(() => {
-      ctrlSTimer = null;
-    }, 1000); // 1秒内无法重复保存
-  }
-}
+// 编辑器快捷键：Ctrl/Cmd + S 保存、Ctrl/Cmd + D 删除当前行（事件注册与冷却都在 composable 内）
+useEditorHotkeys({
+  canEdit: () => viewMode.value === 'edit',
+  onSave: () => void saveNote(),
+  onDeleteLine: () => editorRef.value?.deleteCurrentLine(),
+});
 
 </script>
 
@@ -945,14 +841,11 @@ function handleEvent(event: KeyboardEvent) {
   gap: 10px;
 }
 
+/* 复用删除弹窗的按钮基类，只调整尺寸与圆角 */
 .title-dialog-footer .delete-dialog-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   height: 34px;
   padding: 0 18px;
   border-radius: 8px;
-  font-size: 13px;
   line-height: 1;
 }
 
@@ -1206,7 +1099,11 @@ function handleEvent(event: KeyboardEvent) {
   gap: 8px;
 }
 
+/* 弹窗底部按钮基类：两个弹窗共用，居中与间距统一在这里 */
 .delete-dialog-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   height: 32px;
   padding: 0 14px;
   border-radius: 6px;
