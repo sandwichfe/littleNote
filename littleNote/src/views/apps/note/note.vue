@@ -61,9 +61,9 @@
       <button v-if="hasActiveQuery" type="button" class="result-clear" @click="clearFilters">清除筛选</button>
     </div>
 
-    <!-- 列表 -->
-    <div ref="scrollContainer" class="scroll_content" :aria-busy="loading">
-      <div ref="scrollWrapper" class="scroll-wrapper">
+    <!-- 列表：外层只负责定位进度条，内层是原生滚动容器 -->
+    <div class="list-box">
+      <div ref="scrollContainer" class="scroll_content" :aria-busy="loading">
         <!-- 首屏骨架屏：只在首次加载时出现，避免整块遮罩闪白 -->
         <div v-if="firstLoading" class="skeleton-list" aria-hidden="true">
           <div v-for="n in 8" :key="n" class="skeleton-line">
@@ -126,14 +126,13 @@
             新建第一篇
           </el-button>
         </el-empty>
-
       </div>
 
-      <!-- 搜索时的顶部进度条，保留旧列表，不做整块遮罩 -->
+      <!-- 搜索时的顶部进度条，保留旧列表，不做整块遮罩；放在滚动区外，不随内容滚走 -->
       <div v-if="isRefreshing" class="list-progress" role="progressbar" aria-label="正在加载"></div>
     </div>
 
-    <BackToTop :target="scrollContainer" :scroller="scroll" />
+    <BackToTop :target="scrollContainer" />
 
   </div>
 </template>
@@ -256,12 +255,12 @@ watch(() => [queryParams.groupId, queryParams.keyword], () => {
 const groups = ref<Array<{ id: number; groupName: string }>>([]);
 
 const scrollContainer = ref<HTMLElement | null>(null);
-const scrollWrapper = ref<HTMLElement | null>(null);
 
 // el-input 实例，只用到 focus
 const keywordSelect = ref<{ focus: () => void } | null>(null);
 
-const { scroll, refreshScroll } = useNoteScroll(scrollContainer);
+// 原生滚动 + 桌面端按住拖动
+const { resetScroll } = useNoteScroll(scrollContainer);
 
 const router = useRouter();
 
@@ -304,12 +303,14 @@ const searchInAllGroups = () => {
 
 onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeydown);
+  // 原生滚动容器滚动时收起展开的菜单，避免 popper 与卡片错位
+  scrollContainer.value?.addEventListener('scroll', closeDropdownOnScroll, { passive: true });
   initList();
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleGlobalKeydown);
-  scroll.value?.off?.('scrollStart', closeDropdownOnScroll);
+  scrollContainer.value?.removeEventListener('scroll', closeDropdownOnScroll);
   // 卸载时清理防抖定时器，避免组件销毁后仍触发请求
   debounce.cancel();
 });
@@ -350,8 +351,9 @@ const loadNotesByQuery = async () => {
   loading.value = true;
   try {
     await loadNotes(queryParams.groupId, queryParams.keyword);
+    // 新结果回到顶部
     nextTick(() => {
-      refreshScroll();
+      resetScroll();
     });
   } catch (error) {
     console.error('Failed to load notes by query:', error);
@@ -622,11 +624,8 @@ const removeNote = async (note: Note) => {
 
   try {
     await deleteNoteItem(note.id);
-    // 删除后即时移出列表，避免整表重新请求造成闪烁
+    // 删除后即时移出列表，避免整表重新请求造成闪烁；原生滚动会自行收敛滚动位置
     contents.value = contents.value.filter(item => item.id !== note.id);
-    nextTick(() => {
-      scroll.value?.refresh();
-    });
     ElMessage.success('删除成功！');
   } catch (error) {
     console.error('Failed to delete note:', error);
@@ -668,16 +667,12 @@ const handleDropdownVisible = (visible: boolean, id: number) => {
   }
 };
 
-// better-scroll 用 transform 滚动，popper 面板不会跟随卡片，滚动开始即收起菜单
+// popper 面板挂在 body 上，不会跟随卡片移动，滚动时直接收起已展开的菜单
 const closeDropdownOnScroll = () => {
   if (openDropdownId.value === null) return;
   dropdownRefs.get(openDropdownId.value)?.handleClose?.();
   openDropdownId.value = null;
 };
-
-watch(scroll, (instance) => {
-  instance?.on?.('scrollStart', closeDropdownOnScroll);
-}, { immediate: true });
 
 /* ---------------- 快捷键 ---------------- */
 
@@ -1044,11 +1039,24 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
 }
 
+/* 列表外层：只承担进度条的定位参照 */
+.list-box {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 列表滚动容器：走浏览器原生滚动 */
 .scroll_content {
   flex: 1;
   min-height: 0;
-  position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* 滚到边界后不再把滚动链传给外层页面 */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid #e5e7eb;
   /* 灰底衬托白色条目，靠底色区分边界，不再依赖分隔线 */
   background-color: #f6f8fa;
@@ -1057,9 +1065,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   padding: 6px 8px;
 }
 
-.scroll-wrapper {
-  width: 100%;
-  min-height: 101%;
+/* 鼠标拖拽平移中：抓手光标 + 禁止选中文字 */
+.scroll_content.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* 搜索中的顶部 2px 进度条 */
@@ -1181,6 +1191,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   text-decoration: none;
   cursor: pointer;
   box-sizing: border-box;
+  /* 禁止浏览器对 a 标签的原生拖拽，否则按住拖动会拖出链接虚影而中断滚动 */
+  -webkit-user-drag: none;
 }
 
 /* 键盘 Tab 聚焦时的描边 */

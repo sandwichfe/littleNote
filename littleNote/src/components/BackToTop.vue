@@ -16,26 +16,12 @@
 <script setup lang="ts">
 import { onBeforeUnmount, watch, ref } from 'vue';
 
-interface ScrollPosition {
-  x?: number;
-  y?: number;
-}
-
-interface ScrollLike {
-  y?: number;
-  on?: (eventName: 'scroll' | 'scrollEnd', callback: (position?: ScrollPosition) => void) => void;
-  off?: (eventName: 'scroll' | 'scrollEnd', callback: (position?: ScrollPosition) => void) => void;
-  scrollTo?: (x: number, y: number, time?: number) => void;
-}
-
 const props = withDefaults(defineProps<{
   target?: HTMLElement | null;
-  scroller?: ScrollLike | null;
   threshold?: number;
   duration?: number;
 }>(), {
   target: null,
-  scroller: null,
   threshold: 220,
   duration: 300,
 });
@@ -43,7 +29,6 @@ const props = withDefaults(defineProps<{
 const visible = ref(false);
 
 let cleanupNativeScroll: (() => void) | null = null;
-let cleanupScrollerScroll: (() => void) | null = null;
 
 const prefersReducedMotion = () => {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -60,7 +45,7 @@ const bindNativeScroll = (target: HTMLElement | null | undefined) => {
   if (!target) return;
 
   const handleScroll = () => updateVisible(target.scrollTop);
-  // 原生滚动容器复用入口，笔记页当前走 better-scroll 实例。
+  // 监听原生滚动容器，target 变化时重新绑定
   target.addEventListener('scroll', handleScroll, { passive: true });
   handleScroll();
 
@@ -69,46 +54,22 @@ const bindNativeScroll = (target: HTMLElement | null | undefined) => {
   };
 };
 
-const bindScrollerScroll = (scroller: ScrollLike | null | undefined) => {
-  cleanupScrollerScroll?.();
-  cleanupScrollerScroll = null;
-
-  if (!scroller?.on) return;
-
-  const handleScroll = (position?: ScrollPosition) => {
-    updateVisible(Math.abs(position?.y ?? scroller.y ?? 0));
-  };
-  scroller.on('scroll', handleScroll);
-  scroller.on('scrollEnd', handleScroll);
-  updateVisible(Math.abs(scroller.y ?? 0));
-
-  cleanupScrollerScroll = () => {
-    scroller.off?.('scroll', handleScroll);
-    scroller.off?.('scrollEnd', handleScroll);
-  };
-};
-
 const scrollToTop = () => {
-  const duration = prefersReducedMotion() ? 0 : props.duration;
+  if (!props.target) return;
 
-  if (props.scroller?.scrollTo) {
-    props.scroller.scrollTo(0, 0, duration);
-  } else if (props.target) {
-    props.target.scrollTo({
-      top: 0,
-      behavior: duration > 0 ? 'smooth' : 'auto',
-    });
-  }
+  const duration = prefersReducedMotion() ? 0 : props.duration;
+  props.target.scrollTo({
+    top: 0,
+    behavior: duration > 0 ? 'smooth' : 'auto',
+  });
 
   visible.value = false;
 };
 
 watch(() => props.target, bindNativeScroll, { immediate: true });
-watch(() => props.scroller, bindScrollerScroll, { immediate: true });
 
 onBeforeUnmount(() => {
   cleanupNativeScroll?.();
-  cleanupScrollerScroll?.();
 });
 </script>
 
