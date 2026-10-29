@@ -1,10 +1,31 @@
 <template>
   <div class="main_content">
 
+    <!-- 宽屏侧栏：分组导航（含各分组条数），窄屏隐藏并回落到顶部的类型下拉 -->
+    <aside class="group-nav" aria-label="笔记分组">
+      <div class="group-nav-head">分组</div>
+      <ul class="group-nav-list">
+        <li>
+          <button type="button" class="group-nav-item" :class="{ active: queryParams.groupId === null }"
+                  @click="selectGroupById(null)">
+            <span class="group-nav-name">全部笔记</span>
+            <span class="group-count">{{ totalCount }}</span>
+          </button>
+        </li>
+        <li v-for="item in groups" :key="item.id">
+          <button type="button" class="group-nav-item" :class="{ active: queryParams.groupId === item.id }"
+                  @click="selectGroupById(item.id)">
+            <span class="group-nav-name">{{ item.groupName }}</span>
+            <span class="group-count">{{ groupCounts[item.groupName] || 0 }}</span>
+          </button>
+        </li>
+      </ul>
+    </aside>
+
     <div class="top-box">
       <div class="filter-container">
-        <!-- 分组筛选 -->
-        <div class="filter-item">
+        <!-- 分组筛选：宽屏下由左侧分组栏代替，这里只在窄屏显示 -->
+        <div class="filter-item group-filter">
           <el-select v-model="queryParams.groupId" placeholder="类型" size="large" clearable
                      @clear="handleClear">
             <template #prefix>
@@ -268,6 +289,42 @@ watch(() => [queryParams.groupId, queryParams.keyword], () => {
 
 const groups = ref<Array<{ id: number; groupName: string }>>([]);
 
+/* ---------------- 侧栏分组计数 ---------------- */
+
+// 全量笔记条数，用于侧栏「全部笔记」
+const totalCount = ref(0);
+// 各分组条数：列表接口只下发 groupName，没有 groupId，所以按名称聚合
+const groupCounts = ref<Record<string, number>>({});
+
+// 拉一次全量笔记统计侧栏计数（不带分组/关键词，与当前筛选无关）
+const loadGroupCounts = async () => {
+  try {
+    const res = await listNote(-1, -1);
+    const records: Note[] = res.data.records || [];
+    const counts: Record<string, number> = {};
+
+    records.forEach(item => {
+      const name = item.groupName?.trim();
+      if (name) counts[name] = (counts[name] || 0) + 1;
+    });
+
+    groupCounts.value = counts;
+    totalCount.value = records.length;
+  } catch (error) {
+    console.error('Failed to load note counts:', error);
+  }
+};
+
+// 删除笔记后本地收敛计数，避免为了一次减一重新拉全量
+const decreaseGroupCount = (note: Note) => {
+  totalCount.value = Math.max(0, totalCount.value - 1);
+
+  const name = note.groupName?.trim();
+  if (name && groupCounts.value[name]) {
+    groupCounts.value[name] -= 1;
+  }
+};
+
 const scrollContainer = ref<HTMLElement | null>(null);
 
 // el-input 实例，只用到 focus
@@ -361,6 +418,20 @@ const selectGroup = () => {
   }
 };
 
+// 侧栏切换分组：只改查询条件，具体的列表刷新交给上面的 watch 防抖处理
+const selectGroupById = (id: number | null) => {
+  if (queryParams.groupId === id) return;
+
+  queryParams.groupId = id;
+
+  // 与顶部下拉保持一致，把选择结果同步到全局 store
+  if (id === null) {
+    noteGroupStore.resetSelectedGroupId();
+  } else {
+    noteGroupStore.updateSelectedGroupId(id);
+  }
+};
+
 const loadNotesByQuery = async () => {
   loading.value = true;
   try {
@@ -406,7 +477,11 @@ const initList = async () => {
   try {
     await loadNoteGroups();
     selectGroup();
-    await loadNotes(queryParams.groupId, queryParams.keyword);
+    // 列表与侧栏计数互不依赖，并行请求缩短首屏时间
+    await Promise.all([
+      loadNotes(queryParams.groupId, queryParams.keyword),
+      loadGroupCounts()
+    ]);
   } catch (error) {
     console.error('Failed to initialize data:', error);
   } finally {
@@ -648,6 +723,7 @@ const removeNote = async (note: Note) => {
     await deleteNoteItem(note.id);
     // 删除后即时移出列表，避免整表重新请求造成闪烁；原生滚动会自行收敛滚动位置
     contents.value = contents.value.filter(item => item.id !== note.id);
+    decreaseGroupCount(note);
     ElMessage.success('删除成功！');
   } catch (error) {
     console.error('Failed to delete note:', error);
@@ -750,16 +826,146 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 <style scoped>
 .main_content {
   margin: 0 auto;
-  /* 宽屏下收成一列文档宽度，避免单行过长、阅读跨度太大 */
-  max-width: 960px;
+  /* 宽屏下「左侧分组栏 + 单列列表」整体居中，列表仍保持文档宽度，避免单行过长、阅读跨度太大 */
+  max-width: 1180px;
   width: 100%;
   position: relative;
   overflow: hidden;
   /* 留白处透出外层渐变背景，形成居中的文档卡片 */
   background-color: transparent;
   height: calc(100vh - 64px);
+  /* 左列定宽放分组导航，右列占满放内容；三行依次是工具栏、结果概览、列表 */
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  column-gap: 16px;
+}
+
+/* 结果概览是条件渲染的，行号显式指定，避免首屏缺行时列表塌陷 */
+.top-box,
+.result-bar,
+.list-box {
+  grid-column: 2;
+}
+
+.top-box {
+  grid-row: 1;
+}
+
+.result-bar {
+  grid-row: 2;
+}
+
+.list-box {
+  grid-row: 3;
+}
+
+/* 左侧分组导航：与右侧内容齐高，分组多时自身滚动 */
+.group-nav {
+  grid-column: 1;
+  grid-row: 1 / -1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  padding: 14px 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #fff;
+  border-radius: 10px;
+}
+
+.group-nav-head {
+  padding: 0 8px 8px;
+  font-size: 12px;
+  color: #9aa1a9;
+}
+
+.group-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.group-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #4e5969;
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.group-nav-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-count {
+  flex-shrink: 0;
+  color: #a9aeb8;
+  font-size: 12px;
+  /* 等宽数字，避免条数变化时文字左右跳动 */
+  font-variant-numeric: tabular-nums;
+}
+
+.group-nav-item:hover,
+.group-nav-item:focus-visible {
+  background: #f4f6f8;
+  color: #1d2129;
+  outline: none;
+}
+
+.group-nav-item:focus-visible {
+  outline: 2px solid rgba(13, 148, 136, 0.4);
+  outline-offset: -2px;
+}
+
+/* 选中态沿用列表主色，和顶部下拉的选中语义一致 */
+.group-nav-item.active {
+  background: rgba(13, 148, 136, 0.08);
+  color: #0d9488;
+  font-weight: 600;
+}
+
+.group-nav-item.active .group-count {
+  color: #0d9488;
+}
+
+/* 分组栏只在宽屏出现，窄屏回落到顶部的类型下拉 */
+@media screen and (max-width: 1023px) {
+  .main_content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .group-nav {
+    display: none;
+  }
+
+  .top-box,
+  .result-bar,
+  .list-box {
+    grid-column: 1;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .group-filter {
+    display: none;
+  }
 }
 
 @media screen and (max-width: 768px) {
