@@ -107,7 +107,7 @@ watch(searchValue, (newValue) => {
 // 节流函数
 const delay = (function () {
   let timer: ReturnType<typeof setTimeout>;
-  return function (callback, ms) {
+  return function (callback: () => void, ms: number) {
     clearTimeout(timer);
     timer = setTimeout(callback, ms);
   };
@@ -132,11 +132,11 @@ const loadData = () => {
 };
 
 // 搜索标签
-const searchGroups = (query) => {
+const searchGroups = (query: string) => {
   loading.value = true;
   listNoteGroup(-1, -1).then((res) => {
     if (query) {
-      noteGroups.value = res.data.records.filter(group => 
+      noteGroups.value = res.data.records.filter((group: NoteGroup) =>
         group.groupName.toLowerCase().includes(query.toLowerCase())
       );
     } else {
@@ -155,16 +155,16 @@ const handleAdd = () => {
 };
 
 // 编辑标签
-const handleEdit = (row) => {
+const handleEdit = (row: NoteGroup) => {
   dialogType.value = 'edit';
-  currentId.value = row.id;
+  currentId.value = row.id ?? null;
   form.value = { groupName: row.groupName };
   dialogVisible.value = true;
 };
 
 // 删除标签
-const handleDelete = (row) => {
-  currentId.value = row.id;
+const handleDelete = (row: NoteGroup) => {
+  currentId.value = row.id ?? null;
   deleteDialogVisible.value = true;
 };
 

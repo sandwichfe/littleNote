@@ -7,6 +7,7 @@ import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
 
+// @ts-ignore
 import 'virtual:svg-icons-register';
 
 import SvgIcon from '@/components/SvgIcon.vue'; 

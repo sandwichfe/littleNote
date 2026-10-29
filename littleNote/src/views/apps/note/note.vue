@@ -67,12 +67,12 @@
               </a>
 
               <!-- 卡片更多操作 -->
-              <el-dropdown :ref="(el) => registerDropdownRef(c.id, el)"
+              <el-dropdown :ref="(el: unknown) => registerDropdownRef(c.id, el)"
                            trigger="click"
                            class="card-more"
                            placement="bottom-end"
-                           @visible-change="(visible) => handleDropdownVisible(!!visible, c.id)"
-                           @command="(command) => handleCardCommand(String(command), c)">
+                           @visible-change="(visible: boolean) => handleDropdownVisible(!!visible, c.id)"
+                           @command="(command: string) => handleCardCommand(command, c)">
                 <button type="button" class="card-more-btn" aria-label="更多操作">
                   <el-icon><MoreFilled /></el-icon>
                 </button>
@@ -238,7 +238,8 @@ const loadNotesByQuery = async () => {
 
 const loadNotes = async (groupId: number | null = null, keyword = '') => {
   try {
-    const noteRes = await listNote(-1, -1, groupId, keyword);
+    // listNote 的 groupId 只接受 number | undefined，null 统一转 undefined（axios 都不会带上该参数）
+    const noteRes = await listNote(-1, -1, groupId ?? undefined, keyword);
 
     // 接口已按 ES 搜索返回结果，前端不再按标题二次过滤，避免正文命中被隐藏。
     contents.value = noteRes.data.records;

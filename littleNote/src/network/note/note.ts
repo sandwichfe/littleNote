@@ -36,7 +36,7 @@ export function getNote(id: number): Promise<any> {
   });
 }
 
-export function editNote(id: number, content: string, title: string, groupId?: number): Promise<any> {
+export function editNote(id: number, content: string, title: string, groupId?: number | null): Promise<any> {
   return request({
     method: "post",
     url: `${NOTE_API}/editNote`,
@@ -49,7 +49,8 @@ export function editNote(id: number, content: string, title: string, groupId?: n
   });
 }
 
-export function addNote(id: number, content: string, title: string, groupId?: number): Promise<any> {
+// 新建时 id 传 null，groupId 传 null 表示未分组
+export function addNote(id: number | null, content: string, title: string, groupId?: number | null): Promise<any> {
   return request({
     method: "post",
     url: `${NOTE_API}/addNote`,
