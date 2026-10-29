@@ -17,13 +17,17 @@
         <!-- 搜索框移到顶部 -->
         <div class="filter-item search-box">
           <el-input v-model="queryParams.keyword" placeholder="搜索笔记" ref="keywordSelect" size="large" clearable
-                    @focus="handleSearchFocus" @blur="handleSearchBlur">
+                    @focus="handleSearchFocus" @blur="handleSearchBlur" @clear="handleSearchClear">
             <template #prefix>
               <svg-icon iconClass="search" className="search-icon" />
             </template>
+            <!-- 显式搜索按钮：点击立即请求，不用等防抖或按 Enter -->
+            <template #append>
+              <el-button class="search-submit" @click="doSearch">搜索</el-button>
+            </template>
           </el-input>
 
-          <!-- 最近搜索：空输入聚焦时展示，点击直接复用（mousedown.prevent 保住输入框焦点） -->
+          <!-- 最近搜索：聚焦时展示，点击直接复用（mousedown.prevent 保住输入框焦点） -->
           <div v-if="showHistory && searchHistory.length > 0" class="search-history" @mousedown.prevent>
             <div class="search-history-head">
               <span>最近搜索</span>
@@ -199,6 +203,8 @@ const readSearchHistory = (): string[] => {
 
 const searchHistory = ref<string[]>(readSearchHistory());
 const showHistory = ref(false);
+// 最近一次非空关键词：点清空（X）时补记历史，避免刚搜过的词被漏掉
+let lastKeyword = '';
 
 // 记录一次有效搜索，重复词提到最前
 const saveSearchHistory = (word: string) => {
@@ -213,15 +219,22 @@ const saveSearchHistory = (word: string) => {
   }
 };
 
-// 有输入内容时不弹历史，历史只作为空输入时的补全
+// 聚焦即展开历史；一开始输入就由下面的 watch 收起，不遮挡结果
 const handleSearchFocus = () => {
-  showHistory.value = searchHistory.value.length > 0 && !queryParams.keyword.trim();
+  showHistory.value = searchHistory.value.length > 0;
 };
 
 const handleSearchBlur = () => {
   showHistory.value = false;
   // 输入中途切走的词往往不完整，过短的不入历史
   if (queryParams.keyword.trim().length >= 2) saveSearchHistory(queryParams.keyword);
+};
+
+// 点清空（X）时：把刚搜过的词补进历史，并直接展开面板（清空后焦点仍在输入框）
+const handleSearchClear = () => {
+  saveSearchHistory(lastKeyword);
+  lastKeyword = '';
+  showHistory.value = searchHistory.value.length > 0;
 };
 
 const applyHistory = (word: string) => {
@@ -240,9 +253,13 @@ const clearHistory = () => {
   }
 };
 
-// 一旦开始输入就收起历史面板，避免遮挡结果
+// 记录最近一次非空关键词；一开始输入就收起历史面板，避免遮挡结果
 watch(() => queryParams.keyword, (value) => {
-  if (value) showHistory.value = false;
+  const keyword = value.trim();
+  if (keyword) {
+    lastKeyword = keyword;
+    showHistory.value = false;
+  }
 });
 
 watch(() => [queryParams.groupId, queryParams.keyword], () => {
@@ -360,6 +377,14 @@ const loadNotesByQuery = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// 显式搜索（点搜索按钮）：取消防抖立即请求，并把关键词记入历史
+const doSearch = () => {
+  showHistory.value = false;
+  debounce.cancel();
+  saveSearchHistory(queryParams.keyword);
+  loadNotesByQuery();
 };
 
 const loadNotes = async (groupId: number | null = null, keyword = '') => {
@@ -896,6 +921,30 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
     min-width: 40px;
     margin-right: 3px;
   }
+}
+
+/* 搜索按钮：与主色同族的浅色块，避免在顶部工具栏里过于抢眼 */
+.search-box :deep(.el-input-group__append) {
+  padding: 0;
+  background: rgba(13, 148, 136, 0.08);
+  border-color: #d5e5e2;
+  box-shadow: none;
+}
+
+.search-box :deep(.el-input-group__append .el-button) {
+  height: 100%;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  color: #0f766e;
+  font-size: 13px;
+  box-shadow: none;
+}
+
+.search-box :deep(.el-input-group__append .el-button:hover),
+.search-box :deep(.el-input-group__append .el-button:focus-visible) {
+  background: rgba(13, 148, 136, 0.14);
+  box-shadow: none;
 }
 
 /* 最近搜索面板，浮在列表之上 */
