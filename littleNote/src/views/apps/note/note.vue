@@ -737,16 +737,12 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
     return;
   }
 
-  // 搜索框内 Enter 打开首条；请求中拦截，避免打开旧结果
+  // 搜索框内 Enter 直接触发搜索（与搜索按钮同一套逻辑，不再跳转首条笔记）
   if (key === 'Enter' && !event.isComposing && !event.ctrlKey && !event.metaKey) {
     const active = document.activeElement;
     if (!active?.closest('.search-box')) return;
     event.preventDefault();
-    // Enter 视为一次明确搜索，落进历史
-    saveSearchHistory(queryParams.keyword);
-    if (loading.value) return;
-    const first = contents.value[0];
-    if (first) openNoteWindow(first.id);
+    doSearch();
   }
 };
 </script>
