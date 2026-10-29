@@ -84,6 +84,8 @@
           <div v-for="n in 8" :key="n" class="skeleton-line">
             <div class="skeleton-bar skeleton-title"></div>
             <div class="skeleton-bar skeleton-text"></div>
+            <!-- 摘要按两行放置，和真实卡片的两行摘要对齐，减少加载完的高度跳动 -->
+            <div class="skeleton-bar skeleton-text is-short"></div>
             <div class="skeleton-bar skeleton-meta"></div>
           </div>
         </div>
@@ -1386,7 +1388,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   /* 灰底衬托白色条目，靠底色区分边界，不再依赖分隔线 */
   background-color: #f6f8fa;
   border-bottom: none;
-  border-radius: 0 0 8px 8px;
+  /* 与顶部工具栏、左侧分组栏统一 10px，避免上下圆角不一致 */
+  border-radius: 0 0 10px 10px;
   padding: 6px 8px;
 }
 
@@ -1604,7 +1607,10 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 /* 第二层：摘要，搜索态为命中上下文 */
 .pcontent {
-  display: block;
+  /* 宽屏给两行：单行摘要会让 1180px 宽的卡片显得空，两行信息量更合适 */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   width: 100%;
   margin-top: 3px;
   text-align: left;
@@ -1614,7 +1620,9 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  /* 多行钳制要放开 nowrap，长串英文按字符折行，避免撑破卡片 */
+  white-space: normal;
+  word-break: break-word;
 }
 
 .note-highlight-html :deep(em),
@@ -1726,7 +1734,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   flex-direction: column;
   justify-content: center;
   gap: 8px;
-  min-height: 93px;
+  /* 对齐「标题 + 两行摘要 + 元信息」的真实卡片高度，避免加载完列表整体上移 */
+  min-height: 112px;
   margin: 0;
   padding: 12px 44px 12px 14px;
   background: #fff;
@@ -1750,6 +1759,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 .skeleton-text {
   width: 90%;
+}
+
+/* 摘要最后一行通常不满，短一截更像真实文本 */
+.skeleton-text.is-short {
+  width: 58%;
 }
 
 .skeleton-meta {
@@ -1802,6 +1816,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   .pcontent {
     margin-top: 2px;
     font-size: 12px;
+    /* 窄屏空间紧张，摘要回到单行 */
+    -webkit-line-clamp: 1;
   }
 
   .note-meta {
