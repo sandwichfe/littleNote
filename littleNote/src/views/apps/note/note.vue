@@ -142,8 +142,14 @@
         </el-empty>
       </div>
 
-      <!-- 搜索时的顶部进度条，保留旧列表，不做整块遮罩；放在滚动区外，不随内容滚走 -->
+      <!-- 顶部进度条：轻量提示，放在滚动区外，不随内容滚走 -->
       <div v-if="isRefreshing" class="list-progress" role="progressbar" aria-label="正在加载"></div>
+
+      <!-- 加载遮罩：压住旧结果，避免旧列表被当成新结果，同时不做整块闪白 -->
+      <div v-if="isRefreshing" class="list-loading" role="status" aria-live="polite">
+        <span class="list-loading-spinner" aria-hidden="true"></span>
+        <span class="list-loading-text">{{ loadingText }}</span>
+      </div>
     </div>
 
     <BackToTop :target="scrollContainer" />
@@ -192,6 +198,9 @@ const debounce = (() => {
   // 额外暴露 cancel，便于卸载时清掉未触发的定时器
   return { run, cancel };
 })();
+
+// 列表请求序号：连续搜索时只认最后一次，避免旧结果覆盖新结果、加载态提前收起
+let notesSeq = 0;
 
 /* ---------------- 搜索历史 ---------------- */
 
@@ -274,6 +283,9 @@ watch(() => queryParams.keyword, (value) => {
 
 watch(() => [queryParams.groupId, queryParams.keyword], () => {
   if (isInitializing.value) return;
+  // 输入即刻进入加载态，防抖等待期也有反馈；序号递增让在途请求失效
+  loading.value = true;
+  notesSeq++;
   debounce.run(() => {
     loadNotesByQuery();
   }, 300);
@@ -320,9 +332,12 @@ const loading = ref(false);
 // 首屏骨架屏标记，只在初始化阶段为 true
 const firstLoading = ref(true);
 
-// 已有列表情况下的加载（搜索/切分组），走顶部进度条 + 轻微弱化
+// 已有列表情况下的加载（搜索/切分组），走顶部进度条 + 半透明遮罩
 const isRefreshing = computed(() => loading.value && !firstLoading.value);
 const isSearchEmpty = computed(() => !!queryParams.keyword.trim());
+
+// 加载文案跟随触发来源，切分组时提示「加载中」更准确
+const loadingText = computed(() => (isSearchEmpty.value ? '搜索中…' : '加载中…'));
 
 const emptyDescription = computed(() => {
   const keyword = queryParams.keyword.trim();
@@ -397,9 +412,12 @@ const selectGroupById = (id: number | null) => {
 };
 
 const loadNotesByQuery = async () => {
+  const seq = ++notesSeq;
   loading.value = true;
   try {
-    await loadNotes(queryParams.groupId, queryParams.keyword);
+    await loadNotes(queryParams.groupId, queryParams.keyword, seq);
+    // 已有更新的请求时，本次不再动滚动条
+    if (seq !== notesSeq) return;
     // 新结果回到顶部
     nextTick(() => {
       resetScroll();
@@ -407,7 +425,8 @@ const loadNotesByQuery = async () => {
   } catch (error) {
     console.error('Failed to load notes by query:', error);
   } finally {
-    loading.value = false;
+    // 只有最后一次请求负责收起加载态，避免连续搜索时遮罩闪烁
+    if (seq === notesSeq) loading.value = false;
   }
 };
 
@@ -419,10 +438,13 @@ const doSearch = () => {
   loadNotesByQuery();
 };
 
-const loadNotes = async (groupId: number | null = null, keyword = '') => {
+const loadNotes = async (groupId: number | null = null, keyword = '', seq?: number) => {
   try {
     // listNote 的 groupId 只接受 number | undefined，null 统一转 undefined（axios 都不会带上该参数）
     const noteRes = await listNote(-1, -1, groupId ?? undefined, keyword);
+
+    // 已有更新的请求在跑，本次结果直接丢弃，避免旧结果盖掉新结果
+    if (seq !== undefined && seq !== notesSeq) return false;
 
     // 接口已按 ES 搜索返回结果，前端不再按标题二次过滤，避免正文命中被隐藏。
     contents.value = noteRes.data.records;
@@ -1272,6 +1294,41 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   to { left: 100%; }
 }
 
+/* 加载遮罩：半透明压住旧列表，明确「正在取新结果」，但不整块闪白 */
+.list-loading {
+  position: absolute;
+  inset: 0;
+  /* 低于顶部进度条，让进度条压在遮罩上层 */
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(246, 248, 250, 0.72);
+  color: #0d9488;
+  font-size: 13px;
+  animation: listLoadingFadeIn 0.15s ease-out;
+}
+
+.list-loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(13, 148, 136, 0.2);
+  border-top-color: #0d9488;
+  border-radius: 50%;
+  animation: listLoadingSpin 0.7s linear infinite;
+}
+
+@keyframes listLoadingFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes listLoadingSpin {
+  to { transform: rotate(360deg); }
+}
+
 /* 限定到笔记列表，避免作用域样式命中 el-dropdown-menu 的根 ul */
 .note-list {
   list-style: none;
@@ -1585,7 +1642,9 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 @media (prefers-reduced-motion: reduce) {
   .line,
   .skeleton-bar,
-  .list-progress::before {
+  .list-progress::before,
+  .list-loading,
+  .list-loading-spinner {
     animation: none;
   }
 
