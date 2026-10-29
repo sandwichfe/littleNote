@@ -381,7 +381,8 @@ watch(
 watch(
   () => props.editable,
   (val) => {
-    editor.value?.setEditable(val);
+    // 第二个参数关掉 emitUpdate：切换只读/编辑只是视图状态，不该被当成"内容改了"
+    editor.value?.setEditable(val, false);
   }
 );
 

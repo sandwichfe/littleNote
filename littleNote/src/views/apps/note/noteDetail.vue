@@ -1001,6 +1001,8 @@ function handleEvent(event: KeyboardEvent) {
   line-height: 32px;
 }
 
+/* 普通列表项用 :hover，虚拟列表用 is-hovering，两者都按同一套灰调处理 */
+:global(.group-select-popper.el-popper .el-select-dropdown__item:not(.is-disabled):hover),
 :global(.group-select-popper .el-select-dropdown__item.is-hovering) {
   background: #f1f3f4;
   color: #202124;
@@ -1091,40 +1093,56 @@ function handleEvent(event: KeyboardEvent) {
   font-size: 16px;
 }
 
-/* 更多操作菜单：与项目其它浮层保持一致（圆角、描边、浅灰 hover） */
-::global(.toolbar-more-popper.el-popper) {
+/* 更多操作菜单：去掉箭头、收窄留白，跟项目其它浮层统一（圆角、描边、浅灰 hover） */
+:global(.toolbar-more-popper.el-popper) {
+  min-width: 148px;
+  padding: 6px;
   border: 1px solid #dadce0;
   border-radius: 8px;
   box-shadow: 0 10px 28px rgba(32, 33, 36, 0.16), 0 2px 8px rgba(32, 33, 36, 0.08);
+  /* 覆盖 Element Plus 默认的蓝色 hover 取色变量 */
+  --el-dropdown-menuItem-hover-fill: #f1f3f4;
+  --el-dropdown-menuItem-hover-color: #202124;
 }
 
-::global(.toolbar-more-popper .el-dropdown-menu) {
-  padding: 6px;
+/* 指向按钮的小箭头去掉，菜单直接悬在按钮下方更干净 */
+:global(.toolbar-more-popper.el-popper .el-popper__arrow) {
+  display: none;
 }
 
-::global(.toolbar-more-popper .el-dropdown-menu__item) {
+:global(.toolbar-more-popper.el-popper .el-dropdown-menu) {
+  padding: 0;
+  background-color: transparent;
+}
+
+:global(.toolbar-more-popper.el-popper .el-dropdown-menu__item) {
   height: 32px;
-  padding: 0 12px;
-  gap: 6px;
+  padding: 0 10px;
+  gap: 8px;
   border-radius: 6px;
   color: #5f6368;
   font-size: 13px;
   line-height: 32px;
 }
 
-::global(.toolbar-more-popper .el-dropdown-menu__item:not(.is-disabled):hover),
-::global(.toolbar-more-popper .el-dropdown-menu__item:not(.is-disabled):focus) {
+:global(.toolbar-more-popper.el-popper .el-dropdown-menu__item .el-icon) {
+  color: currentColor;
+  font-size: 15px;
+}
+
+:global(.toolbar-more-popper.el-popper .el-dropdown-menu__item:not(.is-disabled):hover),
+:global(.toolbar-more-popper.el-popper .el-dropdown-menu__item:not(.is-disabled):focus) {
   background-color: #f1f3f4;
   color: #202124;
 }
 
 /* 删除这类不可逆操作：红色文字 + 浅红 hover，进菜单但危险感仍在 */
-::global(.toolbar-more-popper .el-dropdown-menu__item.toolbar-more-danger:not(.is-disabled)) {
+:global(.toolbar-more-popper.el-popper .el-dropdown-menu__item.toolbar-more-danger:not(.is-disabled)) {
   color: #d93025;
 }
 
-::global(.toolbar-more-popper .el-dropdown-menu__item.toolbar-more-danger:not(.is-disabled):hover),
-::global(.toolbar-more-popper .el-dropdown-menu__item.toolbar-more-danger:not(.is-disabled):focus) {
+:global(.toolbar-more-popper.el-popper .el-dropdown-menu__item.toolbar-more-danger:not(.is-disabled):hover),
+:global(.toolbar-more-popper.el-popper .el-dropdown-menu__item.toolbar-more-danger:not(.is-disabled):focus) {
   background-color: #fce8e6;
   color: #c5221f;
 }
