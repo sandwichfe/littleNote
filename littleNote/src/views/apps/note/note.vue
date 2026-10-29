@@ -912,19 +912,19 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 }
 
 .group-nav-item:focus-visible {
-  outline: 2px solid rgba(13, 148, 136, 0.4);
+  outline: 2px solid rgba(var(--app-primary-rgb), 0.4);
   outline-offset: -2px;
 }
 
 /* 选中态沿用列表主色，和顶部下拉的选中语义一致 */
 .group-nav-item.active {
-  background: rgba(13, 148, 136, 0.08);
-  color: #0d9488;
+  background: rgba(var(--app-primary-rgb), 0.08);
+  color: var(--app-primary);
   font-weight: 600;
 }
 
 .group-nav-item.active .group-count {
-  color: #0d9488;
+  color: var(--app-primary);
 }
 
 /* 分组栏只在宽屏出现，窄屏回落到顶部的类型下拉 */
@@ -1128,7 +1128,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 }
 
 .search-history-clear:hover {
-  color: #0d9488;
+  color: var(--app-primary);
 }
 
 .search-history-item {
@@ -1231,7 +1231,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 }
 
 .el-select:focus-within {
-  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
+  box-shadow: 0 0 0 2px rgba(var(--app-primary-rgb), 0.2);
 }
 
 /* 列表外层：只承担进度条的定位参照 */
@@ -1275,7 +1275,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   right: 0;
   height: 2px;
   overflow: hidden;
-  background: rgba(13, 148, 136, 0.12);
+  background: rgba(var(--app-primary-rgb), 0.12);
   z-index: 5;
 }
 
@@ -1285,7 +1285,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   top: 0;
   bottom: 0;
   width: 35%;
-  background: #0d9488;
+  background: var(--app-primary);
   animation: listProgressMove 1s ease-in-out infinite;
 }
 
@@ -1306,7 +1306,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   justify-content: center;
   gap: 10px;
   background: rgba(246, 248, 250, 0.72);
-  color: #0d9488;
+  color: var(--app-primary);
   font-size: 13px;
   animation: listLoadingFadeIn 0.15s ease-out;
 }
@@ -1314,8 +1314,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 .list-loading-spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(13, 148, 136, 0.2);
-  border-top-color: #0d9488;
+  border: 2px solid rgba(var(--app-primary-rgb), 0.2);
+  border-top-color: var(--app-primary);
   border-radius: 50%;
   animation: listLoadingSpin 0.7s linear infinite;
 }
@@ -1373,7 +1373,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 }
 
 .line:hover .prename {
-  color: #0d9488;
+  color: var(--app-primary);
 }
 
 /* 桌面端「更多」按钮 hover/focus 时出现，触摸端常驻显示 */
@@ -1427,7 +1427,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 /* 键盘 Tab 聚焦时的描边 */
 .file-li-item:focus-visible {
-  outline: 2px solid rgba(13, 148, 136, 0.5);
+  outline: 2px solid rgba(var(--app-primary-rgb), 0.5);
   outline-offset: -2px;
   border-radius: 6px;
 }
@@ -1471,7 +1471,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   color: inherit;
   font-style: normal;
   font-weight: 600;
-  background: rgba(13, 148, 136, 0.14);
+  background: rgba(var(--app-primary-rgb), 0.14);
   padding: 0 2px;
   border-radius: 2px;
 }

@@ -110,7 +110,8 @@ const goToModule = (targetPath: string) => {
 
 <style scoped>
 .global-header {
-  --header-accent: #0d9488;
+  /* 顶部导航的强调色，跟随全局主色变量 */
+  --header-accent: var(--app-primary);
   --header-border: #e2e8f0;
   --header-text: #0f172a;
   --header-subtle: #64748b;
@@ -159,13 +160,13 @@ const goToModule = (targetPath: string) => {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  border: 1px solid rgba(13, 148, 136, 0.16);
+  border: 1px solid rgba(var(--app-primary-rgb), 0.16);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .brand-button:hover .brand-mark {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(13, 148, 136, 0.12);
+  box-shadow: 0 10px 24px rgba(var(--app-primary-rgb), 0.12);
 }
 
 .brand-title {
@@ -191,8 +192,8 @@ const goToModule = (targetPath: string) => {
 }
 
 .module-trigger:hover, .module-trigger.is-active {
-  border-color: rgba(13, 148, 136, 0.3);
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.08);
+  border-color: rgba(var(--app-primary-rgb), 0.3);
+  box-shadow: 0 4px 12px rgba(var(--app-primary-rgb), 0.08);
   background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
 }
 
@@ -292,9 +293,9 @@ const goToModule = (targetPath: string) => {
 }
 
 .module-entry.is-active .module-entry-icon {
-  background: linear-gradient(135deg, var(--header-accent) 0%, #0f766e 100%);
+  background: linear-gradient(135deg, var(--header-accent) 0%, var(--app-primary-dark) 100%);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+  box-shadow: 0 4px 12px rgba(var(--app-primary-rgb), 0.25);
 }
 
 .module-entry-copy {
@@ -353,7 +354,7 @@ const goToModule = (targetPath: string) => {
 
 .module-entry.is-active .module-entry-content {
   background: linear-gradient(135deg, rgba(240, 253, 250, 0.8), rgba(204, 251, 241, 0.4));
-  border-color: rgba(13, 148, 136, 0.15);
+  border-color: rgba(var(--app-primary-rgb), 0.15);
 }
 
 .module-entry.is-active .module-entry-title {
@@ -369,7 +370,7 @@ const goToModule = (targetPath: string) => {
 
 .login-button {
   border-radius: 999px;
-  border-color: rgba(13, 148, 136, 0.24);
+  border-color: rgba(var(--app-primary-rgb), 0.24);
   color: var(--header-accent);
 }
 

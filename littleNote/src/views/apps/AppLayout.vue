@@ -19,7 +19,7 @@ import GlobalHeader from '@/components/layout/GlobalHeader.vue'
   height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at top left, rgba(13, 148, 136, 0.07), transparent 28%),
+    radial-gradient(circle at top left, rgba(var(--app-primary-rgb), 0.07), transparent 28%),
     linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
 }
 

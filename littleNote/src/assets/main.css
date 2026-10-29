@@ -1,2 +1,22 @@
 @import './base.css';
 
+/* ---------------- 主题色 ----------------
+   全站主色集中在这里定义，页面样式只引用变量，不再散落硬编码色值。
+   用 :root:root 提高特异性，保证能覆盖 element-plus/dist/index.css 里的默认主色。 */
+:root:root {
+  /* 品牌主色（teal） */
+  --app-primary: #0d9488;
+  /* 主色深一档，用于 hover 与强调文字 */
+  --app-primary-dark: #0f766e;
+  /* 主色的 rgb 分量，配合 rgba() 生成各种透明度的底色、描边 */
+  --app-primary-rgb: 13, 148, 136;
+
+  /* 同步覆盖 Element Plus 主色：按钮、下拉选中、输入框聚焦跟随项目主色 */
+  --el-color-primary: var(--app-primary);
+  --el-color-primary-light-3: #56b4ac;
+  --el-color-primary-light-5: #86cac4;
+  --el-color-primary-light-7: #b6dfdb;
+  --el-color-primary-light-8: #cfeae7;
+  --el-color-primary-light-9: #e7f4f3;
+  --el-color-primary-dark-2: var(--app-primary-dark);
+}

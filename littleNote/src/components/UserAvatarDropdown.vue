@@ -476,13 +476,14 @@ watch(() => route.fullPath, () => {
   height: 64px;
   margin-bottom: 12px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #ecf5ff, #d9ecff);
-  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.16);
+  /* 底色跟随主色的浅色梯度，避免残留 EP 默认蓝 */
+  background: linear-gradient(145deg, var(--el-color-primary-light-9), var(--el-color-primary-light-8));
+  box-shadow: 0 8px 20px rgba(var(--app-primary-rgb), 0.16);
 }
 
 .password-lock-icon {
   font-size: 28px;
-  color: #409eff;
+  color: var(--app-primary);
 }
 
 .password-security-title {
@@ -513,7 +514,7 @@ watch(() => route.fullPath, () => {
 
 .password-form :deep(.el-input__wrapper.is-focus) {
   background-color: #fff;
-  box-shadow: 0 0 0 1px #409eff inset, 0 0 0 3px rgba(64, 158, 255, 0.1);
+  box-shadow: 0 0 0 1px var(--app-primary) inset, 0 0 0 3px rgba(var(--app-primary-rgb), 0.1);
 }
 
 .password-dialog-footer {
@@ -598,9 +599,9 @@ watch(() => route.fullPath, () => {
 }
 
 .avatar-upload-container:hover .avatar-uploader-icon {
-  border-color: #409eff;
-  color: #409eff;
-  background-color: #f0f9ff;
+  border-color: var(--app-primary);
+  color: var(--app-primary);
+  background-color: var(--el-color-primary-light-9);
 }
 
 .camera-icon {
