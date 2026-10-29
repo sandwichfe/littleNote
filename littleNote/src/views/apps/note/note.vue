@@ -1360,20 +1360,30 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   background: #fff;
   border: 1px solid #edf0f4;
   border-radius: 8px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
   opacity: 0;
   animation: itemFadeInUp 0.4s ease-out forwards;
   box-sizing: border-box;
 }
 
+/* hover / 聚焦：整卡微亮 + 边框收敛 + 轻投影，不位移、不改标题色，避免抢走阅读重心 */
 .line:hover,
 .line:focus-within {
-  border-color: #d8dfe7;
+  background: #fcfdfe;
+  border-color: #e5e9f0;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
-.line:hover .prename {
-  color: var(--app-primary);
+/* 次级信息在 hover 时提亮一档，暗示整卡可点击，而不是只给标题换颜色 */
+.line:hover .ptime,
+.line:focus-within .ptime {
+  color: #86909c;
+}
+
+.line:hover .note-group,
+.line:focus-within .note-group {
+  background: #e9edf2;
+  color: #6b7280;
 }
 
 /* 桌面端「更多」按钮 hover/focus 时出现，触摸端常驻显示 */
@@ -1445,7 +1455,6 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: color 0.2s ease;
 }
 
 /* 第二层：摘要，搜索态为命中上下文 */
@@ -1493,6 +1502,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   white-space: nowrap;
   /* 等宽数字，避免时间串长度不同导致文字抖动 */
   font-variant-numeric: tabular-nums;
+  transition: color 0.18s ease;
 }
 
 .note-group {
@@ -1505,6 +1515,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
 /* 行右侧「更多」，垂直居中避免压住标题和底部元信息 */
