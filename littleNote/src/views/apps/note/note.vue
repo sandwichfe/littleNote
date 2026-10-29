@@ -8,7 +8,7 @@
         <li>
           <button type="button" class="group-nav-item" :class="{ active: queryParams.groupId === null }"
                   @click="selectGroupById(null)">
-            <span class="group-nav-name">全部笔记</span>
+            <span class="group-nav-name">全部</span>
             <span class="group-count">{{ totalCount }}</span>
           </button>
         </li>
@@ -16,7 +16,7 @@
           <button type="button" class="group-nav-item" :class="{ active: queryParams.groupId === item.id }"
                   @click="selectGroupById(item.id)">
             <span class="group-nav-name">{{ item.groupName }}</span>
-            <span class="group-count">{{ groupCounts[item.groupName] || 0 }}</span>
+            <span class="group-count">{{ groupCounts[item.id] ?? 0 }}</span>
           </button>
         </li>
       </ul>
@@ -162,7 +162,7 @@
 <script setup lang="ts">
 defineOptions({ name: 'note' })
 
-import { listNote, deleteNoteItem, type Note } from "@/network/note/note";
+import { listNote, deleteNoteItem, countNoteByGroup, type Note, type GroupNoteCount } from "@/network/note/note";
 import { listNoteGroup } from "@/network/note/noteGroup";
 import { ref, watch, onMounted, onBeforeUnmount, nextTick, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
@@ -293,35 +293,23 @@ const groups = ref<Array<{ id: number; groupName: string }>>([]);
 
 // 全量笔记条数，用于侧栏「全部笔记」
 const totalCount = ref(0);
-// 各分组条数：列表接口只下发 groupName，没有 groupId，所以按名称聚合
-const groupCounts = ref<Record<string, number>>({});
+// 分组 id -> 笔记数；计数由后端按分组聚合，无笔记的分组也会返回 0
+const groupCounts = ref<Record<number, number>>({});
 
-// 拉一次全量笔记统计侧栏计数（不带分组/关键词，与当前筛选无关）
-const loadGroupCounts = async () => {
+// 不再拉全量笔记自己算，避免分组重名时计数被合并
+const loadNoteCounts = async () => {
   try {
-    const res = await listNote(-1, -1);
-    const records: Note[] = res.data.records || [];
-    const counts: Record<string, number> = {};
+    const res = await countNoteByGroup();
+    const counts: Record<number, number> = {};
 
-    records.forEach(item => {
-      const name = item.groupName?.trim();
-      if (name) counts[name] = (counts[name] || 0) + 1;
+    (res.data?.groupCounts || []).forEach((item: GroupNoteCount) => {
+      counts[item.groupId] = item.noteCount;
     });
 
     groupCounts.value = counts;
-    totalCount.value = records.length;
+    totalCount.value = res.data?.totalCount || 0;
   } catch (error) {
     console.error('Failed to load note counts:', error);
-  }
-};
-
-// 删除笔记后本地收敛计数，避免为了一次减一重新拉全量
-const decreaseGroupCount = (note: Note) => {
-  totalCount.value = Math.max(0, totalCount.value - 1);
-
-  const name = note.groupName?.trim();
-  if (name && groupCounts.value[name]) {
-    groupCounts.value[name] -= 1;
   }
 };
 
@@ -480,7 +468,7 @@ const initList = async () => {
     // 列表与侧栏计数互不依赖，并行请求缩短首屏时间
     await Promise.all([
       loadNotes(queryParams.groupId, queryParams.keyword),
-      loadGroupCounts()
+      loadNoteCounts()
     ]);
   } catch (error) {
     console.error('Failed to initialize data:', error);
@@ -723,7 +711,8 @@ const removeNote = async (note: Note) => {
     await deleteNoteItem(note.id);
     // 删除后即时移出列表，避免整表重新请求造成闪烁；原生滚动会自行收敛滚动位置
     contents.value = contents.value.filter(item => item.id !== note.id);
-    decreaseGroupCount(note);
+    // 计数接口很轻，删除后直接重拉，避免按 groupName 猜分组不准
+    loadNoteCounts();
     ElMessage.success('删除成功！');
   } catch (error) {
     console.error('Failed to delete note:', error);

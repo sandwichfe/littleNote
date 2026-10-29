@@ -67,6 +67,26 @@ export function addNote(id: number | null, content: string, title: string, group
   });
 }
 
+// 单个分组的笔记数量，没有笔记的分组后端也会返回 0
+export interface GroupNoteCount {
+  groupId: number;
+  groupName: string;
+  noteCount: number;
+}
+
+// 笔记计数：总数 + 各分组分布，供列表页侧栏展示
+export interface NoteCount {
+  totalCount: number;
+  groupCounts: GroupNoteCount[];
+}
+
+export function countNoteByGroup(): Promise<any> {
+  return request({
+    method: "get",
+    url: `${NOTE_API}/countNoteByGroup`
+  });
+}
+
 export function deleteNoteItem(id: number): Promise<any> {
   return request({
     method: "get",
