@@ -74,22 +74,37 @@
           </el-tooltip>
         </div>
 
-        <!-- 分隔线：把主操作与危险操作（删除）分开 -->
+        <!-- 分隔线：把主操作与低频操作分开 -->
         <div class="toolbar-divider"></div>
 
-        <!-- 删除按钮：新笔记尚未落库，不可删除 -->
-        <el-tooltip content="删除" placement="bottom" :show-after="300">
-          <button
-              class="toolbar-btn toolbar-btn-delete"
-              aria-label="删除"
-              :disabled="noteData.noteId === -1"
-              @click="deleteDialogVisible = true"
-          >
+        <!-- 更多操作：删除这类低频且不可逆的操作收进菜单，工具栏只留常用入口；
+             后续要加「复制链接」「导出」等直接往菜单里补 item 即可 -->
+        <el-dropdown
+            trigger="click"
+            placement="bottom-end"
+            popper-class="toolbar-more-popper"
+            @command="handleMoreCommand"
+        >
+          <button class="toolbar-btn" aria-label="更多操作">
             <el-icon>
-              <Delete/>
+              <MoreFilled/>
             </el-icon>
           </button>
-        </el-tooltip>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item
+                  command="delete"
+                  class="toolbar-more-danger"
+                  :disabled="noteData.noteId === -1"
+              >
+                <el-icon>
+                  <Delete/>
+                </el-icon>
+                删除笔记
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </div>
 
@@ -203,7 +218,7 @@ import RichEditor from '@/components/RichEditor/index.vue';
 import {addNote, deleteNoteItem, editNote, getNote} from "@/network/note/note";
 import {onBeforeRouteLeave, useRouter} from 'vue-router';
 import {ElMessage, ElMessageBox} from 'element-plus'
-import {Delete, DocumentChecked, Edit, View} from '@element-plus/icons-vue'
+import {Delete, DocumentChecked, Edit, MoreFilled, View} from '@element-plus/icons-vue'
 import {cipherText, decrypted} from "@/utils/aesUtil";
 import {closeLoading} from "@/utils/loadingUtil";
 import {listNoteGroup} from "@/network/note/noteGroup";
@@ -553,6 +568,11 @@ const delNote = () => {
 const confirmDeleteNote = () => {
   deleteDialogVisible.value = false;
   delNote();
+};
+
+// 更多操作菜单：目前只有删除，后续其他低频操作都从这里分发
+const handleMoreCommand = (command: string) => {
+  if (command === 'delete') deleteDialogVisible.value = true;
 };
 
 
@@ -1022,14 +1042,6 @@ function handleEvent(event: KeyboardEvent) {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
-/* 保存中禁用 */
-.toolbar-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
 .toolbar-btn .el-icon {
   font-size: 15px;
 }
@@ -1079,20 +1091,42 @@ function handleEvent(event: KeyboardEvent) {
   font-size: 16px;
 }
 
-/* 删除按钮 */
-.toolbar-btn-delete {
-  background-color: #fff;
-  color: #d93025;
-  border-color: transparent;
+/* 更多操作菜单：与项目其它浮层保持一致（圆角、描边、浅灰 hover） */
+::global(.toolbar-more-popper.el-popper) {
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(32, 33, 36, 0.16), 0 2px 8px rgba(32, 33, 36, 0.08);
 }
 
-.toolbar-btn-delete:hover {
+::global(.toolbar-more-popper .el-dropdown-menu) {
+  padding: 6px;
+}
+
+::global(.toolbar-more-popper .el-dropdown-menu__item) {
+  height: 32px;
+  padding: 0 12px;
+  gap: 6px;
+  border-radius: 6px;
+  color: #5f6368;
+  font-size: 13px;
+  line-height: 32px;
+}
+
+::global(.toolbar-more-popper .el-dropdown-menu__item:not(.is-disabled):hover),
+::global(.toolbar-more-popper .el-dropdown-menu__item:not(.is-disabled):focus) {
+  background-color: #f1f3f4;
+  color: #202124;
+}
+
+/* 删除这类不可逆操作：红色文字 + 浅红 hover，进菜单但危险感仍在 */
+::global(.toolbar-more-popper .el-dropdown-menu__item.toolbar-more-danger:not(.is-disabled)) {
+  color: #d93025;
+}
+
+::global(.toolbar-more-popper .el-dropdown-menu__item.toolbar-more-danger:not(.is-disabled):hover),
+::global(.toolbar-more-popper .el-dropdown-menu__item.toolbar-more-danger:not(.is-disabled):focus) {
   background-color: #fce8e6;
   color: #c5221f;
-}
-
-.toolbar-btn-delete:active {
-  background-color: #f9dedc;
 }
 
 #note-detail-page :deep(.delete-confirm-dialog) {
