@@ -16,11 +16,24 @@
 
         <!-- 搜索框移到顶部 -->
         <div class="filter-item search-box">
-          <el-input v-model="queryParams.keyword" placeholder="搜索" ref="keywordSelect" size="large" clearable>
+          <el-input v-model="queryParams.keyword" placeholder="搜索笔记" ref="keywordSelect" size="large" clearable
+                    @focus="handleSearchFocus" @blur="handleSearchBlur">
             <template #prefix>
               <svg-icon iconClass="search" className="search-icon" />
             </template>
           </el-input>
+
+          <!-- 最近搜索：空输入聚焦时展示，点击直接复用（mousedown.prevent 保住输入框焦点） -->
+          <div v-if="showHistory && searchHistory.length > 0" class="search-history" @mousedown.prevent>
+            <div class="search-history-head">
+              <span>最近搜索</span>
+              <button type="button" class="search-history-clear" @click="clearHistory">清空</button>
+            </div>
+            <button v-for="item in searchHistory" :key="item" type="button" class="search-history-item"
+                    @click="applyHistory(item)">
+              {{ item }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -40,15 +53,22 @@
 
     </div>
 
+    <!-- 结果概览：条数 + 当前筛选条件，固定在顶部不参与滚动（首屏骨架期不显示） -->
+    <div v-if="!firstLoading" class="result-bar">
+      <span class="result-count">共 {{ contents.length }} 条</span>
+      <span v-if="selectedGroupName" class="result-chip">{{ selectedGroupName }}</span>
+      <span v-if="queryParams.keyword.trim()" class="result-chip">“{{ queryParams.keyword.trim() }}”</span>
+      <button v-if="hasActiveQuery" type="button" class="result-clear" @click="clearFilters">清除筛选</button>
+    </div>
+
     <!-- 列表 -->
     <div ref="scrollContainer" class="scroll_content" :aria-busy="loading">
       <div ref="scrollWrapper" class="scroll-wrapper">
         <!-- 首屏骨架屏：只在首次加载时出现，避免整块遮罩闪白 -->
         <div v-if="firstLoading" class="skeleton-list" aria-hidden="true">
-          <div v-for="n in 5" :key="n" class="skeleton-line">
+          <div v-for="n in 8" :key="n" class="skeleton-line">
             <div class="skeleton-bar skeleton-title"></div>
             <div class="skeleton-bar skeleton-text"></div>
-            <div class="skeleton-bar skeleton-time"></div>
           </div>
         </div>
 
@@ -60,10 +80,14 @@
               <a class="file-li-item"
                  :href="getNoteHref(c.id)"
                  @click="handleCardClick($event, c.id)">
-                <span class="prename note-highlight-html" v-html="getDisplayTitle(c)"></span>
-                <span v-if="getDisplayContent(c)" class="pcontent note-highlight-html" v-html="getDisplayContent(c)"></span>
-                <span class="ptime"
-                      :title="formatFullTime(c.updateTime || c.createTime)">{{ formatRelativeTime(c.updateTime || c.createTime) }}</span>
+                <!-- 首行：标题 + 相对时间；时间靠右，不再独占一行 -->
+                <span class="note-row">
+                  <span class="prename note-highlight-html" v-html="getDisplayTitle(c)"></span>
+                  <span class="ptime"
+                        :title="formatFullTime(c.updateTime || c.createTime)">{{ formatRelativeTime(c.updateTime || c.createTime) }}</span>
+                </span>
+                <!-- 摘要解密是分批完成的，这里始终渲染占位，避免摘要补上时行内跳动 -->
+                <span class="pcontent note-highlight-html" v-html="getDisplayContent(c)"></span>
               </a>
 
               <!-- 卡片更多操作 -->
@@ -89,8 +113,10 @@
         </div>
 
         <!-- 空态区分：真的没笔记 / 搜索没结果 -->
-        <el-empty v-else class="empty-msg-box" :image-size="160"
-                  :description="isSearchEmpty ? '(๑•́ ₃ •̀๑)没有匹配的笔记' : '(ง •̀_•́)ง还没有笔记'">
+        <el-empty v-else class="empty-msg-box" :image-size="120" :description="emptyDescription">
+          <!-- 分组内搜不到时，引导用户去全部笔记里再搜一次 -->
+          <el-button v-if="isSearchEmpty && queryParams.groupId !== null" class="empty-action"
+                     @click="searchInAllGroups">在全部笔记中搜索</el-button>
           <el-button v-if="isSearchEmpty" class="empty-action" @click="clearSearch">清空搜索</el-button>
           <el-button v-else class="empty-action" type="primary" @click="addOrUpdateNote(-1, 'edit')">
             新建第一篇
@@ -150,6 +176,72 @@ const debounce = (() => {
   return { run, cancel };
 })();
 
+/* ---------------- 搜索历史 ---------------- */
+
+const SEARCH_HISTORY_KEY = 'littleNote:searchHistory';
+const SEARCH_HISTORY_MAX = 8;
+
+const readSearchHistory = (): string[] => {
+  try {
+    const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list)
+        ? list.filter((item): item is string => typeof item === 'string').slice(0, SEARCH_HISTORY_MAX)
+        : [];
+  } catch {
+    // 缓存损坏或隐私模式禁用存储时按空历史处理
+    return [];
+  }
+};
+
+const searchHistory = ref<string[]>(readSearchHistory());
+const showHistory = ref(false);
+
+// 记录一次有效搜索，重复词提到最前
+const saveSearchHistory = (word: string) => {
+  const value = word.trim();
+  if (!value) return;
+
+  searchHistory.value = [value, ...searchHistory.value.filter(item => item !== value)].slice(0, SEARCH_HISTORY_MAX);
+  try {
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory.value));
+  } catch {
+    // 存储不可用时只保留内存态
+  }
+};
+
+// 有输入内容时不弹历史，历史只作为空输入时的补全
+const handleSearchFocus = () => {
+  showHistory.value = searchHistory.value.length > 0 && !queryParams.keyword.trim();
+};
+
+const handleSearchBlur = () => {
+  showHistory.value = false;
+  // 输入中途切走的词往往不完整，过短的不入历史
+  if (queryParams.keyword.trim().length >= 2) saveSearchHistory(queryParams.keyword);
+};
+
+const applyHistory = (word: string) => {
+  showHistory.value = false;
+  saveSearchHistory(word);
+  queryParams.keyword = word;
+};
+
+const clearHistory = () => {
+  searchHistory.value = [];
+  showHistory.value = false;
+  try {
+    localStorage.removeItem(SEARCH_HISTORY_KEY);
+  } catch {
+    // 忽略存储异常
+  }
+};
+
+// 一旦开始输入就收起历史面板，避免遮挡结果
+watch(() => queryParams.keyword, (value) => {
+  if (value) showHistory.value = false;
+});
+
 watch(() => [queryParams.groupId, queryParams.keyword], () => {
   if (isInitializing.value) return;
   debounce.run(() => {
@@ -177,6 +269,34 @@ const firstLoading = ref(true);
 // 已有列表情况下的加载（搜索/切分组），走顶部进度条 + 轻微弱化
 const isRefreshing = computed(() => loading.value && !firstLoading.value);
 const isSearchEmpty = computed(() => !!queryParams.keyword.trim());
+
+/* ---------------- 结果概览 / 筛选 ---------------- */
+
+const selectedGroupName = computed(() => {
+  const group = groups.value.find(item => item.id === queryParams.groupId);
+  return group?.groupName || '';
+});
+
+// 有关键词或已按分组筛选时，才需要「清除筛选」
+const hasActiveQuery = computed(() => !!queryParams.keyword.trim() || queryParams.groupId !== null);
+
+const emptyDescription = computed(() => {
+  const keyword = queryParams.keyword.trim();
+  return keyword ? `没有找到包含“${keyword}”的笔记` : '还没有笔记';
+});
+
+const clearFilters = () => {
+  queryParams.keyword = '';
+  queryParams.groupId = null;
+  noteGroupStore.resetSelectedGroupId();
+};
+
+// 当前分组内没搜到，切到全部笔记再搜一次
+const searchInAllGroups = () => {
+  queryParams.groupId = null;
+  noteGroupStore.resetSelectedGroupId();
+  focusSearch();
+};
 
 onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeydown);
@@ -274,8 +394,20 @@ const getDisplayTitle = (note: Note) => {
 };
 
 const getDisplayContent = (note: Note) => {
-  return buildHighlightSnippet(note.highlightContent || '');
+  // 搜索态用后端高亮摘要，普通态用列表接口返回的纯文本摘要
+  return buildHighlightSnippet(note.highlightContent || note.summary || '');
 };
+
+/* ---------------- 摘要清洗 ---------------- */
+
+const SNIPPET_MAX = 150;         // 普通摘要最多展示的字符数
+const SNIPPET_SOURCE_MAX = 400;  // 清洗前截取的原始长度，控制正则开销
+const HIT_CONTEXT_BEFORE = 20;   // 命中词前保留的上下文长度
+const HIT_CONTEXT_WINDOW = 100;  // 从命中词起展示的窗口长度（含命中词）
+
+// 用不可见的控制字符做占位，长度固定为 1，便于按命中位置安全截取
+const MARK_OPEN = '\u0001';
+const MARK_CLOSE = '\u0002';
 
 const escapeHtml = (value: string) => {
   return value
@@ -291,7 +423,9 @@ const buildHighlightSnippet = (value: string) => {
   const highlightEnd = '___NOTE_HIGHLIGHT_END___';
 
   // 列表只展示搜索摘要文本，避免富文本里的 p/div 等标签撑乱卡片排版。
-  const snippet = value
+  // 先截原始长度再清洗，避免整篇正文跑正则。
+  let snippet = value
+      .slice(0, SNIPPET_SOURCE_MAX)
       .replace(/<br\s*\/?>/gi, ' ')
       .replace(/<\/(p|div|li|h[1-6])>/gi, ' ')
       .replace(/<(em|mark)\b[^>]*>/gi, highlightStart)
@@ -301,9 +435,36 @@ const buildHighlightSnippet = (value: string) => {
       .replace(/\s+/g, ' ')
       .trim();
 
+  if (!snippet) return '';
+
+  // 换成单字符标记后围绕首个命中词取窗口，避免单行展示时高亮被截在屏幕外
+  snippet = snippet.split(highlightStart).join(MARK_OPEN).split(highlightEnd).join(MARK_CLOSE);
+  const hitIndex = snippet.indexOf(MARK_OPEN);
+
+  if (hitIndex === -1) {
+    snippet = snippet.slice(0, SNIPPET_MAX);
+  } else {
+    const total = snippet.length;
+    const start = Math.max(0, hitIndex - HIT_CONTEXT_BEFORE);
+    const end = Math.min(total, hitIndex + HIT_CONTEXT_WINDOW);
+    snippet = snippet.slice(start, end);
+
+    // 窗口边界可能切断配对标记，补平避免 mark 吞掉后续文本
+    const openCount = snippet.split(MARK_OPEN).length - 1;
+    const closeCount = snippet.split(MARK_CLOSE).length - 1;
+    if (openCount > closeCount) snippet += MARK_CLOSE.repeat(openCount - closeCount);
+    if (closeCount > openCount) snippet = MARK_OPEN.repeat(closeCount - openCount) + snippet;
+
+    if (start > 0) snippet = `…${snippet}`;
+    if (end < total) snippet += '…';
+  }
+
+  // 截断可能切在 emoji 等代理对中间，去掉半个字符避免乱码
+  snippet = snippet.replace(/^[\uDC00-\uDFFF]/, '').replace(/[\uD800-\uDBFF]$/, '');
+
   return escapeHtml(snippet)
-      .split(highlightStart).join('<mark class="note-search-hit">')
-      .split(highlightEnd).join('</mark>');
+      .split(MARK_OPEN).join('<mark class="note-search-hit">')
+      .split(MARK_CLOSE).join('</mark>');
 };
 
 /* ---------------- 时间展示 ---------------- */
@@ -538,6 +699,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
     const active = document.activeElement;
     if (!active?.closest('.search-box')) return;
     event.preventDefault();
+    // Enter 视为一次明确搜索，落进历史
+    saveSearchHistory(queryParams.keyword);
     if (loading.value) return;
     const first = contents.value[0];
     if (first) openNoteWindow(first.id);
@@ -548,9 +711,13 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 <style scoped>
 .main_content {
   margin: 0 auto;
+  /* 宽屏下收成一列文档宽度，避免单行过长、阅读跨度太大 */
+  max-width: 1040px;
+  width: 100%;
   position: relative;
   overflow: hidden;
-  background-color: #f4f6f8;
+  /* 留白处透出外层渐变背景，形成居中的文档卡片 */
+  background-color: transparent;
   height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
@@ -587,6 +754,51 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   .top-box {
     padding: 8px 10px;
   }
+}
+
+/* 结果概览：条数 + 当前筛选条件 */
+.result-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 20px 10px;
+  background: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #8a9199;
+  flex-shrink: 0;
+}
+
+.result-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.result-chip {
+  max-width: 40%;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(13, 148, 136, 0.08);
+  color: #0f766e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-clear {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #0d9488;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.result-clear:hover,
+.result-clear:focus-visible {
+  color: #0f766e;
+  text-decoration: underline;
 }
 
 .filter-container {
@@ -645,6 +857,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   flex: 1;
   min-width: 100px;
   margin-right: 10px;
+  /* 作为「最近搜索」面板的定位参照 */
+  position: relative;
 }
 
 /* 移动端适配 */
@@ -661,6 +875,65 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
     min-width: 40px;
     margin-right: 3px;
   }
+}
+
+/* 最近搜索面板，浮在列表之上 */
+.search-history {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 280px;
+  padding: 6px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+}
+
+.search-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 6px 6px;
+  font-size: 12px;
+  color: #9aa1a9;
+}
+
+.search-history-clear {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #9aa1a9;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.search-history-clear:hover {
+  color: #0d9488;
+}
+
+.search-history-item {
+  display: block;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #1f2328;
+  font-size: 13px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.search-history-item:hover,
+.search-history-item:focus-visible {
+  background: #f1f3f4;
 }
 
 .add-btn {
@@ -742,7 +1015,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 }
 
 .el-select:focus-within {
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.2);
 }
 
 .scroll_content {
@@ -750,11 +1023,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   min-height: 0;
   position: relative;
   overflow: hidden;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #e5e7eb;
   background-color: #ffffff;
   border-bottom: none;
   border-radius: 0 0 8px 8px;
-  padding: 10px;
+  padding: 6px 8px;
 }
 
 .scroll-wrapper {
@@ -770,7 +1043,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   right: 0;
   height: 2px;
   overflow: hidden;
-  background: rgba(64, 158, 255, 0.12);
+  background: rgba(13, 148, 136, 0.12);
   z-index: 5;
 }
 
@@ -780,7 +1053,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   top: 0;
   bottom: 0;
   width: 35%;
-  background: #409eff;
+  background: #0d9488;
   animation: listProgressMove 1s ease-in-out infinite;
 }
 
@@ -791,12 +1064,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 /* 限定到笔记列表，避免作用域样式命中 el-dropdown-menu 的根 ul */
 .note-list {
-  margin-left: 10px;
-  margin-right: 10px;
   list-style: none;
   display: flex;
   flex-direction: column;
   padding: 0;
+  margin: 0;
   width: 100%;
 }
 
@@ -813,25 +1085,34 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 .line {
   position: relative;
-  background-color: #fff;
-  border-radius: 8px;
-  margin-top: 8px;
-  margin-bottom: 8px;
+  border-radius: 6px;
+  margin: 0;
   width: 100%;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  /* 用极淡的分隔线替代阴影卡片，行更紧凑、视觉噪音更小 */
+  transition: background-color 0.15s ease;
   opacity: 0;
-  animation: itemFadeInUp 0.5s ease-out forwards;
+  animation: itemFadeInUp 0.4s ease-out forwards;
   box-sizing: border-box;
 }
 
-.line:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+/* 行分隔线，两端留出缩进 */
+.line + .line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: #f1f3f4;
+}
+
+.line:hover,
+.line:focus-within {
+  background: #f1f3f4;
 }
 
 .line:hover .prename {
-  color: #409EFF;
+  color: #0d9488;
 }
 
 /* 桌面端「更多」按钮 hover/focus 时出现，触摸端常驻显示 */
@@ -864,88 +1145,100 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 }
 
 .file-li-item {
-  width: calc(100% - 40px);
-  min-height: 90px;
-  height: auto;
-  margin-left: 20px;
   display: flex;
-  align-items: flex-start;
   flex-direction: column;
-  gap: 4px;
   justify-content: center;
-  padding: 12px 0;
+  gap: 3px;
+  width: 100%;
+  /* 固定行高：标题行 + 单行摘要，一屏能容纳更多笔记 */
+  min-height: 62px;
+  /* 右侧留出「更多」按钮的位置 */
+  padding: 9px 44px 9px 12px;
   overflow: hidden;
   /* 卡片本身是 a 标签，清掉默认链接样式 */
   color: inherit;
   text-decoration: none;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 /* 键盘 Tab 聚焦时的描边 */
 .file-li-item:focus-visible {
-  outline: 2px solid rgba(64, 158, 255, 0.55);
+  outline: 2px solid rgba(13, 148, 136, 0.5);
   outline-offset: -2px;
-  border-radius: 8px;
+  border-radius: 6px;
+}
+
+/* 首行：标题 + 相对时间 */
+.note-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 
 .prename {
+  flex: 1 1 auto;
+  min-width: 0;
   text-align: left;
-  line-height: 1.35;
+  line-height: 1.4;
   margin: 0;
-  color: #333;
-  font-size: 16px;
+  color: #1f2328;
+  font-size: 15px;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: color 0.3s ease;
-  width: 100%;
-  max-width: 100%;
-  /* 给右上角「更多」按钮留出空间，避免长标题被按钮压住 */
-  padding-right: 18px;
+  transition: color 0.2s ease;
 }
 
 .pcontent {
   text-align: left;
   line-height: 1.45;
   margin: 0;
-  color: #666;
-  font-size: 14px;
+  color: #6b7280;
+  font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   width: 100%;
   max-width: 100%;
+  /* 占住一行高度，摘要分批补上时行高保持不变 */
+  min-height: 19px;
 }
 
 .note-highlight-html :deep(em),
 .note-highlight-html :deep(mark),
 .note-highlight-html :deep(.highlight),
 .note-highlight-html :deep(.note-search-hit) {
-  color: #d97706;
+  /* 与主色一致的柔和高亮，避免大块黄色在灰阶列表里过于抢眼 */
+  color: inherit;
   font-style: normal;
-  background: #fff3cd;
+  font-weight: 600;
+  background: rgba(13, 148, 136, 0.14);
   padding: 0 2px;
   border-radius: 2px;
 }
 
 .ptime {
-  text-align: left;
+  flex: 0 0 auto;
+  text-align: right;
   line-height: 1.4;
-  margin-top: 2px;
-  margin-bottom: 0;
-  color: #888;
-  font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0;
+  color: #9aa1a9;
+  font-size: 12px;
   white-space: nowrap;
+  /* 等宽数字，避免时间串长度不同导致标题区域抖动 */
+  font-variant-numeric: tabular-nums;
 }
 
-/* 卡片右上角「更多」 */
+/* 行右侧「更多」，改为垂直居中，把首行右侧让给时间 */
 .card-more {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
   z-index: 2;
   transition: opacity 0.2s ease;
 }
@@ -986,18 +1279,17 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 10px;
-  min-height: 90px;
-  margin: 8px 20px;
-  padding: 14px 16px;
-  border-radius: 8px;
+  gap: 8px;
+  min-height: 62px;
+  margin: 0;
+  padding: 9px 44px 9px 12px;
+  border-bottom: 1px solid #f1f3f4;
   background: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
   box-sizing: border-box;
 }
 
 .skeleton-bar {
-  height: 12px;
+  height: 11px;
   border-radius: 6px;
   background: linear-gradient(90deg, #eef2f7 25%, #f6f8fb 37%, #eef2f7 63%);
   background-size: 400% 100%;
@@ -1006,16 +1298,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 .skeleton-title {
   width: 46%;
-  height: 16px;
+  height: 14px;
 }
 
 .skeleton-text {
   width: 92%;
-}
-
-.skeleton-time {
-  width: 22%;
-  height: 10px;
 }
 
 @keyframes skeletonShimmer {
@@ -1024,12 +1311,37 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 }
 
 .empty-msg-box {
-  margin-top: 80px;
+  margin-top: 60px;
   color: #909399;
 }
 
 .empty-action {
   margin-top: 4px;
+}
+
+/* 窄屏下压缩行内边距，时间字号同步缩小 */
+@media screen and (max-width: 768px) {
+  .result-bar {
+    padding: 0 15px 8px;
+  }
+
+  .file-li-item {
+    min-height: 58px;
+    padding: 8px 40px 8px 10px;
+  }
+
+  .prename {
+    font-size: 14px;
+  }
+
+  .pcontent {
+    font-size: 12px;
+    min-height: 18px;
+  }
+
+  .ptime {
+    font-size: 11px;
+  }
 }
 
 .el-button, .el-select, .el-input {

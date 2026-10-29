@@ -219,7 +219,6 @@ import {addNote, deleteNoteItem, editNote, getNote} from "@/network/note/note";
 import {useRouter} from 'vue-router';
 import {ElMessage} from 'element-plus'
 import {Delete, DocumentChecked, Edit, MoreFilled, View} from '@element-plus/icons-vue'
-import {cipherText, decrypted} from "@/utils/aesUtil";
 import {closeLoading} from "@/utils/loadingUtil";
 import {listNoteGroup} from "@/network/note/noteGroup";
 import {useNoteAutoSave} from "@/composables/useNoteAutoSave";
@@ -338,16 +337,6 @@ const valueHtml = ref("");
 // 视图模式：edit（编辑）、preview（预览）
 const viewMode = ref<ViewMode>(props.initialViewMode);
 
-// 解密失败（历史明文或异常密文）时回退原文，避免内容被静默清空
-const safeDecrypt = (raw: string) => {
-  if (!raw) return '';
-  try {
-    return decrypted(raw) || raw;
-  } catch {
-    return raw;
-  }
-};
-
 // 加载笔记：新建（id = -1）与详情共用一套回填逻辑
 let loadToken = 0;
 const loadNote = async (id: number) => {
@@ -365,7 +354,7 @@ const loadNote = async (id: number) => {
       const res = await getNote(id);
       if (token !== loadToken) return; // 已有更新的加载请求，丢弃本次结果
 
-      valueHtml.value = safeDecrypt(res.data?.content || '');
+      valueHtml.value = res.data?.content || '';
       noteTitle.value = res.data?.title || '';
       groupValue.value = toGroupId(res.data?.groupId);
     }
@@ -442,8 +431,8 @@ const persistNote = async (silent: boolean): Promise<boolean> => {
   // 标题优先取输入框，留空时退回正文自动生成，并回填到输入框保持界面与实际一致
   const title = noteTitle.value.trim() || buildNoteTitle(editor.getText());
   noteTitle.value = title;
+  // 加解密已收敛到后端，这里直接提交编辑器明文
   const snapshot = editor.getHTML();
-  const noteValue = cipherText(snapshot);
 
   // 保存期间继续编辑的内容不算已保存，用快照比对决定是否清除脏标记
   const markSaved = () => {
@@ -453,7 +442,7 @@ const persistNote = async (silent: boolean): Promise<boolean> => {
 
   try {
     if (noteId.value === -1) {
-      const res = await addNote(null, noteValue, title, groupValue.value);
+      const res = await addNote(null, snapshot, title, groupValue.value);
       if (res.code !== 200 || !res.data) {
         reportSaveError(res.msg || '保存失败', silent);
         return false;
@@ -466,7 +455,7 @@ const persistNote = async (silent: boolean): Promise<boolean> => {
         query: router.currentRoute.value.query,
       });
     } else {
-      const res = await editNote(noteId.value, noteValue, title, groupValue.value);
+      const res = await editNote(noteId.value, snapshot, title, groupValue.value);
       if (res.code !== 200) {
         reportSaveError(res.msg || '保存失败', silent);
         return false;
