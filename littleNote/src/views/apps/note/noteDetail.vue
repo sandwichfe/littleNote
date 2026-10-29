@@ -392,9 +392,10 @@ const confirmDiscard = async (message: string) => {
 
 // 正文变动由编辑器 @change 立即通知（标题走输入事件），这里无需再监听 v-model
 
-// 切到预览时把未保存的改动落库，让预览始终对应已保存的内容
+// 切到预览时把未保存的改动落库，让预览始终对应已保存的内容；
+// 这里走非静默保存，保存成功后会有提示，避免用户不知道刚才的改动已经存下来了
 watch(viewMode, (mode) => {
-  if (mode === 'preview' && dirty.value) void saveNote({ silent: true });
+  if (mode === 'preview' && dirty.value) void saveNote();
 });
 
 // 同一路由复用组件时 onMounted 不会再次执行，必须监听参数变化重新加载
