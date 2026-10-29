@@ -17,15 +17,12 @@
         <!-- 搜索框移到顶部 -->
         <div class="filter-item search-box">
           <el-input v-model="queryParams.keyword" placeholder="搜索笔记" ref="keywordSelect" size="large" clearable
-                    @focus="handleSearchFocus" @blur="handleSearchBlur" @clear="handleSearchClear">
-            <template #prefix>
-              <svg-icon iconClass="search" className="search-icon" />
-            </template>
-            <!-- 显式搜索按钮：点击立即请求，不用等防抖或按 Enter -->
-            <template #append>
-              <el-button class="search-submit" @click="doSearch">搜索</el-button>
-            </template>
-          </el-input>
+                    @focus="handleSearchFocus" @blur="handleSearchBlur" @clear="handleSearchClear" />
+
+          <!-- 搜索按钮：绝对定位贴在输入框内右侧，做成灰底图标块（点击立即请求，不用等防抖） -->
+          <button type="button" class="search-submit" aria-label="搜索" @click="doSearch">
+            <el-icon><Search /></el-icon>
+          </button>
 
           <!-- 最近搜索：聚焦时展示，点击直接复用（mousedown.prevent 保住输入框焦点） -->
           <div v-if="showHistory && searchHistory.length > 0" class="search-history" @mousedown.prevent>
@@ -152,7 +149,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { useNoteGroupStore } from "@/store/noteGroup";
 import { useNoteScroll } from "@/composables/useNoteScroll";
 import BackToTop from "@/components/BackToTop.vue";
-import { DocumentAdd, MoreFilled } from '@element-plus/icons-vue';
+import { DocumentAdd, MoreFilled, Search } from '@element-plus/icons-vue';
 
 // 定义查询对象接口
 interface QueryParams {
@@ -923,28 +920,39 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   }
 }
 
-/* 搜索按钮：与主色同族的浅色块，避免在顶部工具栏里过于抢眼 */
-.search-box :deep(.el-input-group__append) {
+/* 输入框本体：右侧留出按钮宽度，圆角与边框按设计稿收细 */
+.search-box :deep(.el-input__wrapper) {
+  padding-right: 46px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px #e4e7ed inset;
+}
+
+/* 搜索按钮：贴住输入框内侧右边的灰底图标块 */
+.search-box .search-submit {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
   padding: 0;
-  background: rgba(13, 148, 136, 0.08);
-  border-color: #d5e5e2;
-  box-shadow: none;
-}
-
-.search-box :deep(.el-input-group__append .el-button) {
-  height: 100%;
-  padding: 0 12px;
   border: none;
-  background: transparent;
-  color: #0f766e;
-  font-size: 13px;
-  box-shadow: none;
+  border-radius: 0 7px 7px 0;
+  background: #f4f4f5;
+  color: #1f2328;
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
-.search-box :deep(.el-input-group__append .el-button:hover),
-.search-box :deep(.el-input-group__append .el-button:focus-visible) {
-  background: rgba(13, 148, 136, 0.14);
-  box-shadow: none;
+.search-box .search-submit:hover,
+.search-box .search-submit:focus-visible {
+  background: #e9eaec;
+  color: #1f2328;
+  outline: none;
 }
 
 /* 最近搜索面板，浮在列表之上 */
