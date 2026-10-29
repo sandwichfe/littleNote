@@ -1476,11 +1476,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 .note-highlight-html :deep(mark),
 .note-highlight-html :deep(.highlight),
 .note-highlight-html :deep(.note-search-hit) {
-  /* 与主色一致的柔和高亮，避免大块黄色在灰阶列表里过于抢眼 */
+  /* 黄色柔和高亮：降透明度避免在灰阶列表里过于刺眼，文字沿用原色保证可读性 */
   color: inherit;
   font-style: normal;
   font-weight: 600;
-  background: rgba(var(--app-primary-rgb), 0.14);
+  background: rgba(255, 208, 0, 0.32);
   padding: 0 2px;
   border-radius: 2px;
 }
