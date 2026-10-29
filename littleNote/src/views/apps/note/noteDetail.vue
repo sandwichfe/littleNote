@@ -787,7 +787,7 @@ function handleEvent(event: KeyboardEvent) {
   flex: 1;
   min-width: 0;
   /* 限制标题占位宽度：长标题不把工具栏横向拉满，超出部分直接省略 */
-  max-width: 480px;
+  max-width: 320px;
   padding: 4px 6px;
   margin-left: -6px; /* 抵消内边距，让文字左边缘与工具栏内边距对齐 */
   border: none;
