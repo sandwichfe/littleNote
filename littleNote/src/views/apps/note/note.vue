@@ -69,6 +69,7 @@
           <div v-for="n in 8" :key="n" class="skeleton-line">
             <div class="skeleton-bar skeleton-title"></div>
             <div class="skeleton-bar skeleton-text"></div>
+            <div class="skeleton-bar skeleton-meta"></div>
           </div>
         </div>
 
@@ -80,14 +81,17 @@
               <a class="file-li-item"
                  :href="getNoteHref(c.id)"
                  @click="handleCardClick($event, c.id)">
-                <!-- 首行：标题 + 相对时间；时间靠右，不再独占一行 -->
-                <span class="note-row">
-                  <span class="prename note-highlight-html" v-html="getDisplayTitle(c)"></span>
+                <!-- 第一层：标题独占一行，不被右侧信息挤压 -->
+                <span class="prename note-highlight-html" v-html="getDisplayTitle(c)"></span>
+                <!-- 第二层：正文摘要，搜索态为命中上下文 -->
+                <span v-if="getDisplayContent(c)" class="pcontent note-highlight-html"
+                      v-html="getDisplayContent(c)"></span>
+                <!-- 第三层：相对时间 + 所属分组 -->
+                <span class="note-meta">
                   <span class="ptime"
                         :title="formatFullTime(c.updateTime || c.createTime)">{{ formatRelativeTime(c.updateTime || c.createTime) }}</span>
+                  <span v-if="c.groupName" class="note-group">{{ c.groupName }}</span>
                 </span>
-                <!-- 摘要解密是分批完成的，这里始终渲染占位，避免摘要补上时行内跳动 -->
-                <span class="pcontent note-highlight-html" v-html="getDisplayContent(c)"></span>
               </a>
 
               <!-- 卡片更多操作 -->
@@ -393,9 +397,31 @@ const getDisplayTitle = (note: Note) => {
   return buildHighlightSnippet(note.highlightTitle || note.title || '');
 };
 
+// 标题多由正文首段自动生成，摘要又是正文开头，两者会大段重复，这里裁掉重叠部分
+const stripRepeatedTitle = (summary: string, title: string) => {
+  const titleKey = (title || '').replace(/<[^>]+>/g, '').replace(/\s+/g, '');
+  if (!titleKey || !summary) return summary;
+
+  let cursor = 0;
+  let matched = 0;
+  while (cursor < summary.length && matched < titleKey.length) {
+    const char = summary[cursor];
+    // 摘要里的换行、空格在比对时跳过
+    if (!/\s/.test(char)) {
+      if (char !== titleKey[matched]) return summary;
+      matched++;
+    }
+    cursor++;
+  }
+
+  // 只有完整吃掉标题才认为是重复，避免误裁正常摘要
+  return matched === titleKey.length ? summary.slice(cursor).trim() : summary;
+};
+
 const getDisplayContent = (note: Note) => {
-  // 搜索态用后端高亮摘要，普通态用列表接口返回的纯文本摘要
-  return buildHighlightSnippet(note.highlightContent || note.summary || '');
+  // 搜索态用后端高亮摘要（带命中上下文），普通态用纯文本摘要
+  if (note.highlightContent) return buildHighlightSnippet(note.highlightContent);
+  return buildHighlightSnippet(stripRepeatedTitle(note.summary || '', note.title || ''));
 };
 
 /* ---------------- 摘要清洗 ---------------- */
@@ -712,7 +738,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 .main_content {
   margin: 0 auto;
   /* 宽屏下收成一列文档宽度，避免单行过长、阅读跨度太大 */
-  max-width: 1040px;
+  max-width: 960px;
   width: 100%;
   position: relative;
   overflow: hidden;
@@ -1024,7 +1050,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   position: relative;
   overflow: hidden;
   border: 1px solid #e5e7eb;
-  background-color: #ffffff;
+  /* 灰底衬托白色条目，靠底色区分边界，不再依赖分隔线 */
+  background-color: #f6f8fa;
   border-bottom: none;
   border-radius: 0 0 8px 8px;
   padding: 6px 8px;
@@ -1067,6 +1094,8 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   list-style: none;
   display: flex;
   flex-direction: column;
+  /* 条目之间的间隙，替代分隔线来做视觉分组 */
+  gap: 6px;
   padding: 0;
   margin: 0;
   width: 100%;
@@ -1085,30 +1114,22 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 .line {
   position: relative;
-  border-radius: 6px;
   margin: 0;
   width: 100%;
-  /* 用极淡的分隔线替代阴影卡片，行更紧凑、视觉噪音更小 */
-  transition: background-color 0.15s ease;
+  /* 每条独立成卡：白底 + 细边 + 圆角，靠间隙分组而不是分隔线 */
+  background: #fff;
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
   opacity: 0;
   animation: itemFadeInUp 0.4s ease-out forwards;
   box-sizing: border-box;
 }
 
-/* 行分隔线，两端留出缩进 */
-.line + .line::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 12px;
-  right: 12px;
-  height: 1px;
-  background: #f1f3f4;
-}
-
 .line:hover,
 .line:focus-within {
-  background: #f1f3f4;
+  border-color: #d8dfe7;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
 .line:hover .prename {
@@ -1148,12 +1169,12 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 3px;
+  gap: 0;
   width: 100%;
-  /* 固定行高：标题行 + 单行摘要，一屏能容纳更多笔记 */
-  min-height: 62px;
+  /* 标题 / 摘要 / 元信息三层，层间距由各自的 margin 控制 */
+  min-height: 78px;
   /* 右侧留出「更多」按钮的位置 */
-  padding: 9px 44px 9px 12px;
+  padding: 12px 44px 12px 14px;
   overflow: hidden;
   /* 卡片本身是 a 标签，清掉默认链接样式 */
   color: inherit;
@@ -1169,23 +1190,15 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   border-radius: 6px;
 }
 
-/* 首行：标题 + 相对时间 */
-.note-row {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  width: 100%;
-  min-width: 0;
-}
-
+/* 第一层：标题 */
 .prename {
-  flex: 1 1 auto;
-  min-width: 0;
+  display: block;
+  width: 100%;
   text-align: left;
   line-height: 1.4;
   margin: 0;
-  color: #1f2328;
-  font-size: 15px;
+  color: #1d2129;
+  font-size: 16px;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1193,19 +1206,19 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   transition: color 0.2s ease;
 }
 
+/* 第二层：摘要，搜索态为命中上下文 */
 .pcontent {
+  display: block;
+  width: 100%;
+  margin-top: 3px;
   text-align: left;
-  line-height: 1.45;
-  margin: 0;
-  color: #6b7280;
+  line-height: 1.5;
+  /* 比标题浅两档，和标题拉开层级 */
+  color: #86909c;
   font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  width: 100%;
-  max-width: 100%;
-  /* 占住一行高度，摘要分批补上时行高保持不变 */
-  min-height: 19px;
 }
 
 .note-highlight-html :deep(em),
@@ -1221,19 +1234,38 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   border-radius: 2px;
 }
 
-.ptime {
-  flex: 0 0 auto;
-  text-align: right;
+/* 第三层：时间 + 所属分组，作为次要信息压在底部 */
+.note-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
   line-height: 1.4;
-  margin: 0;
-  color: #9aa1a9;
+}
+
+.ptime {
+  color: #a9aeb8;
   font-size: 12px;
   white-space: nowrap;
-  /* 等宽数字，避免时间串长度不同导致标题区域抖动 */
+  /* 等宽数字，避免时间串长度不同导致文字抖动 */
   font-variant-numeric: tabular-nums;
 }
 
-/* 行右侧「更多」，改为垂直居中，把首行右侧让给时间 */
+.note-group {
+  max-width: 40%;
+  padding: 1px 8px;
+  border-radius: 3px;
+  background: #f2f3f5;
+  color: #86909c;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 行右侧「更多」，垂直居中避免压住标题和底部元信息 */
 .card-more {
   position: absolute;
   top: 50%;
@@ -1269,10 +1301,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   outline-offset: 1px;
 }
 
-/* 首屏骨架屏 */
+/* 首屏骨架屏：形状与真实条目保持一致 */
 .skeleton-list {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
 .skeleton-line {
@@ -1280,11 +1313,12 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   flex-direction: column;
   justify-content: center;
   gap: 8px;
-  min-height: 62px;
+  min-height: 93px;
   margin: 0;
-  padding: 9px 44px 9px 12px;
-  border-bottom: 1px solid #f1f3f4;
+  padding: 12px 44px 12px 14px;
   background: #fff;
+  border: 1px solid #edf0f4;
+  border-radius: 8px;
   box-sizing: border-box;
 }
 
@@ -1297,12 +1331,17 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 }
 
 .skeleton-title {
-  width: 46%;
-  height: 14px;
+  width: 62%;
+  height: 15px;
 }
 
 .skeleton-text {
-  width: 92%;
+  width: 90%;
+}
+
+.skeleton-meta {
+  width: 16%;
+  height: 10px;
 }
 
 @keyframes skeletonShimmer {
@@ -1326,17 +1365,25 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   }
 
   .file-li-item {
-    min-height: 58px;
-    padding: 8px 40px 8px 10px;
+    min-height: 70px;
+    padding: 10px 40px 10px 12px;
   }
 
   .prename {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .pcontent {
+    margin-top: 2px;
     font-size: 12px;
-    min-height: 18px;
+  }
+
+  .note-meta {
+    margin-top: 6px;
+  }
+
+  .note-group {
+    font-size: 11px;
   }
 
   .ptime {

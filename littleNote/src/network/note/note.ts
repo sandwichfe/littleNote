@@ -5,9 +5,11 @@ const NOTE_API = "/api/little-note/note";
 export interface Note {
   id: number;
   title: string;
-  // 加解密收敛到后端后，列表接口只回纯文本摘要，正文仅详情接口返回
+  // 加解密收敛到后端后，正文只在详情接口返回，列表接口下发纯文本摘要
   content?: string;
   summary?: string;
+  // 列表接口带上所属分组名时在条目底部展示
+  groupName?: string;
   createTime?: string;
   updateTime?: string;
   highlightTitle?: string | null;
