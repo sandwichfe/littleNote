@@ -5,7 +5,9 @@ const NOTE_API = "/api/little-note/note";
 export interface Note {
   id: number;
   title: string;
-  content: string;
+  // 加解密收敛到后端后，列表接口只回纯文本摘要，正文仅详情接口返回
+  content?: string;
+  summary?: string;
   createTime?: string;
   updateTime?: string;
   highlightTitle?: string | null;
