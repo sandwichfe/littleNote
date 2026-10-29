@@ -19,7 +19,7 @@
         </button>
       </div>
 
-      <!-- 右侧：分组选择 + 保存反馈 + 模式切换 + 操作按钮（只留图标，悬浮再给文字说明） -->
+      <!-- 右侧：分组选择 + 模式切换 + 保存反馈 + 操作按钮（只留图标，悬浮再给文字说明） -->
       <div class="toolbar-right">
         <!-- 分组选择（编辑态可改；预览态只读展示，不用灰态下拉框） -->
         <div v-if="viewMode === 'preview'" class="group-readonly">
@@ -48,13 +48,6 @@
             />
           </el-select>
         </div>
-
-        <!-- 保存状态：贴着保存按钮，反馈就近可见；预览态只在保存中/失败时出现 -->
-        <span
-            v-show="viewMode === 'edit' || saveState !== 'saved'"
-            class="save-status"
-            :class="`is-${saveState}`"
-        >{{ saveStatusText }}</span>
 
         <!-- 分隔线 -->
         <div class="toolbar-divider"></div>
@@ -87,11 +80,19 @@
           </el-tooltip>
         </div>
 
-        <!-- 保存按钮：仅编辑态存在；预览态内容不可改，留个禁用按钮只会误导 -->
-        <el-tooltip v-if="viewMode === 'edit'" content="保存" placement="bottom" :show-after="300">
+        <!-- 保存状态：紧贴保存按钮左侧，反馈就近可见；
+             预览态只隐藏文字（visibility），保留占位，切换模式时按钮不会左右移动 -->
+        <span
+            class="save-status"
+            :class="[`is-${saveState}`, { 'is-placeholder': viewMode === 'preview' && saveState === 'saved' }]"
+        >{{ saveStatusText }}</span>
+
+        <!-- 保存按钮：预览态不显示（内容不可改，禁用态只会误导），但保留占位 -->
+        <el-tooltip content="保存" placement="bottom" :show-after="300">
           <button
               @click="saveNote()"
               class="toolbar-btn toolbar-btn-save"
+              :class="{ 'is-placeholder': viewMode !== 'edit' }"
               aria-label="保存"
               :disabled="saving"
           >
@@ -724,8 +725,8 @@ function handleEvent(event: KeyboardEvent) {
 
 .mode-switch-item {
   height: 30px;
-  /* 只留图标：内边距收窄成方形按钮，文字说明交给 tooltip */
-  padding: 0 9px;
+  /* 只留图标：内边距收窄成方形按钮，文字说明交给 tooltip；留足左右呼吸，避免贴到相邻按钮 */
+  padding: 0 11px;
   font-weight: 500;
   border-radius: 4px;
   border: none;
@@ -1019,7 +1020,7 @@ function handleEvent(event: KeyboardEvent) {
   font-weight: 600;
 }
 
-/* 保存状态文字：紧邻保存按钮，颜色区分已保存 / 未保存 / 保存中 / 失败；固定宽度避免按钮位移 */
+/* 保存状态文字：紧邻保存按钮左侧，颜色区分已保存 / 未保存 / 保存中 / 失败；固定宽度避免按钮位移 */
 .save-status {
   flex-shrink: 0;
   min-width: 84px;
@@ -1029,6 +1030,11 @@ function handleEvent(event: KeyboardEvent) {
   text-align: right;
   white-space: nowrap;
   transition: color 0.15s ease;
+}
+
+/* 预览态无需提示"已保存"，隐藏但保留占位 */
+.save-status.is-placeholder {
+  visibility: hidden;
 }
 
 .save-status.is-saved {
@@ -1077,12 +1083,17 @@ function handleEvent(event: KeyboardEvent) {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
-/* 保存中 / 预览态禁用 */
+/* 保存中禁用 */
 .toolbar-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* 预览态不可用的按钮：隐藏但保留占位，避免工具栏其他元素左右跳动 */
+.toolbar-btn.is-placeholder {
+  visibility: hidden;
 }
 
 .toolbar-btn .el-icon {
