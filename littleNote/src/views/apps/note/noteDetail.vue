@@ -598,7 +598,7 @@ useEditorHotkeys({
    标题等展示信息进正文上方的文档头，低频操作浮动到右上角 */
 
 #note-detail-page.is-preview {
-  background-color: #f5f4f1;
+  background-color: #f3f4f6;
 }
 
 /* 去外框：纸张自身表达内容边界，不再套一层边框 */
@@ -612,13 +612,13 @@ useEditorHotkeys({
 #note-detail-page.is-preview :deep(.rich-editor.is-preview),
 #note-detail-page.is-preview :deep(.rich-editor.is-preview .re-header),
 #note-detail-page.is-preview :deep(.rich-editor.is-preview .re-content) {
-  background-color: #f5f4f1;
+  background-color: #f3f4f6;
 }
 
 /* 标题与正文分别绘制纸张，只画外侧细边，避免衔接处出现横线 */
 #note-detail-page.is-preview :deep(.rich-editor.is-preview .re-content .ProseMirror) {
   width: calc(100% - 48px);
-  box-shadow: inset 1px 0 #e9e7e2, inset -1px 0 #e9e7e2, inset 0 -1px #e9e7e2;
+  box-shadow: inset 1px 0 #e5e7eb, inset -1px 0 #e5e7eb, inset 0 -1px #e5e7eb;
 }
 
 /* 工具栏在预览态不再占一行：整条脱离文档流贴到右上角，
@@ -650,7 +650,7 @@ useEditorHotkeys({
   padding: 32px 200px 28px 56px;
   border-radius: 12px 12px 0 0;
   background-color: #fff;
-  box-shadow: inset 1px 0 #e9e7e2, inset -1px 0 #e9e7e2, inset 0 1px #e9e7e2;
+  box-shadow: inset 1px 0 #e5e7eb, inset -1px 0 #e5e7eb, inset 0 1px #e5e7eb;
 }
 
 /* 标题区与正文的分隔：一根极细的线，两端淡出而不是通栏实线，
