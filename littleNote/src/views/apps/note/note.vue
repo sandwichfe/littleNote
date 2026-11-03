@@ -84,7 +84,6 @@
             <li v-for="c in contents" :key="c.id" class="line">
               <!-- 用 a 承载整张卡片：支持 Tab 聚焦、Ctrl/中键新标签打开、右键复制链接 -->
               <a class="file-li-item"
-                 :class="{ 'has-cover': !!c.coverUrl }"
                  :href="getNoteHref(c.id)"
                  @click="handleCardClick($event, c.id)">
                 <!-- 封面：正文第一张图，objectKey 由组件内部换预签名地址 -->
@@ -96,15 +95,13 @@
                   <!-- 第二层：正文摘要，搜索态为命中上下文 -->
                   <span v-if="getDisplayContent(c)" class="pcontent note-highlight-html"
                         v-html="getDisplayContent(c)"></span>
-                </span>
-
-                <!-- 第三层：相对时间 + 所属分组。独立成行横跨整卡，
-                     有图无图都从卡片左边起，日期位置不会跟着封面左右跳 -->
-                <span class="note-meta">
-                  <span class="ptime"
-                        :title="formatFullTime(c.updateTime || c.createTime)">{{ formatRelativeTime(c.updateTime || c.createTime) }}</span>
-                  <!-- 未分组的笔记不显示标签，避免列表里大量「未分组」干扰阅读 -->
-                  <span v-if="c.groupName" class="note-group">{{ c.groupName }}</span>
+                  <!-- 分组靠左、时间靠右，与标题和摘要保持在同一文字区域 -->
+                  <span class="note-meta">
+                    <!-- 未分组的笔记不显示标签，避免列表里大量「未分组」干扰阅读 -->
+                    <span v-if="c.groupName" class="note-group">{{ c.groupName }}</span>
+                    <span class="ptime"
+                          :title="formatFullTime(c.updateTime || c.createTime)">{{ formatRelativeTime(c.updateTime || c.createTime) }}</span>
+                  </span>
                 </span>
               </a>
 
@@ -1537,16 +1534,13 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 .file-li-item {
   display: flex;
-  /* 允许换行：第一行是「封面（可选）+ 文字块」，元信息独占第二行 */
-  flex-wrap: wrap;
   align-items: center;
-  column-gap: 12px;
-  row-gap: 6px;
+  gap: 16px;
   width: 100%;
   /* 标题 / 摘要 / 元信息三层，层间距由各自的 margin 控制 */
   min-height: 78px;
   /* 右侧留出「更多」按钮的位置 */
-  padding: 12px 44px 12px 14px;
+  padding: 14px 44px 14px 14px;
   overflow: hidden;
   /* 卡片本身是 a 标签，清掉默认链接样式 */
   color: inherit;
@@ -1564,11 +1558,6 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   justify-content: center;
   flex: 1;
   min-width: 0;
-}
-
-/* 元信息强制换行占满整行：起点固定为卡片左内边距，与有没有封面无关 */
-.file-li-item .note-meta {
-  flex: 0 0 100%;
 }
 
 /* 键盘 Tab 聚焦时的描边 */
@@ -1613,11 +1602,6 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   word-break: break-word;
 }
 
-/* 有封面时卡片本身已够高，摘要收到一行，让有图/无图的条目高度更接近 */
-.file-li-item.has-cover .pcontent {
-  -webkit-line-clamp: 1;
-}
-
 .note-highlight-html :deep(em),
 .note-highlight-html :deep(mark),
 .note-highlight-html :deep(.highlight),
@@ -1631,18 +1615,18 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   border-radius: 2px;
 }
 
-/* 第三层：时间 + 所属分组，作为次要信息压在底部；
-   两者作为一组左对齐，宽卡片下不会被顶到两端、看起来悬空 */
+/* 第三层：分组与时间分居两侧，保持文字区层次清晰 */
 .note-meta {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   gap: 12px;
   width: 100%;
+  margin-top: 8px;
   line-height: 1.4;
 }
 
 .ptime {
+  margin-left: auto;
   color: #a9aeb8;
   font-size: 12px;
   white-space: nowrap;
@@ -1664,12 +1648,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   transition: background-color 0.18s ease, color 0.18s ease;
 }
 
-/* 行右侧「更多」，垂直居中避免压住标题和底部元信息 */
+/* 更多操作置于右上角，避开右下角的时间 */
 .card-more {
   position: absolute;
-  top: 50%;
-  right: 4px;
-  transform: translateY(-50%);
+  top: 8px;
+  right: 8px;
   z-index: 2;
   transition: opacity 0.2s ease;
 }
@@ -1784,6 +1767,7 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
   .file-li-item {
     min-height: 70px;
+    gap: 12px;
     padding: 10px 40px 10px 12px;
   }
 
@@ -1794,8 +1778,6 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   .pcontent {
     margin-top: 2px;
     font-size: 12px;
-    /* 窄屏空间紧张，摘要回到单行 */
-    -webkit-line-clamp: 1;
   }
 
   .note-group {

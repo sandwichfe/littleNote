@@ -62,9 +62,9 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 64px;
-  height: 64px;
-  border-radius: 6px;
+  width: 120px;
+  height: 90px;
+  border-radius: 8px;
   background: #f2f3f5;
   overflow: hidden;
 }
@@ -87,8 +87,8 @@ onBeforeUnmount(() => {
 /* 窄屏空间紧张，封面同步缩小一档 */
 @media screen and (max-width: 768px) {
   .note-cover {
-    width: 56px;
-    height: 56px;
+    width: 88px;
+    height: 72px;
   }
 }
 </style>
