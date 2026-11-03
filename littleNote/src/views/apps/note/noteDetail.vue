@@ -598,14 +598,27 @@ useEditorHotkeys({
    标题等展示信息进正文上方的文档头，低频操作浮动到右上角 */
 
 #note-detail-page.is-preview {
-  background-color: #f1f3f4;
+  background-color: #f5f4f1;
 }
 
-/* 去外框：纸片的圆角与阴影已经表达了内容边界，再套一层边框会显得拘束 */
+/* 去外框：纸张自身表达内容边界，不再套一层边框 */
 #note-detail-page.is-preview .note-editor-wrap {
   margin-top: 0;
   border: none;
   border-radius: 0;
+}
+
+/* 统一编辑器内部桌面底色，仅影响笔记详情的预览态 */
+#note-detail-page.is-preview :deep(.rich-editor.is-preview),
+#note-detail-page.is-preview :deep(.rich-editor.is-preview .re-header),
+#note-detail-page.is-preview :deep(.rich-editor.is-preview .re-content) {
+  background-color: #f5f4f1;
+}
+
+/* 标题与正文分别绘制纸张，只画外侧细边，避免衔接处出现横线 */
+#note-detail-page.is-preview :deep(.rich-editor.is-preview .re-content .ProseMirror) {
+  width: calc(100% - 48px);
+  box-shadow: inset 1px 0 #e9e7e2, inset -1px 0 #e9e7e2, inset 0 -1px #e9e7e2;
 }
 
 /* 工具栏在预览态不再占一行：整条脱离文档流贴到右上角，
@@ -631,11 +644,13 @@ useEditorHotkeys({
   position: relative; /* 底部的分隔线用伪元素绝对定位 */
   box-sizing: border-box;
   max-width: 860px;
+  width: calc(100% - 48px);
   margin: 0 auto;
   /* 右侧留出浮动按钮的位置，长标题不会钻到按钮底下 */
   padding: 32px 200px 28px 56px;
   border-radius: 12px 12px 0 0;
   background-color: #fff;
+  box-shadow: inset 1px 0 #e9e7e2, inset -1px 0 #e9e7e2, inset 0 1px #e9e7e2;
 }
 
 /* 标题区与正文的分隔：一根极细的线，两端淡出而不是通栏实线，
@@ -1332,8 +1347,16 @@ useEditorHotkeys({
   /* 小屏收紧文档头内边距，去掉为浮动按钮预留的右侧空间，
      圆角与下方的纸张保持一致（小屏纸张铺满视口，不需要圆角） */
   .preview-doc-header {
+    width: 100%;
     padding: 16px 20px 18px;
     border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* 手机端保持贴边阅读，不显示桌面纸张的外侧细边 */
+  #note-detail-page.is-preview :deep(.rich-editor.is-preview .re-content .ProseMirror) {
+    width: 100%;
+    box-shadow: none;
   }
 
   /* 分隔线跟随小屏内边距收窄，保持与正文左右对齐 */
