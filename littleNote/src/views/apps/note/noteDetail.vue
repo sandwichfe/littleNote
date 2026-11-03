@@ -628,13 +628,34 @@ useEditorHotkeys({
    与下方正文拼成一张完整的纸，不再是浮在灰底上的独立标题。
    border-box 是关键，否则内边距会把 860px 撑宽，标题与正文左边缘错位 */
 .preview-doc-header {
+  position: relative; /* 底部的分隔线用伪元素绝对定位 */
   box-sizing: border-box;
   max-width: 860px;
   margin: 0 auto;
   /* 右侧留出浮动按钮的位置，长标题不会钻到按钮底下 */
-  padding: 32px 200px 20px 56px;
+  padding: 32px 200px 28px 56px;
   border-radius: 12px 12px 0 0;
   background-color: #fff;
+}
+
+/* 标题区与正文的分隔：一根极细的线，两端淡出而不是通栏实线，
+   既有"两段内容"的边界感，又不会把纸切开；
+   左右与正文内边距对齐，视觉上仍是一条纸上的两个区块 */
+.preview-doc-header::after {
+  content: '';
+  position: absolute;
+  right: 56px;
+  bottom: 0;
+  left: 56px;
+  height: 1px;
+  /* 中间 76% 保持可见，两端各 12% 渐隐，比等宽实线更轻 */
+  background: linear-gradient(
+      90deg,
+      rgba(60, 64, 67, 0) 0%,
+      rgba(60, 64, 67, 0.14) 12%,
+      rgba(60, 64, 67, 0.14) 88%,
+      rgba(60, 64, 67, 0) 100%
+  );
 }
 
 /* 文档头随正文一起滚动，标题就是正文的首行主标题，因此比工具栏时放大加粗一档 */
@@ -1311,8 +1332,14 @@ useEditorHotkeys({
   /* 小屏收紧文档头内边距，去掉为浮动按钮预留的右侧空间，
      圆角与下方的纸张保持一致（小屏纸张铺满视口，不需要圆角） */
   .preview-doc-header {
-    padding: 16px 20px 12px;
+    padding: 16px 20px 18px;
     border-radius: 0;
+  }
+
+  /* 分隔线跟随小屏内边距收窄，保持与正文左右对齐 */
+  .preview-doc-header::after {
+    right: 20px;
+    left: 20px;
   }
 
   .note-title-text {
