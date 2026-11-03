@@ -96,20 +96,26 @@
             <li v-for="c in contents" :key="c.id" class="line">
               <!-- 用 a 承载整张卡片：支持 Tab 聚焦、Ctrl/中键新标签打开、右键复制链接 -->
               <a class="file-li-item"
+                 :class="{ 'has-cover': !!c.coverUrl }"
                  :href="getNoteHref(c.id)"
                  @click="handleCardClick($event, c.id)">
-                <!-- 第一层：标题独占一行，不被右侧信息挤压 -->
-                <span class="prename note-highlight-html" v-html="getDisplayTitle(c)"></span>
-                <!-- 第二层：正文摘要，搜索态为命中上下文 -->
-                <span v-if="getDisplayContent(c)" class="pcontent note-highlight-html"
-                      v-html="getDisplayContent(c)"></span>
-                <!-- 第三层：相对时间 + 所属分组 -->
-                <span class="note-meta">
-                  <span class="ptime"
-                        :title="formatFullTime(c.updateTime || c.createTime)">{{ formatRelativeTime(c.updateTime || c.createTime) }}</span>
-                  <span v-if="c.groupName" class="note-group">{{ c.groupName }}</span>
-                  <!-- 未分组也给出标记，避免元信息右侧留空、卡片重心失衡 -->
-                  <span v-else class="note-group is-empty">未分组</span>
+                <!-- 封面：正文第一张图，objectKey 由组件内部换预签名地址 -->
+                <NoteCover v-if="c.coverUrl" :src="c.coverUrl"/>
+
+                <span class="file-li-main">
+                  <!-- 第一层：标题独占一行，不被右侧信息挤压 -->
+                  <span class="prename note-highlight-html" v-html="getDisplayTitle(c)"></span>
+                  <!-- 第二层：正文摘要，搜索态为命中上下文 -->
+                  <span v-if="getDisplayContent(c)" class="pcontent note-highlight-html"
+                        v-html="getDisplayContent(c)"></span>
+                  <!-- 第三层：相对时间 + 所属分组 -->
+                  <span class="note-meta">
+                    <span class="ptime"
+                          :title="formatFullTime(c.updateTime || c.createTime)">{{ formatRelativeTime(c.updateTime || c.createTime) }}</span>
+                    <span v-if="c.groupName" class="note-group">{{ c.groupName }}</span>
+                    <!-- 未分组也给出标记，避免元信息右侧留空、卡片重心失衡 -->
+                    <span v-else class="note-group is-empty">未分组</span>
+                  </span>
                 </span>
               </a>
 
@@ -184,6 +190,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { useNoteGroupStore } from "@/store/noteGroup";
 import { useNoteScroll } from "@/composables/useNoteScroll";
 import BackToTop from "@/components/BackToTop.vue";
+import NoteCover from "@/components/note/NoteCover.vue";
 import { DocumentAdd, MoreFilled, Search } from '@element-plus/icons-vue';
 
 // 定义查询对象接口
@@ -1565,9 +1572,10 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 .file-li-item {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0;
+  /* 横向：左侧封面（有图时才有）+ 右侧文字块，无图时文字块自然占满 */
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
   width: 100%;
   /* 标题 / 摘要 / 元信息三层，层间距由各自的 margin 控制 */
   min-height: 78px;
@@ -1581,6 +1589,15 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   box-sizing: border-box;
   /* 禁止浏览器对 a 标签的原生拖拽，否则按住拖动会拖出链接虚影而中断滚动 */
   -webkit-user-drag: none;
+}
+
+/* 文字区：占满封面之外的宽度，长标题靠自身省略号收敛 */
+.file-li-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
 }
 
 /* 键盘 Tab 聚焦时的描边 */
@@ -1623,6 +1640,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   /* 多行钳制要放开 nowrap，长串英文按字符折行，避免撑破卡片 */
   white-space: normal;
   word-break: break-word;
+}
+
+/* 有封面时卡片本身已够高，摘要收到一行，让有图/无图的条目高度更接近 */
+.file-li-item.has-cover .pcontent {
+  -webkit-line-clamp: 1;
 }
 
 .note-highlight-html :deep(em),

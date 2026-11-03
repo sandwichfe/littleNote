@@ -220,6 +220,7 @@ import {useRouter} from 'vue-router';
 import {ElMessage} from 'element-plus'
 import {Delete, DocumentChecked, Edit, MoreFilled, View} from '@element-plus/icons-vue'
 import {closeLoading} from "@/utils/loadingUtil";
+import {toObjectKey} from "@/utils/oss";
 import {listNoteGroup} from "@/network/note/noteGroup";
 import {useNoteAutoSave} from "@/composables/useNoteAutoSave";
 import {useUnsavedGuard} from "@/composables/useUnsavedGuard";
@@ -431,6 +432,30 @@ const buildNoteTitle = (text: string) => {
   return text.replace(/\s+/g, ' ').trim().substring(0, 100);
 };
 
+/* ---------------- 列表封面 ---------------- */
+
+// http(s):// 与 //cdn 这类外链图片，原样作为封面保存
+const EXTERNAL_SRC = /^(?:[a-z][a-z0-9+.-]*:)?\/\//i;
+
+/**
+ * 取正文第一张图片作为列表封面。
+ * 正文里本站图片存的是 objectKey/站内相对路径（见 utils/oss 的约定），
+ * 这里统一收敛成裸 objectKey；外链保留原始地址；data: 内联图体积太大，直接忽略。
+ */
+const pickCoverUrl = (html: string): string | null => {
+  if (!html) return null;
+
+  // 用 DOMParser 而不是正则，避免属性顺序、大小写带来的误判
+  const image = new DOMParser().parseFromString(html, 'text/html').querySelector('img');
+  const src = image?.getAttribute('src')?.trim() || '';
+  if (!src) return null;
+
+  const objectKey = toObjectKey(src);
+  if (objectKey) return objectKey;
+
+  return EXTERNAL_SRC.test(src) ? src : null;
+};
+
 // 真正的落库逻辑，返回 true 表示已保存成功，composable 据此决定是否续期自动保存
 // silent 只影响提示：自动保存成功不打扰用户，失败仍要提醒一次（内容没落库不能让用户以为存好了）
 const persistNote = async (silent: boolean): Promise<boolean> => {
@@ -442,6 +467,8 @@ const persistNote = async (silent: boolean): Promise<boolean> => {
   noteTitle.value = title;
   // 加解密已收敛到后端，这里直接提交编辑器明文
   const snapshot = editor.getHTML();
+  // 封面跟着正文第一张图走：删掉图片后随本次保存一起置空
+  const coverUrl = pickCoverUrl(snapshot);
 
   // 保存期间继续编辑的内容不算已保存，用快照比对决定是否清除脏标记
   const markSaved = () => {
@@ -451,7 +478,7 @@ const persistNote = async (silent: boolean): Promise<boolean> => {
 
   try {
     if (noteId.value === -1) {
-      const res = await addNote(null, snapshot, title, groupValue.value);
+      const res = await addNote(null, snapshot, title, groupValue.value, coverUrl);
       if (res.code !== 200 || !res.data) {
         reportSaveError(res.msg || '保存失败', silent);
         return false;
@@ -467,7 +494,7 @@ const persistNote = async (silent: boolean): Promise<boolean> => {
         query: nextQuery,
       });
     } else {
-      const res = await editNote(noteId.value, snapshot, title, groupValue.value);
+      const res = await editNote(noteId.value, snapshot, title, groupValue.value, coverUrl);
       if (res.code !== 200) {
         reportSaveError(res.msg || '保存失败', silent);
         return false;
