@@ -1,41 +1,8 @@
 <template>
   <div class="main_content">
 
-    <!-- 宽屏侧栏：分组导航（含各分组条数），窄屏隐藏并回落到顶部的类型下拉 -->
-    <aside class="group-nav" aria-label="笔记分组">
-      <div class="group-nav-head">分组</div>
-      <ul class="group-nav-list">
-        <li>
-          <button type="button" class="group-nav-item" :class="{ active: queryParams.groupId === null }"
-                  @click="selectGroupById(null)">
-            <span class="group-nav-name">全部</span>
-            <span class="group-count">{{ totalCount }}</span>
-          </button>
-        </li>
-        <li v-for="item in groups" :key="item.id">
-          <button type="button" class="group-nav-item" :class="{ active: queryParams.groupId === item.id }"
-                  @click="selectGroupById(item.id)">
-            <span class="group-nav-name">{{ item.groupName }}</span>
-            <span class="group-count">{{ groupCounts[item.id] ?? 0 }}</span>
-          </button>
-        </li>
-      </ul>
-    </aside>
-
     <div class="top-box">
       <div class="filter-container">
-        <!-- 分组筛选：宽屏下由左侧分组栏代替，这里只在窄屏显示 -->
-        <div class="filter-item group-filter">
-          <!-- 用 groupSelectValue 代理：null 会被 el-select 当成空值只显示 placeholder，所以「全部」用 'all' 承载 -->
-          <el-select v-model="groupSelectValue" placeholder="全部分组" size="large" aria-label="筛选分组">
-            <template #prefix>
-              <svg-icon iconClass="filter" className="filter-icon" />
-            </template>
-            <el-option label="全部笔记" value="all" />
-            <el-option v-for="item in groups" :key="item.id" :label="item.groupName" :value="item.id" />
-          </el-select>
-        </div>
-
         <!-- 搜索框移到顶部 -->
         <div class="filter-item search-box">
           <el-input v-model="queryParams.keyword" placeholder="搜索笔记" ref="keywordSelect" size="large" clearable
@@ -75,6 +42,27 @@
       </el-tooltip>
 
     </div>
+
+    <!-- 横向分组导航：分组较多时可横向滚动，不挤占笔记列表空间 -->
+    <nav class="group-nav" aria-label="笔记分组">
+      <ul class="group-nav-list">
+        <li>
+          <button type="button" class="group-nav-item" :class="{ active: queryParams.groupId === null }"
+                  :aria-pressed="queryParams.groupId === null" @click="selectGroupById(null)">
+            <span class="group-nav-name">全部笔记</span>
+            <span class="group-count">{{ totalCount }}</span>
+          </button>
+        </li>
+        <li v-for="item in groups" :key="item.id">
+          <button type="button" class="group-nav-item" :class="{ active: queryParams.groupId === item.id }"
+                  :aria-pressed="queryParams.groupId === item.id" :title="item.groupName"
+                  @click="selectGroupById(item.id)">
+            <span class="group-nav-name">{{ item.groupName }}</span>
+            <span class="group-count">{{ groupCounts[item.id] ?? 0 }}</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
 
     <!-- 列表：外层只负责定位进度条，内层是原生滚动容器 -->
     <div class="list-box">
@@ -214,7 +202,7 @@ const toGroupId = (value: unknown): number | null => {
   return Number.isFinite(id) ? id : null;
 };
 
-// 把当前分组同步到全局 store，侧栏与窄屏下拉共用同一份选择
+// 把当前分组同步到全局 store
 const syncSelectedGroup = (groupId: number | null) => {
   if (groupId === null) {
     noteGroupStore.resetSelectedGroupId();
@@ -222,16 +210,6 @@ const syncSelectedGroup = (groupId: number | null) => {
     noteGroupStore.updateSelectedGroupId(groupId);
   }
 };
-
-// el-select 用 'all' 承载「全部」：null 会被当成空值只显示 placeholder
-const groupSelectValue = computed<string | number>({
-  get: () => (queryParams.groupId === null ? 'all' : queryParams.groupId),
-  set: (value) => {
-    const groupId = value === 'all' ? null : toGroupId(value);
-    queryParams.groupId = groupId;
-    syncSelectedGroup(groupId);
-  }
-});
 
 const isInitializing = ref(true);
 
@@ -344,7 +322,7 @@ watch(() => [queryParams.groupId, queryParams.keyword], () => {
   notesSeq++;
 
   if (groupChanged) {
-    // 点分组/选下拉是明确操作，取消防抖立即请求，不再白等 300ms 的固定等待
+    // 点击分组是明确操作，取消防抖立即请求，不再白等 300ms 的固定等待
     debounce.cancel();
     syncQueryToUrl();
     loadNotesByQuery();
@@ -361,9 +339,9 @@ watch(() => [queryParams.groupId, queryParams.keyword], () => {
 
 const groups = ref<Array<{ id: number; groupName: string }>>([]);
 
-/* ---------------- 侧栏分组计数 ---------------- */
+/* ---------------- 分组计数 ---------------- */
 
-// 全量笔记条数，用于侧栏「全部笔记」
+// 全量笔记条数，用于「全部笔记」
 const totalCount = ref(0);
 // 分组 id -> 笔记数；计数由后端按分组聚合，无笔记的分组也会返回 0
 const groupCounts = ref<Record<number, number>>({});
@@ -510,7 +488,7 @@ const syncQueryToUrl = () => {
   void router.replace({ path: route.path, query: nextQuery });
 };
 
-// 侧栏切换分组：只改查询条件，具体的列表刷新交给上面的 watch 防抖处理
+// 切换分组：只改查询条件，具体的列表刷新交给上面的 watch 处理
 const selectGroupById = (id: number | null) => {
   if (queryParams.groupId === id) return;
 
@@ -589,7 +567,7 @@ const handleScrollLoadMore = () => {
   void loadMoreNotes();
 };
 
-// 错误态重试：列表与侧栏计数一起重来
+// 错误态重试：列表与分组计数一起重来
 const retryLoad = () => {
   void loadNotesByQuery();
   void loadNoteCounts();
@@ -617,7 +595,7 @@ const initList = async () => {
     const preferredGroup = restored.groupFromUrl ? restored.groupId : toGroupId(noteGroupStore.selectedGroupId);
     queryParams.groupId = normalizeGroupId(preferredGroup);
 
-    // 列表与侧栏计数互不依赖，并行请求缩短首屏时间
+    // 列表与分组计数互不依赖，并行请求缩短首屏时间
     await Promise.all([
       loadNotesByQuery(),
       loadNoteCounts()
@@ -968,24 +946,23 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 <style scoped>
 .main_content {
   margin: 0;
-  /* 横向铺满视口：分组栏贴左、列表占满剩余宽度，不再用居中大留白 */
+  /* 横向铺满视口，列表充分利用移除侧栏后的空间 */
   max-width: none;
   width: 100%;
   position: relative;
   overflow: hidden;
   background-color: transparent;
   height: calc(100vh - 64px);
-  /* 左列定宽放分组导航，右列占满放内容；两行依次是工具栏、列表 */
+  /* 工具栏和分组导航固定在上方，列表占据剩余高度 */
   display: grid;
-  grid-template-columns: 196px minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
-  column-gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 
 /* 行号显式指定，避免内容缺失时列表位置漂移 */
 .top-box,
 .list-box {
-  grid-column: 2;
+  grid-column: 1;
 }
 
 .top-box {
@@ -993,58 +970,48 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 }
 
 .list-box {
-  grid-row: 2;
+  grid-row: 3;
 }
 
-/* 左侧分组导航：与右侧内容齐高，分组多时自身滚动 */
+/* 分组标签横向排列，分组较多时可独立滚动 */
 .group-nav {
   grid-column: 1;
-  grid-row: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  padding: 14px 10px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  grid-row: 2;
+  min-width: 0;
+  padding: 0 20px 14px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
   background: #fff;
-  border-radius: 10px;
-}
-
-.group-nav-head {
-  padding: 0 8px 8px;
-  font-size: 12px;
-  color: #9aa1a9;
 }
 
 .group-nav-list {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 8px;
+  width: max-content;
   margin: 0;
-  padding: 0;
+  padding: 2px;
   list-style: none;
 }
 
 .group-nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: #4e5969;
-  font-size: 14px;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: #f6f7f9;
+  color: #667085;
+  font-size: 13px;
   line-height: 1.4;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .group-nav-name {
-  flex: 1;
-  min-width: 0;
+  max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1052,27 +1019,28 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 .group-count {
   flex-shrink: 0;
-  color: #a9aeb8;
-  font-size: 12px;
+  color: #98a2b3;
+  font-size: 11px;
   /* 等宽数字，避免条数变化时文字左右跳动 */
   font-variant-numeric: tabular-nums;
 }
 
 .group-nav-item:hover,
 .group-nav-item:focus-visible {
-  background: #f4f6f8;
+  background: #eef0f3;
   color: #1d2129;
   outline: none;
 }
 
 .group-nav-item:focus-visible {
   outline: 2px solid rgba(var(--app-primary-rgb), 0.4);
-  outline-offset: -2px;
+  outline-offset: 1px;
 }
 
-/* 选中态沿用列表主色，和顶部下拉的选中语义一致 */
+/* 选中态沿用应用主色，以浅色背景和细边框突出 */
 .group-nav-item.active {
   background: rgba(var(--app-primary-rgb), 0.08);
+  border-color: rgba(var(--app-primary-rgb), 0.18);
   color: var(--app-primary);
   font-weight: 600;
 }
@@ -1081,31 +1049,13 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   color: var(--app-primary);
 }
 
-/* 分组栏只在宽屏出现，窄屏回落到顶部的类型下拉 */
-@media screen and (max-width: 1023px) {
-  .main_content {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .group-nav {
-    display: none;
-  }
-
-  .top-box,
-  .list-box {
-    grid-column: 1;
-  }
-}
-
-@media screen and (min-width: 1024px) {
-  .group-filter {
-    display: none;
-  }
-}
-
 @media screen and (max-width: 768px) {
   .main_content {
     height: calc(100vh - 56px);
+  }
+
+  .group-nav {
+    padding: 0 15px 10px;
   }
 }
 
