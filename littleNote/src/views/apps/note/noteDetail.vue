@@ -33,9 +33,7 @@
 
       <!-- 右侧：模式操作区 + 删除（分组已在左侧紧跟标题，不在这里占位） -->
       <div class="toolbar-right">
-        <!-- 模式操作区（参考 Google Docs 查看态）：编辑态是「预览图标 + 保存主按钮」，
-             查看态只留一个显眼的「修改」按钮作为退出入口；
-             保存状态不在界面上展示（后台静默自动保存），这里只保留操作按钮 -->
+        <!-- 编辑态提供预览与保存，查看态突出「修改」入口；保存进度另由底部状态栏反馈 -->
         <div class="primary-actions">
           <el-tooltip v-if="viewMode === 'edit'" content="预览" placement="bottom" :show-after="300">
             <button
@@ -617,7 +615,14 @@ useEditorHotkeys({
 }
 
 #note-detail-page:not(.is-preview) .note-toolbar {
+  margin: 8px 12px 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   border-bottom: 1px solid #edf0f3;
+}
+
+#note-detail-page:not(.is-preview) .note-editor-wrap {
+  margin: 8px 12px 0;
 }
 
 #note-detail-page:not(.is-preview) .note-title-text {
@@ -676,12 +681,16 @@ useEditorHotkeys({
    左侧标题区由文档头接管，所以直接隐藏 */
 #note-detail-page.is-preview .note-toolbar {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 12px;
+  right: 16px;
   z-index: 10;
   min-height: 0;
-  padding: 12px 16px;
-  background: transparent;
+  padding: 6px 8px;
+  border: 1px solid rgba(229, 231, 235, 0.9);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(10px);
 }
 
 #note-detail-page.is-preview .toolbar-left {
@@ -698,7 +707,7 @@ useEditorHotkeys({
   width: calc(100% - 48px);
   margin: 0 auto;
   /* 右侧留出浮动按钮的位置，长标题不会钻到按钮底下 */
-  padding: 32px 200px 28px 56px;
+  padding: 32px 220px 28px 56px;
   border-radius: 12px 12px 0 0;
   background-color: #fff;
   box-shadow: inset 1px 0 #e5e7eb, inset -1px 0 #e5e7eb, inset 0 1px #e5e7eb;
@@ -774,7 +783,7 @@ useEditorHotkeys({
   flex-direction: column;
   flex-grow: 1;
   min-height: 0;
-  margin: 8px 12px 0;
+  margin-top: 5px;
   border: 1px solid #dadce0;
   border-radius: 8px;
   overflow: hidden;
@@ -785,7 +794,7 @@ useEditorHotkeys({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 16px;
+  padding: 4px 20px;
   background: #fff;
   flex-shrink: 0;
   min-height: 48px;
@@ -1407,6 +1416,12 @@ useEditorHotkeys({
   #note-detail-page.is-preview .note-toolbar {
     position: static;
     padding: 6px 10px;
+    border: 0;
+    border-bottom: 1px solid #e5e7eb;
+    border-radius: 0;
+    background: #fff;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   /* 小屏收紧文档头内边距，去掉为浮动按钮预留的右侧空间，
@@ -1435,17 +1450,22 @@ useEditorHotkeys({
   }
 
   .note-toolbar {
-    padding: 6px 10px;
-    flex-wrap: nowrap;
-    gap: 8px;
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    row-gap: 6px;
     min-height: auto;
-    align-items: center;
+    align-items: flex-start;
   }
 
-  /* 小屏优先保证右侧操作可用，标题让位收缩 */
+  /* 手机端将文档信息与操作拆成两行，避免标题被按钮挤窄 */
   .toolbar-left {
-    flex: 1 1 auto;
+    flex: 0 0 100%;
+    width: 100%;
     min-width: 0;
+  }
+
+  .note-title-text {
+    max-width: calc(100vw - 160px);
   }
 
   /* 小屏标题与分组挤在一行，分组入口再收窄一点 */
@@ -1456,9 +1476,16 @@ useEditorHotkeys({
   }
 
   .toolbar-right {
-    flex: 0 0 auto;
+    flex: 1 1 100%;
+    width: 100%;
     justify-content: flex-end;
-    gap: 6px;
+    gap: 8px;
+  }
+
+  #note-detail-page.is-preview .toolbar-right {
+    flex: 0 0 auto;
+    width: auto;
+    margin-left: auto;
   }
 
   .toolbar-divider {
@@ -1472,11 +1499,9 @@ useEditorHotkeys({
     gap: 8px;
   }
 
-  .note-editor-wrap {
-    margin: 4px 0 0;
-    border-radius: 0;
-    border-right: none;
-    border-left: none;
+  #note-detail-page:not(.is-preview) .note-editor-wrap {
+    margin: 8px 12px 0;
+    border-radius: 8px;
   }
 
   #note-detail-page:not(.is-preview) :deep(.rich-editor:not(.is-preview) .re-content .ProseMirror) {
@@ -1486,8 +1511,8 @@ useEditorHotkeys({
   }
 
   .toolbar-btn {
-    height: 30px;
-    width: 30px;
+    height: 36px;
+    width: 36px;
     padding: 0;
   }
 
@@ -1502,7 +1527,7 @@ useEditorHotkeys({
   }
 
   .toolbar-btn-primary {
-    height: 30px;
+    height: 36px;
     padding: 0 11px;
     gap: 5px;
     font-size: 12px;
