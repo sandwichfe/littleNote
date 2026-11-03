@@ -331,11 +331,27 @@ watch(() => queryParams.keyword, (value) => {
   }
 });
 
+// 上一次生效的分组：用于区分「切分组」和「改关键词」两种刷新节奏
+let lastGroupId = queryParams.groupId;
+
 watch(() => [queryParams.groupId, queryParams.keyword], () => {
+  const groupChanged = queryParams.groupId !== lastGroupId;
+  lastGroupId = queryParams.groupId;
+  // 初始化阶段由 initList 统一加载，这里只保持 lastGroupId 同步
   if (isInitializing.value) return;
-  // 输入即刻进入加载态，防抖等待期也有反馈；序号递增让在途请求失效
-  loading.value = true;
+
+  // 序号递增让在途请求失效，避免旧结果盖掉新结果、加载态提前收起
   notesSeq++;
+
+  if (groupChanged) {
+    // 点分组/选下拉是明确操作，取消防抖立即请求，不再白等 300ms 的固定等待
+    debounce.cancel();
+    syncQueryToUrl();
+    loadNotesByQuery();
+    return;
+  }
+
+  // 关键词输入才需要防抖：等待期不显示加载态，等请求真正发出再转圈
   debounce.run(() => {
     // 条件落到地址栏（放在防抖里，连续输入只写一次），刷新、从详情页返回、复制链接都能回到同一视图
     syncQueryToUrl();
