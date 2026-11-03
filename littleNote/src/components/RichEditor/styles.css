@@ -118,12 +118,67 @@
   line-height: 1.6;
   color: #262626;
 }
-/* 预览态：正文限宽居中，避免大屏整行文字影响阅读；
-   900px 去掉左右 24px 内边距后约 852px 行宽，中文约 55 字一行，兼顾大屏观感与阅读节奏 */
+/* 预览态阅读页：浅灰当"桌面"，正文限宽做成一张白色"纸"。
+   两侧空白因此是有意的留白，而不是没铺满的底色 */
+.rich-editor.is-preview {
+  border-radius: 0;
+  background: #f1f3f4;
+  box-shadow: none;
+}
+
+/* 预览态整页滚动：滚动容器上提到 shell，文档头（标题）与正文同处一层，
+   标题因此跟着正文一起滚走，不再固定钉在顶部。编辑态仍由正文区自己滚动 */
+.rich-editor.is-preview .re-editor-shell {
+  overflow-y: auto;
+}
+
+.rich-editor.is-preview .re-content {
+  /* 正文不再自己滚，高度随内容自然增长；
+     空间富余时仍由 flex-grow 撑满，短笔记的纸张才能铺满一屏 */
+  flex-shrink: 0;
+  overflow: visible;
+  background: #f1f3f4;
+}
+
+/* 滚动条跟着换成新的滚动容器，样式与正文区保持一致 */
+.rich-editor.is-preview .re-editor-shell::-webkit-scrollbar {
+  width: 8px;
+}
+.rich-editor.is-preview .re-editor-shell::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+.rich-editor.is-preview .re-editor-shell::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 4px;
+}
+.rich-editor.is-preview .re-editor-shell::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}
+
+/* 文档头（由调用方通过 header 插槽渲染）就是纸张的上半部分：
+   这里只负责顶部留出桌面间隙，白底与圆角交给插槽内容自己画 */
+.rich-editor.is-preview .re-header {
+  padding-top: 32px;
+  background: #f1f3f4;
+}
+
+/* 纸张下半部分：顶部不留间距、不留圆角，直接接住上面白色的文档头，
+   标题与正文因此落在同一张纸上 */
 .rich-editor.is-preview .re-content :deep(.ProseMirror) {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 28px 24px 72px;
+  box-sizing: border-box;
+  /* 860px 去掉左右各 56px 内边距后约 748px 行宽，中文约 46 字一行 */
+  max-width: 860px;
+  /* 短笔记也让纸张铺满一屏，避免滚到底部只剩一小条白 */
+  min-height: calc(100% - 32px);
+  margin: 0 auto 32px;
+  padding: 24px 56px 72px;
+  border-radius: 0 0 12px 12px;
+  background: #fff;
+  /* 纸张靠底色差异与桌面区分，不加投影，避免标题与正文的接缝处出现一道阴影 */
+  box-shadow: none;
+  /* 阅读态比编辑态松一档：字号 16px、行高 1.75 */
+  font-size: 16px;
+  line-height: 1.75;
 }
 
 .re-content :deep(.ProseMirror p) {
@@ -738,5 +793,19 @@
 }
 .re-content :deep(.ProseMirror s) {
   text-decoration: line-through;
+}
+
+/* 小屏阅读：纸张铺满视口，去掉桌面间隙与圆角，贴近移动端阅读器 */
+@media screen and (max-width: 768px) {
+  .rich-editor.is-preview .re-header {
+    padding-top: 0;
+  }
+
+  .rich-editor.is-preview .re-content :deep(.ProseMirror) {
+    min-height: 100%;
+    margin: 0;
+    padding: 20px 20px 56px;
+    border-radius: 0;
+  }
 }
 

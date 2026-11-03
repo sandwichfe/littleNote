@@ -1,5 +1,6 @@
 <template>
-  <div id="note-detail-page">
+  <!-- 预览态给根节点打标记：整页切成浅灰"桌面"，由样式区统一覆盖 -->
+  <div id="note-detail-page" :class="{ 'is-preview': viewMode === 'preview' }">
     <!-- 顶部工具栏 -->
     <div class="note-toolbar">
       <!-- 左侧：标题 + 分组，点任意一个都打开同一个编辑弹窗；预览态只做展示 -->
@@ -115,7 +116,25 @@
           :editable="viewMode === 'edit'"
           @change="markDirty"
           @update:char-count="charCount = $event"
-      />
+      >
+        <!-- 预览态文档头：标题与分组从工具栏下移到正文上方，作为阅读页的主视觉，
+             编辑态仍沿用工具栏里的标题编辑入口，这里不渲染 -->
+        <template v-if="viewMode === 'preview'" #header>
+          <div class="preview-doc-header">
+            <h1 class="preview-doc-title" :class="{ 'is-empty': !noteTitle }">
+              {{ noteTitle || '无标题' }}
+            </h1>
+            <!-- 标题下方一行元信息：分组 + 更新时间，灰色小字弱化，只做归属与时效提示 -->
+            <div class="preview-doc-meta">
+              <span class="preview-doc-group">{{ currentGroupName }}</span>
+              <template v-if="noteTimeText">
+                <span class="preview-doc-meta-dot">·</span>
+                <span class="preview-doc-time">{{ noteTimeText }}</span>
+              </template>
+            </div>
+          </div>
+        </template>
+      </RichEditor>
     </div>
 
     <!-- 底部状态栏：只放内容属性（字数），独占右下角 -->
@@ -253,6 +272,7 @@ const groupValue = ref<number | null>(null);
 const groups = ref<any[]>([]);
 const deleteDialogVisible = ref(false);
 const noteTitle = ref('');
+const noteTime = ref<number | null>(null); // 笔记最后更新时间（时间戳），预览态展示在标题下方
 const charCount = ref(0);   // 正文字数，由编辑器同步
 
 // 笔记信息弹窗：标题栏只做展示，标题与分组都在弹窗里改，确定后才写回
@@ -324,6 +344,16 @@ const currentGroupName = computed(() => {
   return hit?.groupName || '未分组';
 });
 
+const pad2 = (num: number) => String(num).padStart(2, '0');
+
+// 更新时间展示到分钟：秒对阅读场景没有意义，这里统一按时间戳格式化
+const formatNoteTime = (timestamp: number) => {
+  const time = new Date(timestamp);
+  return `${time.getFullYear()}-${pad2(time.getMonth() + 1)}-${pad2(time.getDate())} ${pad2(time.getHours())}:${pad2(time.getMinutes())}`;
+};
+
+const noteTimeText = computed(() => (noteTime.value ? formatNoteTime(noteTime.value) : ''));
+
 // 分组同属笔记内容，改动后要置脏才能触发自动保存；
 // 新建笔记（id = -1）此时只记住分组，避免仅选了个分组就被自动保存成一条空笔记
 const markGroupChanged = () => {
@@ -350,6 +380,7 @@ const loadNote = async (id: number) => {
     if (id === -1) {
       valueHtml.value = '';
       noteTitle.value = '';
+      noteTime.value = null;
       groupValue.value = null;
     } else {
       const res = await getNote(id);
@@ -357,6 +388,9 @@ const loadNote = async (id: number) => {
 
       valueHtml.value = res.data?.content || '';
       noteTitle.value = res.data?.title || '';
+      // 后端给的是 "YYYY-MM-DD HH:mm:ss"，替换掉横杠以兼容 iOS / Safari 的解析
+      const updated = res.data?.updateTime || res.data?.createTime;
+      noteTime.value = updated ? new Date(String(updated).replace(/-/g, '/')).getTime() || null : null;
       groupValue.value = toGroupId(res.data?.groupId);
     }
 
@@ -474,6 +508,8 @@ const persistNote = async (silent: boolean): Promise<boolean> => {
   const markSaved = () => {
     dirty.value = editor.getHTML() !== snapshot;
     saveError.value = false;
+    // 预览态展示的更新时间跟着刷新，避免停留在进入页面时的旧值
+    noteTime.value = Date.now();
   };
 
   try {
@@ -549,11 +585,100 @@ useEditorHotkeys({
 <style scoped>
 #note-detail-page {
   /* 父级 .app-content 已占满 header 以下空间，这里跟随父级高度，避免写死 header 尺寸 */
+  position: relative; /* 预览态的操作按钮要绝对定位到右上角 */
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   background-color: #fff;
+}
+
+/* ---------------- 预览态布局 ----------------
+   预览不再是一条工具栏 + 全宽正文，而是"浅灰桌面 + 白色纸张"的阅读页：
+   标题等展示信息进正文上方的文档头，低频操作浮动到右上角 */
+
+#note-detail-page.is-preview {
+  background-color: #f1f3f4;
+}
+
+/* 去外框：纸片的圆角与阴影已经表达了内容边界，再套一层边框会显得拘束 */
+#note-detail-page.is-preview .note-editor-wrap {
+  margin-top: 0;
+  border: none;
+  border-radius: 0;
+}
+
+/* 工具栏在预览态不再占一行：整条脱离文档流贴到右上角，
+   左侧标题区由文档头接管，所以直接隐藏 */
+#note-detail-page.is-preview .note-toolbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+  min-height: 0;
+  padding: 12px 16px;
+  background: transparent;
+}
+
+#note-detail-page.is-preview .toolbar-left {
+  display: none;
+}
+
+/* 文档头就是纸张的顶部：白底、同宽、只留上圆角，
+   与下方正文拼成一张完整的纸，不再是浮在灰底上的独立标题。
+   border-box 是关键，否则内边距会把 860px 撑宽，标题与正文左边缘错位 */
+.preview-doc-header {
+  box-sizing: border-box;
+  max-width: 860px;
+  margin: 0 auto;
+  /* 右侧留出浮动按钮的位置，长标题不会钻到按钮底下 */
+  padding: 32px 200px 20px 56px;
+  border-radius: 12px 12px 0 0;
+  background-color: #fff;
+}
+
+/* 文档头随正文一起滚动，标题就是正文的首行主标题，因此比工具栏时放大加粗一档 */
+.preview-doc-title {
+  margin: 0;
+  color: #202124;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* 无标题兜底：与工具栏空标题同一套浅灰 */
+.preview-doc-title.is-empty {
+  color: #c7cacf;
+  font-weight: 400;
+}
+
+/* 标题下的元信息行：分组与更新时间并排，灰色小字弱化，只做归属与时效提示 */
+.preview-doc-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  color: #9aa0a6;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+/* 长分组名自己省略，不把更新时间挤到下一行 */
+.preview-doc-group {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 分隔点：比文字再浅一档，只起断开作用 */
+.preview-doc-meta-dot {
+  color: #dadce0;
+}
+
+.preview-doc-time {
+  flex-shrink: 0;
 }
 
 /* 编辑区容器：撑满剩余高度，滚动交给编辑器内部 */
@@ -1177,6 +1302,19 @@ useEditorHotkeys({
 
 /* 移动端适配 */
 @media screen and (max-width: 768px) {
+  /* 小屏预览态的操作按钮回到正常流，避免和长标题抢同一行 */
+  #note-detail-page.is-preview .note-toolbar {
+    position: static;
+    padding: 6px 10px;
+  }
+
+  /* 小屏收紧文档头内边距，去掉为浮动按钮预留的右侧空间，
+     圆角与下方的纸张保持一致（小屏纸张铺满视口，不需要圆角） */
+  .preview-doc-header {
+    padding: 16px 20px 12px;
+    border-radius: 0;
+  }
+
   .note-title-text {
     font-size: 15px;
   }
