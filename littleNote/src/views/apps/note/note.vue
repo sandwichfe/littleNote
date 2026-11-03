@@ -165,6 +165,7 @@
         <span class="list-loading-spinner" aria-hidden="true"></span>
         <span class="list-loading-text">{{ loadingText }}</span>
       </div>
+
     </div>
 
     <BackToTop :target="scrollContainer" />
@@ -944,13 +945,12 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 <style scoped>
 .main_content {
-  margin: 0 auto;
-  /* 宽屏下「左侧分组栏 + 单列列表」整体居中，列表仍保持文档宽度，避免单行过长、阅读跨度太大 */
-  max-width: 1180px;
+  margin: 0;
+  /* 横向铺满视口：分组栏贴左、列表占满剩余宽度，不再用居中大留白 */
+  max-width: none;
   width: 100%;
   position: relative;
   overflow: hidden;
-  /* 留白处透出外层渐变背景，形成居中的文档卡片 */
   background-color: transparent;
   height: calc(100vh - 64px);
   /* 左列定宽放分组导航，右列占满放内容；两行依次是工具栏、列表 */
@@ -1869,4 +1869,5 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
     transition: none;
   }
 }
+
 </style>
