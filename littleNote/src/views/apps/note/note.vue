@@ -108,14 +108,15 @@
                   <!-- 第二层：正文摘要，搜索态为命中上下文 -->
                   <span v-if="getDisplayContent(c)" class="pcontent note-highlight-html"
                         v-html="getDisplayContent(c)"></span>
-                  <!-- 第三层：相对时间 + 所属分组 -->
-                  <span class="note-meta">
-                    <span class="ptime"
-                          :title="formatFullTime(c.updateTime || c.createTime)">{{ formatRelativeTime(c.updateTime || c.createTime) }}</span>
-                    <span v-if="c.groupName" class="note-group">{{ c.groupName }}</span>
-                    <!-- 未分组也给出标记，避免元信息右侧留空、卡片重心失衡 -->
-                    <span v-else class="note-group is-empty">未分组</span>
-                  </span>
+                </span>
+
+                <!-- 第三层：相对时间 + 所属分组。独立成行横跨整卡，
+                     有图无图都从卡片左边起，日期位置不会跟着封面左右跳 -->
+                <span class="note-meta">
+                  <span class="ptime"
+                        :title="formatFullTime(c.updateTime || c.createTime)">{{ formatRelativeTime(c.updateTime || c.createTime) }}</span>
+                  <!-- 未分组的笔记不显示标签，避免列表里大量「未分组」干扰阅读 -->
+                  <span v-if="c.groupName" class="note-group">{{ c.groupName }}</span>
                 </span>
               </a>
 
@@ -650,7 +651,6 @@ const getDisplayContent = (note: Note) => {
 /* ---------------- 摘要清洗 ---------------- */
 
 const SNIPPET_MAX = 150;         // 普通摘要最多展示的字符数
-const SNIPPET_SOURCE_MAX = 400;  // 清洗前截取的原始长度，控制正则开销
 const HIT_CONTEXT_BEFORE = 20;   // 命中词前保留的上下文长度
 const HIT_CONTEXT_WINDOW = 100;  // 从命中词起展示的窗口长度（含命中词）
 
@@ -672,9 +672,8 @@ const buildHighlightSnippet = (value: string) => {
   const highlightEnd = '___NOTE_HIGHLIGHT_END___';
 
   // 列表只展示搜索摘要文本，避免富文本里的 p/div 等标签撑乱卡片排版。
-  // 先截原始长度再清洗，避免整篇正文跑正则。
+  // 先清洗整段再截断：若先截原始长度，切点落在标签中间会留下 "<img src=..." 这类残片
   let snippet = value
-      .slice(0, SNIPPET_SOURCE_MAX)
       .replace(/<br\s*\/?>/gi, ' ')
       .replace(/<\/(p|div|li|h[1-6])>/gi, ' ')
       .replace(/<(em|mark)\b[^>]*>/gi, highlightStart)
@@ -1572,10 +1571,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
 
 .file-li-item {
   display: flex;
-  /* 横向：左侧封面（有图时才有）+ 右侧文字块，无图时文字块自然占满 */
-  flex-direction: row;
+  /* 允许换行：第一行是「封面（可选）+ 文字块」，元信息独占第二行 */
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
+  column-gap: 12px;
+  row-gap: 6px;
   width: 100%;
   /* 标题 / 摘要 / 元信息三层，层间距由各自的 margin 控制 */
   min-height: 78px;
@@ -1598,6 +1598,11 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   justify-content: center;
   flex: 1;
   min-width: 0;
+}
+
+/* 元信息强制换行占满整行：起点固定为卡片左内边距，与有没有封面无关 */
+.file-li-item .note-meta {
+  flex: 0 0 100%;
 }
 
 /* 键盘 Tab 聚焦时的描边 */
@@ -1660,14 +1665,14 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   border-radius: 2px;
 }
 
-/* 第三层：时间 + 所属分组，作为次要信息压在底部 */
+/* 第三层：时间 + 所属分组，作为次要信息压在底部；
+   两者作为一组左对齐，宽卡片下不会被顶到两端、看起来悬空 */
 .note-meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
   width: 100%;
-  margin-top: 8px;
   line-height: 1.4;
 }
 
@@ -1691,21 +1696,6 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
   text-overflow: ellipsis;
   white-space: nowrap;
   transition: background-color 0.18s ease, color 0.18s ease;
-}
-
-/* 未分组：弱化成虚线描边，和真实分组标签区分开又不留空 */
-.note-group.is-empty {
-  padding: 0 7px;
-  background: transparent;
-  border: 1px dashed #e0e4ea;
-  color: #b6bcc6;
-}
-
-.line:hover .note-group.is-empty,
-.line:focus-within .note-group.is-empty {
-  background: transparent;
-  border-color: #d5dae2;
-  color: #a3aab4;
 }
 
 /* 行右侧「更多」，垂直居中避免压住标题和底部元信息 */
@@ -1840,10 +1830,6 @@ const handleGlobalKeydown = (event: KeyboardEvent) => {
     font-size: 12px;
     /* 窄屏空间紧张，摘要回到单行 */
     -webkit-line-clamp: 1;
-  }
-
-  .note-meta {
-    margin-top: 6px;
   }
 
   .note-group {
