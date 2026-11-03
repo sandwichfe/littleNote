@@ -137,8 +137,18 @@
       </RichEditor>
     </div>
 
-    <!-- 底部状态栏：只放内容属性（字数），独占右下角 -->
+    <!-- 底部状态栏：左侧反馈保存状态，右侧展示字数，不干扰正文编辑 -->
     <div class="note-statusbar">
+      <span class="note-save-state" :class="{
+        'is-saving': saving,
+        'is-dirty': !saving && dirty,
+        'is-error': !saving && saveError
+      }">
+        <span v-if="saveError">保存失败</span>
+        <span v-else-if="saving">保存中…</span>
+        <span v-else-if="dirty || noteId === -1">未保存</span>
+        <span v-else>已保存</span>
+      </span>
       <span class="note-char-count">{{ charCount }} 字</span>
     </div>
 
@@ -601,6 +611,47 @@ useEditorHotkeys({
   background-color: #f3f4f6;
 }
 
+/* 编辑态使用浅灰工作台，让白色编辑区与页面背景形成柔和层次 */
+#note-detail-page:not(.is-preview) {
+  background-color: #f6f7f9;
+}
+
+#note-detail-page:not(.is-preview) .note-toolbar {
+  border-bottom: 1px solid #edf0f3;
+}
+
+#note-detail-page:not(.is-preview) .note-title-text {
+  color: #303846;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+#note-detail-page:not(.is-preview) .note-group-trigger {
+  height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: #f2f4f7;
+}
+
+#note-detail-page:not(.is-preview) .note-group-trigger:hover:not(.is-readonly) {
+  background: #e9edf2;
+}
+
+#note-detail-page:not(.is-preview) :deep(.rich-editor:not(.is-preview)) {
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+#note-detail-page:not(.is-preview) :deep(.rich-editor:not(.is-preview) .re-content) {
+  background: #fff;
+}
+
+#note-detail-page:not(.is-preview) :deep(.rich-editor:not(.is-preview) .re-content .ProseMirror) {
+  padding: 28px 48px;
+  font-size: 16px;
+  line-height: 1.7;
+}
+
 /* 去外框：纸张自身表达内容边界，不再套一层边框 */
 #note-detail-page.is-preview .note-editor-wrap {
   margin-top: 0;
@@ -723,7 +774,7 @@ useEditorHotkeys({
   flex-direction: column;
   flex-grow: 1;
   min-height: 0;
-  margin-top: 5px;
+  margin: 8px 12px 0;
   border: 1px solid #dadce0;
   border-radius: 8px;
   overflow: hidden;
@@ -737,7 +788,7 @@ useEditorHotkeys({
   padding: 4px 16px;
   background: #fff;
   flex-shrink: 0;
-  min-height: 45px;
+  min-height: 48px;
   gap: 16px;
 }
 
@@ -776,12 +827,11 @@ useEditorHotkeys({
   flex-shrink: 0;
 }
 
-/* 底部状态栏：只承载字数这类内容属性，独占右下角；
-   分隔靠编辑器容器自身的下边框，不再重复画线 */
+/* 底部状态栏：保存状态靠左、字数靠右，不重复绘制分隔线 */
 .note-statusbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 12px;
   flex-shrink: 0;
   height: 28px;
@@ -789,6 +839,21 @@ useEditorHotkeys({
   color: #9aa0a6;
   font-size: 12px;
   line-height: 1;
+}
+
+/* 保存状态使用低对比度文字，仅在异常时使用醒目颜色 */
+.note-save-state {
+  color: #98a2b3;
+  white-space: nowrap;
+}
+
+.note-save-state.is-saving,
+.note-save-state.is-dirty {
+  color: #667085;
+}
+
+.note-save-state.is-error {
+  color: #d92d20;
 }
 
 /* 标题：位于工具栏左上角，只做单行展示，点击打开弹窗编辑 */
@@ -1405,6 +1470,19 @@ useEditorHotkeys({
     height: 24px;
     padding: 0 10px;
     gap: 8px;
+  }
+
+  .note-editor-wrap {
+    margin: 4px 0 0;
+    border-radius: 0;
+    border-right: none;
+    border-left: none;
+  }
+
+  #note-detail-page:not(.is-preview) :deep(.rich-editor:not(.is-preview) .re-content .ProseMirror) {
+    padding: 20px;
+    font-size: 15px;
+    line-height: 1.65;
   }
 
   .toolbar-btn {
