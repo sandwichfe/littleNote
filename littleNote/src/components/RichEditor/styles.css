@@ -746,15 +746,38 @@
 .rich-editor.is-preview :deep(.re-code-block.is-source > .re-code-markdown-view) {
   display: none;
 }
-/* markdown 块在预览态更像正文的一段内容，弱化代码块的灰底与描边 */
+/* markdown 块在预览态渲染成正文排版，但仍画成一张浅色卡片，
+   否则读者分不清哪段是笔记正文、哪段是代码块渲染出来的内容 */
 .rich-editor.is-preview :deep(.re-code-block.is-markdown) {
-  background: transparent;
-  border-color: transparent;
+  background: #fbfcfd;
+  border: 1px solid #e3e7ec;
+  border-radius: 10px;
+  overflow: hidden;
 }
+/* 顶部条继续保留，作为卡片头：左边标签、右边复制与切换源码 */
 .rich-editor.is-preview :deep(.re-code-block.is-markdown .re-code-tools) {
-  min-height: 32px;
-  background: transparent;
-  border-bottom-color: transparent;
+  min-height: 34px;
+  background: #f4f6f9;
+  border-bottom: 1px solid #e3e7ec;
+  border-radius: 0;
+}
+/* 标签：编辑态不渲染小屏提示，只在预览态的 markdown 块上出现 */
+.re-content :deep(.re-code-markdown-badge) {
+  display: none;
+}
+.rich-editor.is-preview :deep(.re-code-block.is-markdown .re-code-markdown-badge) {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #e8f0fe;
+  color: #1967d2;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 /* 渲染结果排版：标题收敛字号，避免盖过笔记自身的标题层级；
    选择器统一带 .re-code-block.is-markdown 前缀，保证优先级压过编辑态的 .ProseMirror 规则 */

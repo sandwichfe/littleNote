@@ -259,6 +259,13 @@ const createCodeBlockView = ({ node, view, getPos, HTMLAttributes }: NodeViewRen
   });
 
   toolsLeft.appendChild(picker);
+
+  // 预览态的 markdown 块会被渲染成正文效果，用一枚标签说明这块是「渲染结果」而非普通正文
+  const markdownBadge = document.createElement('span');
+  markdownBadge.className = 're-code-markdown-badge';
+  markdownBadge.textContent = 'Markdown 预览';
+  toolsLeft.appendChild(markdownBadge);
+
   tools.appendChild(toolsLeft);
 
   const toolsRight = document.createElement('div');
@@ -275,6 +282,7 @@ const createCodeBlockView = ({ node, view, getPos, HTMLAttributes }: NodeViewRen
     const isSource = pre.classList.toggle('is-source');
     sourceToggle.textContent = isSource ? '查看渲染' : '查看源码';
     sourceToggle.title = isSource ? '显示 markdown 渲染效果' : '显示 markdown 原文';
+    markdownBadge.textContent = isSource ? 'Markdown 源码' : 'Markdown 预览';
   });
   toolsRight.appendChild(sourceToggle);
 
