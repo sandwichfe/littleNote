@@ -1,12 +1,17 @@
 import type { NodeViewRendererProps } from '@tiptap/core';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import type { ViewMutationRecord } from '@tiptap/pm/view';
+import MarkdownIt from 'markdown-it';
 import { ElMessage } from 'element-plus';
 
 import { codeLanguages } from '../config';
 
 // 代码块节点集中处理语言选择和复制操作。
 let languagePickerId = 0;
+
+// 预览态下 markdown 代码块直接渲染成排版效果；
+// html: false 让块内的原始 HTML 被转义，避免在预览里注入脚本
+const markdown = new MarkdownIt({ html: false, linkify: true });
 
 const copyText = async (text: string) => {
   if (!text) {
@@ -41,6 +46,8 @@ const createCodeBlockView = ({ node, view, getPos, HTMLAttributes }: NodeViewRen
   Object.entries(HTMLAttributes).forEach(([key, value]) => {
     if (value !== undefined && value !== null) pre.setAttribute(key, String(value));
   });
+  // 标记代码块根节点：预览态据此区分 markdown 块与普通代码块（必须放在 HTMLAttributes 之后，避免 class 被覆盖）
+  pre.classList.add('re-code-block');
 
   const tools = document.createElement('div');
   tools.className = 're-code-tools';
@@ -257,6 +264,20 @@ const createCodeBlockView = ({ node, view, getPos, HTMLAttributes }: NodeViewRen
   const toolsRight = document.createElement('div');
   toolsRight.className = 're-code-tools-right';
 
+  // 「查看源码 / 查看渲染」：只对 markdown 块生效，且仅在预览态由样式显示；
+  // 切换状态只落在 pre 的 class 上，不写回文档内容
+  const sourceToggle = document.createElement('button');
+  sourceToggle.type = 'button';
+  sourceToggle.className = 're-code-source-toggle';
+  sourceToggle.textContent = '查看源码';
+  sourceToggle.title = '显示 markdown 原文';
+  sourceToggle.addEventListener('click', () => {
+    const isSource = pre.classList.toggle('is-source');
+    sourceToggle.textContent = isSource ? '查看渲染' : '查看源码';
+    sourceToggle.title = isSource ? '显示 markdown 渲染效果' : '显示 markdown 原文';
+  });
+  toolsRight.appendChild(sourceToggle);
+
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 're-code-copy';
@@ -271,7 +292,42 @@ const createCodeBlockView = ({ node, view, getPos, HTMLAttributes }: NodeViewRen
   tools.appendChild(toolsRight);
 
   const code = document.createElement('code');
-  pre.append(tools, code);
+  // 渲染结果与源码同级并列：源码仍是 contentDOM，两者显隐由 CSS 按视图模式切换，
+  // 这样无需感知编辑器只读状态的切换（setEditable 不会触发这里的 update）
+  const markdownView = document.createElement('div');
+  markdownView.className = 're-code-markdown-view';
+  markdownView.contentEditable = 'false';
+  pre.append(tools, code, markdownView);
+
+  // 渲染结果按文本去重：内容没变就跳过，切换视图模式不会触发重新解析
+  let renderedText: string | null = null;
+  const syncMarkdownView = () => {
+    if (selectedLanguage !== 'markdown') {
+      renderedText = null;
+      markdownView.replaceChildren();
+      return;
+    }
+
+    const text = code.textContent || '';
+    if (text === renderedText) return;
+    renderedText = text;
+    markdownView.innerHTML = markdown.render(text);
+    // 渲染出的链接统一新窗口打开，避免把阅读页顶掉
+    markdownView.querySelectorAll('a').forEach((link) => {
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+    });
+  };
+
+  // contentDOM 的文本写入时机不固定，推到下一帧再读更稳
+  let syncFrame = 0;
+  const scheduleMarkdownSync = () => {
+    if (syncFrame) cancelAnimationFrame(syncFrame);
+    syncFrame = requestAnimationFrame(() => {
+      syncFrame = 0;
+      if (pre.isConnected) syncMarkdownView();
+    });
+  };
 
   const updateLanguage = (language: string) => {
     selectedLanguage = language;
@@ -285,6 +341,9 @@ const createCodeBlockView = ({ node, view, getPos, HTMLAttributes }: NodeViewRen
       code.removeAttribute('class');
     }
     if (isDropdownOpen) renderLanguages();
+    // 类名同步切（避免首帧闪出源码），渲染内容推到下一帧
+    pre.classList.toggle('is-markdown', language === 'markdown');
+    scheduleMarkdownSync();
   };
   updateLanguage(node.attrs.language || '');
 
@@ -297,9 +356,15 @@ const createCodeBlockView = ({ node, view, getPos, HTMLAttributes }: NodeViewRen
       updateLanguage(updatedNode.attrs.language || '');
       return true;
     },
-    stopEvent: (event: Event) => tools.contains(event.target as globalThis.Node),
-    ignoreMutation: (mutation: ViewMutationRecord) =>
-      tools.contains(mutation.target as globalThis.Node),
+    // 渲染结果是自绘 DOM，事件与 DOM 变动都不要交给编辑器处理
+    stopEvent: (event: Event) => {
+      const target = event.target as globalThis.Node;
+      return tools.contains(target) || markdownView.contains(target);
+    },
+    ignoreMutation: (mutation: ViewMutationRecord) => {
+      const target = mutation.target as globalThis.Node;
+      return tools.contains(target) || markdownView.contains(target);
+    },
   };
 };
 

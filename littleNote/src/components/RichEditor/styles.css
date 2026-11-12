@@ -692,6 +692,176 @@
 .re-content :deep(.re-code-copy:active) {
   transform: scale(0.96);
 }
+/* 预览态下的 markdown 渲染区块 ----------------
+   源码仍在 contentDOM(code) 里，渲染结果与之同级，靠祖先 .is-preview 决定显示哪个；
+   编辑态默认隐藏渲染结果，不影响正常编辑 */
+.re-content :deep(.re-code-markdown-view) {
+  display: none;
+  padding: 16px;
+  /* 外层 pre 是等宽 + pre-wrap，渲染结果要回到正常正文排版 */
+  white-space: normal;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #3c4043;
+}
+.re-content :deep(.re-code-source-toggle) {
+  display: none; /* 仅预览态的 markdown 块显示 */
+  align-items: center;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: #7a7f86;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+.re-content :deep(.re-code-source-toggle:hover) {
+  background: #fff;
+  border-color: #d9d9d9;
+  color: #262626;
+}
+/* 预览态只读：语言选择器没有意义（点了只会改文档），直接隐藏 */
+.rich-editor.is-preview :deep(.re-code-language-picker) {
+  display: none;
+}
+.rich-editor.is-preview :deep(.re-code-block.is-markdown > code) {
+  display: none;
+}
+.rich-editor.is-preview :deep(.re-code-block.is-markdown > .re-code-markdown-view) {
+  display: block;
+}
+.rich-editor.is-preview :deep(.re-code-block.is-markdown .re-code-source-toggle) {
+  display: inline-flex;
+}
+/* 用户点了「查看源码」：压掉渲染结果，回到高亮源码 */
+.rich-editor.is-preview :deep(.re-code-block.is-source > code) {
+  display: block;
+}
+.rich-editor.is-preview :deep(.re-code-block.is-source > .re-code-markdown-view) {
+  display: none;
+}
+/* markdown 块在预览态更像正文的一段内容，弱化代码块的灰底与描边 */
+.rich-editor.is-preview :deep(.re-code-block.is-markdown) {
+  background: transparent;
+  border-color: transparent;
+}
+.rich-editor.is-preview :deep(.re-code-block.is-markdown .re-code-tools) {
+  min-height: 32px;
+  background: transparent;
+  border-bottom-color: transparent;
+}
+/* 渲染结果排版：标题收敛字号，避免盖过笔记自身的标题层级；
+   选择器统一带 .re-code-block.is-markdown 前缀，保证优先级压过编辑态的 .ProseMirror 规则 */
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view > :first-child) {
+  margin-top: 0;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view > :last-child) {
+  margin-bottom: 0;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view p) {
+  margin: 8px 0;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h1),
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h2),
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h3),
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h4),
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h5),
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h6) {
+  margin: 16px 0 8px;
+  color: #202124;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h1) {
+  font-size: 1.4em;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h2) {
+  font-size: 1.25em;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h3) {
+  font-size: 1.12em;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h4),
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h5),
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view h6) {
+  font-size: 1em;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view ul),
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view ol) {
+  margin: 8px 0;
+  padding-left: 22px;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view ul) {
+  list-style: disc;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view li) {
+  margin: 2px 0;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view blockquote) {
+  margin: 10px 0;
+  padding: 2px 12px;
+  border-left: 3px solid #dadce0;
+  color: #5f6368;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view hr) {
+  margin: 16px 0;
+  border: 0;
+  border-top: 1px solid #e8e8e8;
+}
+/* 行内代码：覆盖外层「pre 中 code 一律块级」与编辑态 code 底色的规则 */
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view code) {
+  display: inline;
+  padding: 2px 5px;
+  border: 0;
+  border-radius: 4px;
+  background: #f1f3f4;
+  color: #c5221f;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 0.92em;
+  overflow: visible;
+}
+/* 围栏代码块：还原成独立的小卡片 */
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view pre) {
+  margin: 10px 0;
+  padding: 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  background: #fafafa;
+  overflow-x: auto;
+  white-space: pre;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view pre code) {
+  display: block;
+  padding: 0;
+  background: transparent;
+  color: #24292f;
+  font-size: 13px;
+  line-height: 1.6;
+}
+/* 表格：跟随正文宽度，不套用编辑态的固定列宽 */
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view table) {
+  width: 100%;
+  margin: 10px 0;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view th),
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view td) {
+  min-width: 0;
+  height: auto;
+  padding: 6px 10px;
+  border: 1px solid #dadce0;
+}
+.re-content :deep(.re-code-block.is-markdown .re-code-markdown-view th) {
+  background: #f8f9fa;
+}
 .re-content :deep(.ProseMirror pre code) {
   display: block;
   background: none;
